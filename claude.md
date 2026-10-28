@@ -20,9 +20,17 @@ Twilio : numéros virtuels (voix), SMS avec nom d'expéditeur
 Stripe Connect : acomptes ; Stripe Billing : abonnements
 Brevo : e-mails
 Structure des dossiers
-<!-- À compléter : app/, components/, lib/, supabase/migrations/ … -->
+app/ : routes (App Router)
+components/ : composants React (components/landing/ pour la page d'accueil)
+lib/ : logique métier ; lib/supabase/ : clients Supabase (client.ts navigateur, server.ts serveur, proxy.ts rafraîchissement de session) et database.types.ts (généré, ne pas modifier à la main)
+proxy.ts : rafraîchit la session Supabase à chaque requête
+supabase/migrations/ : migrations SQL, une par changement de schéma
 Commandes
-<!-- À compléter : dev, build, lint, test, migrations -->
+npm run dev / build / lint
+npm run db:new <nom> : créer une migration
+npm run db:push : appliquer les migrations sur le projet Supabase lié
+npm run db:types : régénérer lib/supabase/database.types.ts (après chaque migration)
+npm run db:link -- --project-ref <ref> : lier le projet (après npx supabase login)
 Règles de code
 Petites fonctions, noms explicites en anglais, textes de l'interface en français
 Après chaque modification : lancer lint, build et tests, et corriger les erreurs
