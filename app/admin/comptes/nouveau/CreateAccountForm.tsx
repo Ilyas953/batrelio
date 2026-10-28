@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { FormError, SubmitButton, TextField } from "@/components/ui/form";
-import { toSlug, toSmsSenderName } from "@/lib/admin/company-defaults";
+import { toSmsSenderName } from "@/lib/admin/company-defaults";
 import { createAccount, type CreateAccountState } from "./actions";
 
 const INITIAL_STATE: CreateAccountState = {};
@@ -65,13 +65,6 @@ export function CreateAccountForm() {
         defaultValue={state.values?.smsSenderName}
         placeholder={toSmsSenderName(companyName) || "DUPONTTOIT"}
         hint="11 caractères max. Laissez vide pour utiliser la suggestion."
-      />
-      <TextField
-        label="Sous-domaine (optionnel)"
-        name="slug"
-        defaultValue={state.values?.slug}
-        placeholder={toSlug(companyName) || "dupont-toiture"}
-        hint="Laissez vide pour utiliser la suggestion."
       />
 
       <FormError message={state.error} />

@@ -66,9 +66,8 @@ function AccountCard({ account }: { account: Account }) {
       </div>
       <p className="mt-1 break-all text-base text-stone-600">{account.email}</p>
 
-      <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-3 text-sm sm:grid-cols-4">
+      <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-3 text-sm sm:grid-cols-3">
         <AccountDetail label="Expéditeur SMS" value={account.company?.sms_sender_name ?? "–"} />
-        <AccountDetail label="Sous-domaine" value={account.company?.slug ?? "–"} />
         <AccountDetail label="Créé le" value={formatDate(account.createdAt)} />
         <AccountDetail label="Dernière connexion" value={formatDate(account.lastSignInAt)} />
       </dl>

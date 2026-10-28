@@ -20,7 +20,6 @@ export type Database = {
           id: string
           name: string
           owner_id: string
-          slug: string
           sms_sender_name: string
           updated_at: string
         }
@@ -29,7 +28,6 @@ export type Database = {
           id?: string
           name: string
           owner_id: string
-          slug: string
           sms_sender_name: string
           updated_at?: string
         }
@@ -38,7 +36,6 @@ export type Database = {
           id?: string
           name?: string
           owner_id?: string
-          slug?: string
           sms_sender_name?: string
           updated_at?: string
         }
