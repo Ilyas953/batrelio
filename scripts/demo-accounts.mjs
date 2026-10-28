@@ -4,9 +4,28 @@ import { createClient } from "@supabase/supabase-js";
 import { randomBytes } from "node:crypto";
 
 const DEMO_ACCOUNTS = [
-  { email: "couvreur.demo@example.com", companyName: "Toitures Martin", smsSenderName: "TOITMARTIN" },
-  { email: "elagueur.demo@example.com", companyName: "Élagage du Val", smsSenderName: "ELAGAGEVAL" },
-  { email: "plombier.demo@example.com", companyName: "Plomberie Roux", smsSenderName: "PLOMBROUX" },
+  // No SIRET: a made-up but valid number could belong to a real company.
+  {
+    email: "couvreur.demo@example.com",
+    companyName: "Toitures Martin",
+    smsSenderName: "TOITMARTIN",
+    trade: "couvreur",
+    region: "bretagne",
+  },
+  {
+    email: "elagueur.demo@example.com",
+    companyName: "Élagage du Val",
+    smsSenderName: "ELAGAGEVAL",
+    trade: "elagueur",
+    region: "centre-val-de-loire",
+  },
+  {
+    email: "plombier.demo@example.com",
+    companyName: "Plomberie Roux",
+    smsSenderName: "PLOMBROUX",
+    trade: "plombier",
+    region: "occitanie",
+  },
 ];
 
 function readEnv(name) {
@@ -42,6 +61,8 @@ async function createDemoAccount(supabase, account) {
     owner_id: data.user.id,
     name: account.companyName,
     sms_sender_name: account.smsSenderName,
+    trade: account.trade,
+    region: account.region,
   });
   if (companyError) {
     await supabase.auth.admin.deleteUser(data.user.id);

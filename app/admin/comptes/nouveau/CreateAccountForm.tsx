@@ -2,8 +2,8 @@
 
 import { useActionState, useState } from "react";
 import { FormError, SubmitButton, TextField } from "@/components/ui/form";
-import { toSmsSenderName } from "@/lib/admin/company-defaults";
-import { createAccount, type CreateAccountState } from "./actions";
+import { createAccount, type CreateAccountState } from "../actions";
+import { CompanyFields } from "../CompanyFields";
 
 const INITIAL_STATE: CreateAccountState = {};
 const PASSWORD_ALPHABET = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789";
@@ -16,19 +16,10 @@ function generatePassword(): string {
 
 export function CreateAccountForm() {
   const [state, formAction] = useActionState(createAccount, INITIAL_STATE);
-  const [companyName, setCompanyName] = useState(state.values?.companyName ?? "");
   const [password, setPassword] = useState("");
 
   return (
     <form action={formAction} className="space-y-6 rounded-3xl bg-white p-6 shadow-sm sm:p-8">
-      <TextField
-        label="Nom de l'entreprise"
-        name="companyName"
-        required
-        value={companyName}
-        onChange={(event) => setCompanyName(event.target.value)}
-        placeholder="Dupont Toiture"
-      />
       <TextField
         label="Adresse e-mail de l'artisan"
         name="email"
@@ -58,14 +49,7 @@ export function CreateAccountForm() {
         </button>
       </div>
 
-      <TextField
-        label="Nom d'expéditeur SMS (optionnel)"
-        name="smsSenderName"
-        maxLength={11}
-        defaultValue={state.values?.smsSenderName}
-        placeholder={toSmsSenderName(companyName) || "DUPONTTOIT"}
-        hint="11 caractères max. Laissez vide pour utiliser la suggestion."
-      />
+      <CompanyFields defaults={state.values} />
 
       <FormError message={state.error} />
       <SubmitButton label="Créer le compte" pendingLabel="Création…" />

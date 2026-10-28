@@ -20,7 +20,10 @@ export type Database = {
           id: string
           name: string
           owner_id: string
+          region: Database["public"]["Enums"]["region"] | null
+          siret: string | null
           sms_sender_name: string
+          trade: Database["public"]["Enums"]["trade"] | null
           updated_at: string
         }
         Insert: {
@@ -28,7 +31,10 @@ export type Database = {
           id?: string
           name: string
           owner_id: string
+          region?: Database["public"]["Enums"]["region"] | null
+          siret?: string | null
           sms_sender_name: string
+          trade?: Database["public"]["Enums"]["trade"] | null
           updated_at?: string
         }
         Update: {
@@ -36,7 +42,10 @@ export type Database = {
           id?: string
           name?: string
           owner_id?: string
+          region?: Database["public"]["Enums"]["region"] | null
+          siret?: string | null
           sms_sender_name?: string
+          trade?: Database["public"]["Enums"]["trade"] | null
           updated_at?: string
         }
         Relationships: []
@@ -49,7 +58,36 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      region:
+        | "auvergne-rhone-alpes"
+        | "bourgogne-franche-comte"
+        | "bretagne"
+        | "centre-val-de-loire"
+        | "corse"
+        | "grand-est"
+        | "hauts-de-france"
+        | "ile-de-france"
+        | "normandie"
+        | "nouvelle-aquitaine"
+        | "occitanie"
+        | "pays-de-la-loire"
+        | "provence-alpes-cote-d-azur"
+        | "guadeloupe"
+        | "martinique"
+        | "guyane"
+        | "la-reunion"
+        | "mayotte"
+      trade:
+        | "couvreur"
+        | "elagueur"
+        | "paysagiste"
+        | "plombier"
+        | "chauffagiste"
+        | "electricien"
+        | "macon"
+        | "menuisier"
+        | "peintre"
+        | "autre"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -176,6 +214,39 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      region: [
+        "auvergne-rhone-alpes",
+        "bourgogne-franche-comte",
+        "bretagne",
+        "centre-val-de-loire",
+        "corse",
+        "grand-est",
+        "hauts-de-france",
+        "ile-de-france",
+        "normandie",
+        "nouvelle-aquitaine",
+        "occitanie",
+        "pays-de-la-loire",
+        "provence-alpes-cote-d-azur",
+        "guadeloupe",
+        "martinique",
+        "guyane",
+        "la-reunion",
+        "mayotte",
+      ],
+      trade: [
+        "couvreur",
+        "elagueur",
+        "paysagiste",
+        "plombier",
+        "chauffagiste",
+        "electricien",
+        "macon",
+        "menuisier",
+        "peintre",
+        "autre",
+      ],
+    },
   },
 } as const

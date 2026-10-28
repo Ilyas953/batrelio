@@ -9,7 +9,10 @@ export type Account = {
   createdAt: string;
   lastSignInAt: string | null;
   isAdmin: boolean;
-  company: Pick<Tables<"companies">, "name" | "sms_sender_name"> | null;
+  company: Pick<
+    Tables<"companies">,
+    "id" | "name" | "sms_sender_name" | "siret" | "trade" | "region"
+  > | null;
 };
 
 const MAX_USERS_PER_PAGE = 1000;
@@ -20,7 +23,7 @@ export async function listAccounts(): Promise<Account[]> {
 
   const [usersResult, companiesResult] = await Promise.all([
     supabase.auth.admin.listUsers({ perPage: MAX_USERS_PER_PAGE }),
-    supabase.from("companies").select("owner_id, name, sms_sender_name"),
+    supabase.from("companies").select("id, owner_id, name, sms_sender_name, siret, trade, region"),
   ]);
   if (usersResult.error) throw usersResult.error;
   if (companiesResult.error) throw companiesResult.error;

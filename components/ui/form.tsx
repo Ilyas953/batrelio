@@ -34,6 +34,37 @@ export function TextField({ label, name, type = "text", hint, ...inputProps }: T
   );
 }
 
+type SelectFieldProps = {
+  label: string;
+  name: string;
+  options: { value: string; label: string }[];
+  placeholder: string;
+  defaultValue?: string;
+};
+
+export function SelectField({ label, name, options, placeholder, defaultValue = "" }: SelectFieldProps) {
+  return (
+    <div>
+      <label htmlFor={name} className="mb-2 block text-base font-semibold text-stone-800">
+        {label}
+      </label>
+      <select
+        id={name}
+        name={name}
+        defaultValue={defaultValue}
+        className="block min-h-14 w-full rounded-2xl border-2 border-stone-200 bg-white px-4 text-lg text-stone-900 outline-none focus:border-orange-500"
+      >
+        <option value="">{placeholder}</option>
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
 export function FormError({ message }: { message?: string }) {
   if (!message) return null;
 
