@@ -11,7 +11,9 @@
     "db:new": "supabase migration new",
     "db:push": "supabase db push",
     "db:types": "supabase gen types typescript --linked --schema public > lib/supabase/database.types.ts",
-    "admin:create": "node --env-file=.env.local scripts/create-admin.mjs"
+    "admin:create": "node --env-file=.env.local scripts/create-admin.mjs",
+    "demo:seed": "node --env-file=.env.local scripts/demo-accounts.mjs",
+    "demo:remove": "node --env-file=.env.local scripts/demo-accounts.mjs --remove"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
