@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { listAccounts, type Account } from "@/lib/admin/accounts";
-import { REGION_LABELS, TRADE_LABELS, formatSiret } from "@/lib/admin/company-details";
+import { REGION_LABELS, TRADE_LABELS, formatSiret } from "@/lib/company/details";
 
 const dateFormatter = new Intl.DateTimeFormat("fr-FR", {
   dateStyle: "medium",

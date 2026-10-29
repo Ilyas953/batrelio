@@ -1,5 +1,5 @@
 import type { TablesUpdate } from "@/lib/supabase/database.types";
-import { isValidSmsSenderName, toSmsSenderName } from "./company-defaults";
+import { isValidSmsSenderName, toSmsSenderName } from "@/lib/company/sms-sender";
 import {
   isRegion,
   isTrade,
@@ -7,7 +7,7 @@ import {
   normalizeSiret,
   type Region,
   type Trade,
-} from "./company-details";
+} from "@/lib/company/details";
 
 export type CompanyValues = {
   companyName: string;

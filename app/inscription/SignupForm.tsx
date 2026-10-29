@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useActionState } from "react";
 import { FormError, SelectField, SubmitButton, TextField } from "@/components/ui/form";
-import { TRADE_LABELS } from "@/lib/admin/company-details";
+import { TRADE_LABELS } from "@/lib/company/details";
 import { signUp, type SignUpState } from "./actions";
 
 const INITIAL_STATE: SignUpState = {};

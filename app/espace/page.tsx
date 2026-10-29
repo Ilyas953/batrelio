@@ -1,41 +1,18 @@
-import type { Metadata } from "next";
+import Link from "next/link";
 import { Suspense } from "react";
-import { signOut } from "@/lib/auth/actions";
 import { getDashboard, type DashboardQuote, type NewRequest } from "@/lib/espace/dashboard";
 import { formatCents, formatPhone, formatTimeAgo } from "@/lib/format";
 
-export const metadata: Metadata = {
-  title: "Mon espace · Batrelio",
-  robots: { index: false },
-};
-
 export default function ArtisanSpacePage() {
   return (
-    <>
-      <header className="border-b border-stone-200 bg-white">
-        <div className="mx-auto flex h-16 max-w-2xl items-center justify-between px-4 sm:px-6">
-          <span className="text-lg font-bold text-stone-900">Batrelio</span>
-          <form action={signOut}>
-            <button
-              type="submit"
-              className="min-h-11 rounded-xl px-3 text-[15px] font-semibold text-stone-600 hover:bg-stone-100 hover:text-stone-900"
-            >
-              Se déconnecter
-            </button>
-          </form>
-        </div>
-      </header>
-      <main className="mx-auto w-full max-w-2xl flex-1 px-4 pb-16 pt-8 sm:px-6">
-        <Suspense fallback={<p className="text-lg text-stone-500">Chargement…</p>}>
-          <Dashboard />
-        </Suspense>
-      </main>
-    </>
+    <Suspense fallback={<p className="text-lg text-stone-500">Chargement…</p>}>
+      <Dashboard />
+    </Suspense>
   );
 }
 
 async function Dashboard() {
-  const { companyName, newRequests, pendingQuotes, signedQuotes } = await getDashboard();
+  const { companyName, missingQuoteDetails, newRequests, pendingQuotes, signedQuotes } = await getDashboard();
   const now = new Date();
 
   return (
@@ -43,6 +20,8 @@ async function Dashboard() {
       <h1 className="text-3xl font-extrabold tracking-tight text-stone-900">
         Bonjour{companyName ? `, ${companyName}` : ""}
       </h1>
+
+      {missingQuoteDetails.length > 0 && <MissingDetailsBanner missing={missingQuoteDetails} />}
 
       <Section
         title="À traiter"
@@ -70,6 +49,26 @@ async function Dashboard() {
           <QuoteRow key={quote.id} quote={quote} detail={formatDeposit(quote)} signed />
         ))}
       </Section>
+    </div>
+  );
+}
+
+// "votre assurance et votre médiateur", "votre SIRET, votre TVA et votre assurance".
+function joinWithEt(items: string[]): string {
+  return items.length < 2 ? items.join("") : `${items.slice(0, -1).join(", ")} et ${items.at(-1)}`;
+}
+
+function MissingDetailsBanner({ missing }: { missing: string[] }) {
+  return (
+    <div className="rounded-3xl bg-amber-50 p-5 sm:p-6">
+      <p className="text-lg font-bold text-amber-950">Complétez votre entreprise pour faire vos devis</p>
+      <p className="mt-1 text-base text-amber-900">Il manque {joinWithEt(missing)}.</p>
+      <Link
+        href="/espace/entreprise"
+        className="mt-4 inline-flex min-h-12 items-center rounded-2xl bg-stone-900 px-5 text-base font-semibold text-white hover:bg-stone-700"
+      >
+        Compléter mon entreprise
+      </Link>
     </div>
   );
 }

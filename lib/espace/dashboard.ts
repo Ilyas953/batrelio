@@ -1,5 +1,6 @@
 import "server-only";
 import { requireUser } from "@/lib/auth/session";
+import { listMissingQuoteDetails } from "@/lib/company/legal";
 
 const RECENT_SIGNED_QUOTES = 5;
 
@@ -11,7 +12,7 @@ export async function getDashboard() {
   const { supabase } = await requireUser();
 
   const [company, newRequests, pendingQuotes, signedQuotes] = await Promise.all([
-    supabase.from("companies").select("name").maybeSingle(),
+    supabase.from("companies").select("*").maybeSingle(),
     supabase
       .from("requests")
       .select("id, customer_name, customer_phone, description, address, created_at")
@@ -36,6 +37,7 @@ export async function getDashboard() {
 
   return {
     companyName: company.data?.name ?? null,
+    missingQuoteDetails: company.data ? listMissingQuoteDetails(company.data) : [],
     newRequests: newRequests.data ?? [],
     pendingQuotes: pendingQuotes.data ?? [],
     signedQuotes: signedQuotes.data ?? [],

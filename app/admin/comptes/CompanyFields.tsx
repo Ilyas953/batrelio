@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { SelectField, TextField } from "@/components/ui/form";
-import { toSmsSenderName } from "@/lib/admin/company-defaults";
-import { REGION_LABELS, TRADE_LABELS, formatSiret } from "@/lib/admin/company-details";
+import { toSmsSenderName } from "@/lib/company/sms-sender";
+import { REGION_LABELS, TRADE_LABELS, formatSiret } from "@/lib/company/details";
 import type { CompanyValues } from "@/lib/admin/company-form";
 
 const TRADE_OPTIONS = Object.entries(TRADE_LABELS).map(([value, label]) => ({ value, label }));

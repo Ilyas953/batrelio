@@ -16,37 +16,88 @@ export type Database = {
     Tables: {
       companies: {
         Row: {
+          address_line: string | null
+          city: string | null
+          contact_email: string | null
+          contact_phone: string | null
           created_at: string
           id: string
+          insurance_coverage_area: string | null
+          insurance_policy_number: string | null
+          insurer_address: string | null
+          insurer_name: string | null
+          legal_form: Database["public"]["Enums"]["legal_form"] | null
+          legal_name: string | null
+          mediator_name: string | null
+          mediator_website: string | null
+          naf_code: string | null
           name: string
           owner_id: string
+          postal_code: string | null
           region: Database["public"]["Enums"]["region"] | null
+          share_capital_cents: number | null
           siret: string | null
           sms_sender_name: string
           trade: Database["public"]["Enums"]["trade"] | null
           updated_at: string
+          vat_number: string | null
+          vat_regime: Database["public"]["Enums"]["vat_regime"] | null
         }
         Insert: {
+          address_line?: string | null
+          city?: string | null
+          contact_email?: string | null
+          contact_phone?: string | null
           created_at?: string
           id?: string
+          insurance_coverage_area?: string | null
+          insurance_policy_number?: string | null
+          insurer_address?: string | null
+          insurer_name?: string | null
+          legal_form?: Database["public"]["Enums"]["legal_form"] | null
+          legal_name?: string | null
+          mediator_name?: string | null
+          mediator_website?: string | null
+          naf_code?: string | null
           name: string
           owner_id: string
+          postal_code?: string | null
           region?: Database["public"]["Enums"]["region"] | null
+          share_capital_cents?: number | null
           siret?: string | null
           sms_sender_name: string
           trade?: Database["public"]["Enums"]["trade"] | null
           updated_at?: string
+          vat_number?: string | null
+          vat_regime?: Database["public"]["Enums"]["vat_regime"] | null
         }
         Update: {
+          address_line?: string | null
+          city?: string | null
+          contact_email?: string | null
+          contact_phone?: string | null
           created_at?: string
           id?: string
+          insurance_coverage_area?: string | null
+          insurance_policy_number?: string | null
+          insurer_address?: string | null
+          insurer_name?: string | null
+          legal_form?: Database["public"]["Enums"]["legal_form"] | null
+          legal_name?: string | null
+          mediator_name?: string | null
+          mediator_website?: string | null
+          naf_code?: string | null
           name?: string
           owner_id?: string
+          postal_code?: string | null
           region?: Database["public"]["Enums"]["region"] | null
+          share_capital_cents?: number | null
           siret?: string | null
           sms_sender_name?: string
           trade?: Database["public"]["Enums"]["trade"] | null
           updated_at?: string
+          vat_number?: string | null
+          vat_regime?: Database["public"]["Enums"]["vat_regime"] | null
         }
         Relationships: []
       }
@@ -156,6 +207,15 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
+      legal_form:
+        | "ei"
+        | "eurl"
+        | "sarl"
+        | "sasu"
+        | "sas"
+        | "sa"
+        | "snc"
+        | "autre"
       quote_status: "draft" | "sent" | "signed" | "declined"
       region:
         | "auvergne-rhone-alpes"
@@ -188,6 +248,7 @@ export type Database = {
         | "menuisier"
         | "peintre"
         | "autre"
+      vat_regime: "subject" | "franchise"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -315,6 +376,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      legal_form: ["ei", "eurl", "sarl", "sasu", "sas", "sa", "snc", "autre"],
       quote_status: ["draft", "sent", "signed", "declined"],
       region: [
         "auvergne-rhone-alpes",
@@ -349,6 +411,7 @@ export const Constants = {
         "peintre",
         "autre",
       ],
+      vat_regime: ["subject", "franchise"],
     },
   },
 } as const

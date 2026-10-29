@@ -40,9 +40,17 @@ type SelectFieldProps = {
   options: { value: string; label: string }[];
   placeholder: string;
   defaultValue?: string;
+  onChange?: (value: string) => void;
 };
 
-export function SelectField({ label, name, options, placeholder, defaultValue = "" }: SelectFieldProps) {
+export function SelectField({
+  label,
+  name,
+  options,
+  placeholder,
+  defaultValue = "",
+  onChange,
+}: SelectFieldProps) {
   return (
     <div>
       <label htmlFor={name} className="mb-2 block text-base font-semibold text-stone-800">
@@ -52,6 +60,7 @@ export function SelectField({ label, name, options, placeholder, defaultValue = 
         id={name}
         name={name}
         defaultValue={defaultValue}
+        onChange={onChange && ((event) => onChange(event.target.value))}
         className="block min-h-14 w-full rounded-2xl border-2 border-stone-200 bg-white px-4 text-lg text-stone-900 outline-none focus:border-orange-500"
       >
         <option value="">{placeholder}</option>

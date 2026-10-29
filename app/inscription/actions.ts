@@ -3,8 +3,8 @@
 import type { AuthError } from "@supabase/supabase-js";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { toSmsSenderNameOrFallback } from "@/lib/admin/company-defaults";
-import { isTrade, type Trade } from "@/lib/admin/company-details";
+import { toSmsSenderNameOrFallback } from "@/lib/company/sms-sender";
+import { isTrade, type Trade } from "@/lib/company/details";
 import { createClient } from "@/lib/supabase/server";
 
 const MIN_PASSWORD_LENGTH = 8;
