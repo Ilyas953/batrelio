@@ -38,6 +38,8 @@ export type Database = {
           share_capital_cents: number | null
           siret: string | null
           sms_sender_name: string
+          terms_accepted_at: string | null
+          terms_version: string | null
           trade: Database["public"]["Enums"]["trade"] | null
           updated_at: string
           vat_number: string | null
@@ -66,6 +68,8 @@ export type Database = {
           share_capital_cents?: number | null
           siret?: string | null
           sms_sender_name: string
+          terms_accepted_at?: string | null
+          terms_version?: string | null
           trade?: Database["public"]["Enums"]["trade"] | null
           updated_at?: string
           vat_number?: string | null
@@ -94,6 +98,8 @@ export type Database = {
           share_capital_cents?: number | null
           siret?: string | null
           sms_sender_name?: string
+          terms_accepted_at?: string | null
+          terms_version?: string | null
           trade?: Database["public"]["Enums"]["trade"] | null
           updated_at?: string
           vat_number?: string | null

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { CheckIcon } from "@/components/landing/icons";
+import { LegalLinks } from "@/components/legal/LegalLinks";
 import { OFFER } from "@/lib/offer";
 import { SignupForm } from "./SignupForm";
 
@@ -18,32 +19,37 @@ const BENEFITS = [
 
 export default function SignupPage() {
   return (
-    <main className="flex-1">
-      <div className="mx-auto grid max-w-5xl gap-10 px-4 py-10 sm:px-6 lg:grid-cols-[1fr_1.1fr] lg:items-start lg:py-16">
-        <div>
-          <Link href="/" className="text-lg font-bold text-stone-900">
-            Batrelio
-          </Link>
-          <h1 className="mt-8 text-4xl font-extrabold leading-tight tracking-tight text-stone-900 sm:text-5xl">
-            Essayez gratuitement pendant {OFFER.trialDays} jours.
-          </h1>
-          <ul className="mt-8 hidden space-y-4 lg:block">
-            {BENEFITS.map((benefit) => (
-              <li key={benefit} className="flex gap-3 text-lg text-stone-700">
-                <CheckIcon className="mt-1 size-5 shrink-0 text-emerald-600" />
-                {benefit}
-              </li>
-            ))}
-          </ul>
-          <p className="mt-6 text-base font-medium text-stone-500 lg:mt-10">
-            {OFFER.guarantees.join(" · ")}
-          </p>
-        </div>
+    <>
+      <main className="flex-1">
+        <div className="mx-auto grid max-w-5xl gap-10 px-4 py-10 sm:px-6 lg:grid-cols-[1fr_1.1fr] lg:items-start lg:py-16">
+          <div>
+            <Link href="/" className="text-lg font-bold text-stone-900">
+              Batrelio
+            </Link>
+            <h1 className="mt-8 text-4xl font-extrabold leading-tight tracking-tight text-stone-900 sm:text-5xl">
+              Essayez gratuitement pendant {OFFER.trialDays} jours.
+            </h1>
+            <ul className="mt-8 hidden space-y-4 lg:block">
+              {BENEFITS.map((benefit) => (
+                <li key={benefit} className="flex gap-3 text-lg text-stone-700">
+                  <CheckIcon className="mt-1 size-5 shrink-0 text-emerald-600" />
+                  {benefit}
+                </li>
+              ))}
+            </ul>
+            <p className="mt-6 text-base font-medium text-stone-500 lg:mt-10">
+              {OFFER.guarantees.join(" · ")}
+            </p>
+          </div>
 
-        <div className="rounded-3xl bg-white p-6 shadow-sm sm:p-8">
-          <SignupForm />
+          <div className="rounded-3xl bg-white p-6 shadow-sm sm:p-8">
+            <SignupForm />
+          </div>
         </div>
-      </div>
-    </main>
+      </main>
+      <footer className="border-t border-stone-200">
+        <LegalLinks className="mx-auto max-w-5xl px-4 py-6 sm:px-6" />
+      </footer>
+    </>
   );
 }

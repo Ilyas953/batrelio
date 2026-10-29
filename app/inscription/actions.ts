@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { toSmsSenderNameOrFallback } from "@/lib/company/sms-sender";
 import { isTrade, type Trade } from "@/lib/company/details";
+import { LEGAL_VERSION } from "@/lib/legal/publisher";
 import { createClient } from "@/lib/supabase/server";
 
 const MIN_PASSWORD_LENGTH = 8;
@@ -24,7 +25,11 @@ function readSignUpValues(formData: FormData): SignUpValues {
   };
 }
 
-function findSignUpValidationError(values: SignUpValues, password: string): string | null {
+function findSignUpValidationError(
+  values: SignUpValues,
+  password: string,
+  acceptedTerms: boolean,
+): string | null {
   if (!values.companyName) return "Indiquez le nom de votre entreprise.";
   if (values.companyName.length > MAX_COMPANY_NAME_LENGTH) {
     return "Le nom de l'entreprise est trop long.";
@@ -32,6 +37,9 @@ function findSignUpValidationError(values: SignUpValues, password: string): stri
   if (!values.email.includes("@")) return "L'adresse e-mail n'est pas valide.";
   if (password.length < MIN_PASSWORD_LENGTH) {
     return `Choisissez un mot de passe d'au moins ${MIN_PASSWORD_LENGTH} caractères.`;
+  }
+  if (!acceptedTerms) {
+    return "Pour créer votre compte, acceptez les conditions générales et la politique de confidentialité.";
   }
   return null;
 }
@@ -54,7 +62,8 @@ function toSignUpErrorMessage(error: AuthError): string {
 export async function signUp(_previous: SignUpState, formData: FormData): Promise<SignUpState> {
   const values = readSignUpValues(formData);
   const password = String(formData.get("password") ?? "");
-  const validationError = findSignUpValidationError(values, password);
+  const acceptedTerms = formData.get("acceptTerms") === "on";
+  const validationError = findSignUpValidationError(values, password, acceptedTerms);
   if (validationError) return { error: validationError, values };
 
   const origin = (await headers()).get("origin") ?? "";
@@ -69,6 +78,8 @@ export async function signUp(_previous: SignUpState, formData: FormData): Promis
         company_name: values.companyName,
         sms_sender_name: toSmsSenderNameOrFallback(values.companyName),
         trade: values.trade || null,
+        // The trigger records this version and the acceptance time on the company.
+        terms_version: LEGAL_VERSION,
       },
     },
   });

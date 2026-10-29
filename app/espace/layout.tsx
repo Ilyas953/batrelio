@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { LegalLinks } from "@/components/legal/LegalLinks";
 import { signOut } from "@/lib/auth/actions";
 
 export const metadata: Metadata = {
@@ -36,6 +37,9 @@ export default function ArtisanSpaceLayout({ children }: LayoutProps<"/espace">)
         </div>
       </header>
       <main className="mx-auto w-full max-w-2xl flex-1 px-4 pb-16 pt-8 sm:px-6">{children}</main>
+      <footer className="border-t border-stone-200">
+        <LegalLinks className="mx-auto max-w-2xl px-4 py-6 sm:px-6" />
+      </footer>
     </>
   );
 }

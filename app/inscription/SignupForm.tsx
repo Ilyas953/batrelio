@@ -58,6 +58,20 @@ export function SignupForm() {
         autoComplete="new-password"
         hint="8 caractères minimum."
       />
+      <label className="flex cursor-pointer items-start gap-3 text-base leading-snug text-stone-700">
+        <input type="checkbox" name="acceptTerms" required className="mt-0.5 size-5 shrink-0 accent-orange-600" />
+        <span>
+          J&apos;accepte les{" "}
+          <Link href="/cgv" target="_blank" className="font-semibold text-orange-700 underline">
+            conditions générales
+          </Link>{" "}
+          et j&apos;ai lu la{" "}
+          <Link href="/confidentialite" target="_blank" className="font-semibold text-orange-700 underline">
+            politique de confidentialité
+          </Link>
+          .
+        </span>
+      </label>
       <FormError message={state.error} />
       <SubmitButton label="Créer mon compte" pendingLabel="Création du compte…" />
       <p className="text-center text-base text-stone-600">
