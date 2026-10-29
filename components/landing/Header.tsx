@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { OFFER } from "@/lib/offer";
+import { Logo } from "./Logo";
 
 const NAV_LINKS = [
   { href: "#fonctionnement", label: "Comment ça marche" },
@@ -12,9 +13,8 @@ export function Header() {
   return (
     <header className="sticky top-0 z-40 border-b border-stone-200/80 bg-stone-50/90 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
-        <Link href="/" className="flex items-center gap-2 text-xl font-bold tracking-tight text-stone-900">
-          <span className="grid size-9 place-items-center rounded-xl bg-orange-600 text-white">B</span>
-          Batrelio
+        <Link href="/" aria-label="Batrelio, accueil">
+          <Logo />
         </Link>
         <nav className="hidden items-center gap-8 text-[15px] font-medium text-stone-600 md:flex">
           {NAV_LINKS.map((link) => (

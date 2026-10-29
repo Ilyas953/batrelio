@@ -33,8 +33,8 @@ export function Problem() {
 
         <p className="mt-12 text-2xl font-bold leading-snug sm:text-3xl">
           5 appels manqués par semaine, c&apos;est{" "}
-          <span className="text-orange-400">260 clients potentiels par an</span> qui repartent sans
-          réponse.
+          <span className="text-orange-400">260 appels par an</span> qui restent sans réponse. Parmi
+          eux, des chantiers que vous ne verrez jamais.
         </p>
       </div>
     </section>

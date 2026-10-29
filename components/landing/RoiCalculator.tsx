@@ -43,7 +43,11 @@ function formatJobs(jobs: number): string {
   return jobs.toLocaleString("fr-FR", { maximumFractionDigits: 1 });
 }
 
-const ASSUMPTION_NOTE = `Estimation prudente : on considère que ${ROI_ASSUMPTIONS.newClientShare * 100} % des appels manqués viennent de nouveaux clients, et que ${ROI_ASSUMPTIONS.formCompletionRate * 100} % d'entre eux remplissent le formulaire reçu par SMS.`;
+function toPercent(share: number): string {
+  return `${Math.round(share * 100)} %`;
+}
+
+const ASSUMPTION_NOTE = `Estimation réaliste. On considère que ${toPercent(ROI_ASSUMPTIONS.newClientShare)} des appels manqués viennent de nouveaux clients (le reste : démarchage, clients actuels, fournisseurs), que ${toPercent(ROI_ASSUMPTIONS.formCompletionRate)} d'entre eux remplissent le formulaire, et on ne compte que ${toPercent(ROI_ASSUMPTIONS.lostWithoutReplyShare)} de ces demandes : celles que vous auriez perdues sans réponse.`;
 
 export function RoiCalculator() {
   const [missedCallsPerWeek, setMissedCallsPerWeek] = useState(5);
@@ -120,13 +124,13 @@ export function RoiCalculator() {
                 <div className="rounded-2xl bg-stone-800 p-4">
                   <dt className="text-sm text-stone-400">Demandes reçues</dt>
                   <dd className="mt-1 text-2xl font-bold tabular-nums">
-                    {Math.round(estimate.requestsPerMonth)} / mois
+                    {Math.round(estimate.requestsPerYear)} / an
                   </dd>
                 </div>
                 <div className="rounded-2xl bg-stone-800 p-4">
                   <dt className="text-sm text-stone-400">Chantiers en plus</dt>
                   <dd className="mt-1 text-2xl font-bold tabular-nums">
-                    {formatJobs(estimate.jobsPerMonth)} / mois
+                    {formatJobs(estimate.extraJobsPerYear)} / an
                   </dd>
                 </div>
               </dl>
