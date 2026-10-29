@@ -16,7 +16,7 @@ export async function signIn(_previous: SignInState, formData: FormData): Promis
     return { error: "E-mail ou mot de passe incorrect.", email };
   }
 
-  redirect(hasAdminRole(data.user.app_metadata) ? "/admin" : "/");
+  redirect(hasAdminRole(data.user.app_metadata) ? "/admin" : "/espace");
 }
 
 export async function signOut() {

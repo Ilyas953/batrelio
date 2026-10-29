@@ -12,6 +12,17 @@ export function hasAdminRole(appMetadata: unknown): boolean {
   );
 }
 
+export async function requireUser() {
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getClaims();
+
+  if (!data?.claims) {
+    redirect("/connexion");
+  }
+
+  return { supabase, claims: data.claims };
+}
+
 export async function requireAdmin() {
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();

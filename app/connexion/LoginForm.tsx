@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState } from "react";
 import { FormError, SubmitButton, TextField } from "@/components/ui/form";
 import { signIn, type SignInState } from "@/lib/auth/actions";
@@ -28,6 +29,12 @@ export function LoginForm() {
       />
       <FormError message={state.error} />
       <SubmitButton label="Se connecter" pendingLabel="Connexion…" />
+      <p className="text-center text-base text-stone-600">
+        Pas encore de compte ?{" "}
+        <Link href="/inscription" className="font-semibold text-orange-700 underline">
+          Créer un compte
+        </Link>
+      </p>
     </form>
   );
 }

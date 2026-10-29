@@ -17,3 +17,11 @@ export function toSmsSenderName(companyName: string): string {
 export function isValidSmsSenderName(senderName: string): boolean {
   return SMS_SENDER_PATTERN.test(senderName) && /[A-Za-z]/.test(senderName);
 }
+
+// Signup never blocks on the sender name: it can be changed later.
+const FALLBACK_SMS_SENDER_NAME = "BATRELIO";
+
+export function toSmsSenderNameOrFallback(companyName: string): string {
+  const senderName = toSmsSenderName(companyName);
+  return isValidSmsSenderName(senderName) ? senderName : FALLBACK_SMS_SENDER_NAME;
+}
