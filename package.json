@@ -10,7 +10,7 @@
     "db:link": "supabase link",
     "db:new": "supabase migration new",
     "db:push": "supabase db push",
-    "db:types": "supabase gen types typescript --linked --schema public > lib/supabase/database.types.ts",
+    "db:types": "supabase gen types typescript --linked --schema public > lib/supabase/database.types.ts.tmp && mv lib/supabase/database.types.ts.tmp lib/supabase/database.types.ts",
     "admin:create": "node --env-file=.env.local scripts/create-admin.mjs",
     "demo:seed": "node --env-file=.env.local scripts/demo-accounts.mjs",
     "demo:remove": "node --env-file=.env.local scripts/demo-accounts.mjs --remove"

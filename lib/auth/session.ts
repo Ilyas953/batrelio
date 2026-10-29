@@ -1,5 +1,6 @@
 import "server-only";
 import { notFound, redirect } from "next/navigation";
+import { connection } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
 // The role lives in app_metadata, which only the secret key can write:
@@ -12,10 +13,13 @@ export function hasAdminRole(appMetadata: unknown): boolean {
   );
 }
 
-export async function requireUser() {
+async function getSignedInClaims() {
+  // Session checks compare the token expiry with the current time: they must run
+  // at request time, never during a prerender (even one that can read cookies).
+  await connection();
+
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
-
   if (!data?.claims) {
     redirect("/connexion");
   }
@@ -23,16 +27,15 @@ export async function requireUser() {
   return { supabase, claims: data.claims };
 }
 
-export async function requireAdmin() {
-  const supabase = await createClient();
-  const { data } = await supabase.auth.getClaims();
+export async function requireUser() {
+  return getSignedInClaims();
+}
 
-  if (!data?.claims) {
-    redirect("/connexion");
-  }
-  if (!hasAdminRole(data.claims.app_metadata)) {
+export async function requireAdmin() {
+  const { claims } = await getSignedInClaims();
+  if (!hasAdminRole(claims.app_metadata)) {
     notFound();
   }
 
-  return data.claims;
+  return claims;
 }
