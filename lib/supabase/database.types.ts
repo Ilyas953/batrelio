@@ -50,6 +50,104 @@ export type Database = {
         }
         Relationships: []
       }
+      quotes: {
+        Row: {
+          company_id: string
+          created_at: string
+          deposit_cents: number | null
+          deposit_paid_at: string | null
+          id: string
+          request_id: string
+          sent_at: string | null
+          signed_at: string | null
+          status: Database["public"]["Enums"]["quote_status"]
+          total_cents: number
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          deposit_cents?: number | null
+          deposit_paid_at?: string | null
+          id?: string
+          request_id: string
+          sent_at?: string | null
+          signed_at?: string | null
+          status?: Database["public"]["Enums"]["quote_status"]
+          total_cents: number
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          deposit_cents?: number | null
+          deposit_paid_at?: string | null
+          id?: string
+          request_id?: string
+          sent_at?: string | null
+          signed_at?: string | null
+          status?: Database["public"]["Enums"]["quote_status"]
+          total_cents?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quotes_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotes_request_id_company_id_fkey"
+            columns: ["request_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "requests"
+            referencedColumns: ["id", "company_id"]
+          },
+        ]
+      }
+      requests: {
+        Row: {
+          address: string | null
+          company_id: string
+          created_at: string
+          customer_name: string | null
+          customer_phone: string
+          description: string | null
+          id: string
+          status: Database["public"]["Enums"]["request_status"]
+        }
+        Insert: {
+          address?: string | null
+          company_id: string
+          created_at?: string
+          customer_name?: string | null
+          customer_phone: string
+          description?: string | null
+          id?: string
+          status?: Database["public"]["Enums"]["request_status"]
+        }
+        Update: {
+          address?: string | null
+          company_id?: string
+          created_at?: string
+          customer_name?: string | null
+          customer_phone?: string
+          description?: string | null
+          id?: string
+          status?: Database["public"]["Enums"]["request_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "requests_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -58,6 +156,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
+      quote_status: "draft" | "sent" | "signed" | "declined"
       region:
         | "auvergne-rhone-alpes"
         | "bourgogne-franche-comte"
@@ -77,6 +176,7 @@ export type Database = {
         | "guyane"
         | "la-reunion"
         | "mayotte"
+      request_status: "new" | "quoted" | "visit_proposed" | "closed"
       trade:
         | "couvreur"
         | "elagueur"
@@ -215,6 +315,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      quote_status: ["draft", "sent", "signed", "declined"],
       region: [
         "auvergne-rhone-alpes",
         "bourgogne-franche-comte",
@@ -235,6 +336,7 @@ export const Constants = {
         "la-reunion",
         "mayotte",
       ],
+      request_status: ["new", "quoted", "visit_proposed", "closed"],
       trade: [
         "couvreur",
         "elagueur",
