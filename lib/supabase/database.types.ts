@@ -164,6 +164,89 @@ export type Database = {
           },
         ]
       }
+      request_links: {
+        Row: {
+          company_id: string
+          created_at: string
+          customer_name: string | null
+          customer_phone: string | null
+          expires_at: string
+          id: string
+          request_id: string | null
+          token: string
+          used_at: string | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          customer_name?: string | null
+          customer_phone?: string | null
+          expires_at?: string
+          id?: string
+          request_id?: string | null
+          token?: string
+          used_at?: string | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          customer_name?: string | null
+          customer_phone?: string | null
+          expires_at?: string
+          id?: string
+          request_id?: string | null
+          token?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "request_links_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "request_links_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      request_photos: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          request_id: string
+          storage_path: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          request_id: string
+          storage_path: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          request_id?: string
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "request_photos_request_id_company_id_fkey"
+            columns: ["request_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "requests"
+            referencedColumns: ["id", "company_id"]
+          },
+        ]
+      }
       requests: {
         Row: {
           address: string | null
@@ -173,6 +256,7 @@ export type Database = {
           customer_phone: string
           description: string | null
           id: string
+          source: Database["public"]["Enums"]["request_source"]
           status: Database["public"]["Enums"]["request_status"]
         }
         Insert: {
@@ -183,6 +267,7 @@ export type Database = {
           customer_phone: string
           description?: string | null
           id?: string
+          source?: Database["public"]["Enums"]["request_source"]
           status?: Database["public"]["Enums"]["request_status"]
         }
         Update: {
@@ -193,6 +278,7 @@ export type Database = {
           customer_phone?: string
           description?: string | null
           id?: string
+          source?: Database["public"]["Enums"]["request_source"]
           status?: Database["public"]["Enums"]["request_status"]
         }
         Relationships: [
@@ -242,6 +328,7 @@ export type Database = {
         | "guyane"
         | "la-reunion"
         | "mayotte"
+      request_source: "missed_call" | "link"
       request_status: "new" | "quoted" | "visit_proposed" | "closed"
       trade:
         | "couvreur"
@@ -404,6 +491,7 @@ export const Constants = {
         "la-reunion",
         "mayotte",
       ],
+      request_source: ["missed_call", "link"],
       request_status: ["new", "quoted", "visit_proposed", "closed"],
       trade: [
         "couvreur",

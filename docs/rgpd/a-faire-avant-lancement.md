@@ -35,8 +35,11 @@ Ces points-là dépendent de toi, d'un professionnel ou des prestataires.
 
 ## Fonctionnalités à venir : obligations à ne pas oublier
 
-- **Formulaire client (V1)** : afficher le texte `customerPrivacyNotice()` de
-  `lib/legal/customer-notice.ts` sous le formulaire, avec un lien vers `/confidentialite`.
+- **Formulaire client** : fait. Le texte `customerPrivacyNotice()` est affiché sous le formulaire
+  `/demande/[jeton]`, avec un lien vers `/confidentialite`.
+- **Photos des demandes** : supprimer une demande efface ses lignes `request_photos`, mais pas les
+  fichiers du bucket `request-photos`. Toute suppression (bouton, purge à 3 ans, fin de contrat) doit
+  aussi appeler `storage.from("request-photos").remove(...)`.
 - **SMS après appel manqué** : aucun contenu publicitaire (sinon c'est de la prospection, soumise au
   consentement préalable, article L. 34-5 du Code des postes et des communications électroniques).
 - **Devis et signature en ligne** : faire valider les mentions obligatoires et le droit de

@@ -15,7 +15,7 @@ export async function getDashboard() {
     supabase.from("companies").select("*").maybeSingle(),
     supabase
       .from("requests")
-      .select("id, customer_name, customer_phone, description, address, created_at")
+      .select("id, source, customer_name, customer_phone, description, address, created_at, photos:request_photos(count)")
       .eq("status", "new")
       .order("created_at", { ascending: false }),
     supabase

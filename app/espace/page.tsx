@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { getDashboard, type DashboardQuote, type NewRequest } from "@/lib/espace/dashboard";
 import { formatCents, formatPhone, formatTimeAgo } from "@/lib/format";
+import { RequestLinkPanel } from "./RequestLinkPanel";
 
 export default function ArtisanSpacePage() {
   return (
@@ -23,11 +24,13 @@ async function Dashboard() {
 
       {missingQuoteDetails.length > 0 && <MissingDetailsBanner missing={missingQuoteDetails} />}
 
+      <RequestLinkPanel />
+
       <Section
         title="À traiter"
         count={newRequests.length}
         highlight
-        emptyMessage="Aucune nouvelle demande. Quand vous manquez un appel, la demande du client arrive ici."
+        emptyMessage="Aucune nouvelle demande. Envoyez un lien de demande à un client : sa demande arrivera ici."
       >
         {newRequests.map((request) => (
           <RequestCard key={request.id} request={request} now={now} />
@@ -114,16 +117,31 @@ function Section({ title, count, emptyMessage, highlight = false, children }: Se
 }
 
 function RequestCard({ request, now }: { request: NewRequest; now: Date }) {
+  const photoCount = request.photos[0]?.count ?? 0;
+
   return (
     <li className="rounded-3xl border-2 border-orange-200 bg-white p-5">
-      <div className="flex items-baseline justify-between gap-3">
-        <p className="text-lg font-bold text-stone-900">{request.customer_name ?? "Client"}</p>
-        <p className="shrink-0 text-sm text-stone-500">{formatTimeAgo(request.created_at, now)}</p>
-      </div>
-      {request.description && (
-        <p className="mt-2 line-clamp-3 text-base leading-relaxed text-stone-700">{request.description}</p>
-      )}
-      {request.address && <p className="mt-2 text-sm text-stone-500">{request.address}</p>}
+      <Link href={`/espace/demandes/${request.id}`} className="block">
+        <div className="flex items-baseline justify-between gap-3">
+          <p className="text-lg font-bold text-stone-900">{request.customer_name ?? "Client"}</p>
+          <p className="shrink-0 text-sm text-stone-500">{formatTimeAgo(request.created_at, now)}</p>
+        </div>
+        {request.description && (
+          <p className="mt-2 line-clamp-3 text-base leading-relaxed text-stone-700">{request.description}</p>
+        )}
+        {request.address && <p className="mt-2 text-sm text-stone-500">{request.address}</p>}
+        <p className="mt-3 flex flex-wrap gap-2 text-sm font-semibold">
+          {photoCount > 0 && (
+            <span className="rounded-full bg-stone-100 px-3 py-1 text-stone-700">
+              {photoCount} photo{photoCount > 1 ? "s" : ""}
+            </span>
+          )}
+          {request.source === "link" && (
+            <span className="rounded-full bg-stone-100 px-3 py-1 text-stone-700">Via lien</span>
+          )}
+          <span className="px-1 py-1 text-orange-700 underline">Voir la demande</span>
+        </p>
+      </Link>
       <a
         href={`tel:${request.customer_phone}`}
         className="mt-4 flex min-h-14 items-center justify-center rounded-2xl bg-orange-600 px-5 text-lg font-semibold text-white hover:bg-orange-700"
