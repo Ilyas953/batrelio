@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { PRODUCTION_SITE_URL } from "@/lib/site";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -13,6 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(PRODUCTION_SITE_URL),
   title: "Batrelio · Ne perdez plus un client parce que vous étiez sur un chantier",
   description:
     "Appel manqué ? Batrelio envoie un SMS à votre nom, récupère la demande du client avec photos, et vous permet d'envoyer un devis signé en ligne avec acompte. Pour les artisans.",

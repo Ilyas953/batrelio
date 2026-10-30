@@ -1,4 +1,5 @@
 import "server-only";
+import { PRODUCTION_SITE_URL } from "@/lib/site";
 
 function readEnv(name: string): string | undefined {
   const value = process.env[name]?.trim();
@@ -16,8 +17,10 @@ export function getTwilioCredentials() {
 }
 
 // Public address of the app: the provider calls our webhooks there, and SMS links point to it.
+// On the Vercel production deployment it is the production domain unless SITE_URL says otherwise.
 export function getPublicSiteUrl(): string | undefined {
-  return readEnv("SITE_URL")?.replace(/\/+$/, "");
+  const siteUrl = readEnv("SITE_URL") ?? (process.env.VERCEL_ENV === "production" ? PRODUCTION_SITE_URL : undefined);
+  return siteUrl?.replace(/\/+$/, "");
 }
 
 export function isReachableFromInternet(siteUrl: string): boolean {

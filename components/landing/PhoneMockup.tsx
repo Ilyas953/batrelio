@@ -1,3 +1,4 @@
+import { PRODUCTION_DOMAIN } from "@/lib/site";
 import { BellIcon, CheckIcon, PhoneMissedIcon } from "./icons";
 
 export function PhoneMockup() {
@@ -45,9 +46,9 @@ function SmsBubble() {
         SMS envoyé par DUPONTTOIT
       </p>
       <p className="rounded-2xl rounded-tl-sm bg-stone-100 p-3 text-[13px] leading-snug text-stone-800">
-        Bonjour, ici Dupont Toiture. Nous sommes sur un chantier. Décrivez votre besoin ici, on
-        revient vers vous très vite&nbsp;:{" "}
-        <span className="font-medium text-orange-700 underline">dupont-toiture.fr/demande</span>
+        Bonjour, ici Dupont Toiture. Nous n&apos;avons pas pu décrocher. Décrivez votre besoin (photos
+        possibles) ici, nous vous recontactons vite&nbsp;:{" "}
+        <span className="font-medium text-orange-700 underline">{PRODUCTION_DOMAIN}/demande/7f3a…</span>
       </p>
     </div>
   );

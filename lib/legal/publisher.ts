@@ -2,6 +2,8 @@
 // Values in brackets must be filled in before going live: a legal page with a missing
 // mention is not compliant (loi n° 2004-575 du 21 juin 2004, LCEN).
 
+import { PRODUCTION_SITE_URL } from "@/lib/site";
+
 const TO_COMPLETE = (what: string) => `[À compléter : ${what}]`;
 
 export const PUBLISHER = {
@@ -19,7 +21,7 @@ export const PUBLISHER = {
   phone: TO_COMPLETE("numéro de téléphone"),
   // Where people send privacy requests (art. 12 to 22 RGPD).
   privacyEmail: TO_COMPLETE("adresse e-mail pour les données personnelles"),
-  website: "https://batrelio.fr",
+  website: PRODUCTION_SITE_URL,
 } as const;
 
 // Hosting provider of the website, required on the legal notice (LCEN).

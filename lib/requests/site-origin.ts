@@ -1,7 +1,7 @@
 import "server-only";
 import { headers } from "next/headers";
 
-// Origin of the current request, e.g. https://batrelio.fr, to build links sent to customers.
+// Origin of the current request, e.g. https://batrelio.com, to build links sent to customers.
 export async function getSiteOrigin(): Promise<string> {
   const requestHeaders = await headers();
   const host = requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host") ?? "localhost:3000";
