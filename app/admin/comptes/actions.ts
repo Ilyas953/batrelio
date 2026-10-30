@@ -87,3 +87,14 @@ export async function updateCompany(
 
   redirect("/admin");
 }
+
+// Once Twilio confirms the sender name is registered with French operators (AF2M).
+export async function setSenderApproval(companyId: string, approved: boolean): Promise<void> {
+  await requireAdmin();
+  const { error } = await createAdminClient()
+    .from("companies")
+    .update({ sms_sender_approved: approved })
+    .eq("id", companyId);
+  if (error) throw error;
+  redirect("/admin");
+}

@@ -76,24 +76,32 @@ export async function submitCustomerRequest(token: string, formData: FormData): 
     .eq("token", token)
     .is("used_at", null)
     .gt("expires_at", now)
-    .select("id, company_id")
+    .select("id, company_id, request_id")
     .maybeSingle();
   if (claimError) return { error: "La demande n'a pas pu être envoyée. Réessayez." };
   if (!link) return { error: "Ce lien a déjà été utilisé ou a expiré. Demandez-en un nouveau à l'artisan." };
 
-  const { data: saved, error: insertError } = await supabase
-    .from("requests")
-    .insert({
-      company_id: link.company_id,
-      source: "link",
-      customer_name: request.name || null,
-      customer_phone: request.phone,
-      description: request.description,
-      address: request.address || null,
-    })
-    .select("id")
-    .single();
-  if (insertError) {
+  const details = {
+    customer_name: request.name || null,
+    customer_phone: request.phone,
+    description: request.description,
+    address: request.address || null,
+  };
+  // A link sent after a missed call completes the request created when the customer called.
+  const { data: saved, error: saveError } = link.request_id
+    ? await supabase
+        .from("requests")
+        .update(details)
+        .eq("id", link.request_id)
+        .eq("company_id", link.company_id)
+        .select("id")
+        .single()
+    : await supabase
+        .from("requests")
+        .insert({ company_id: link.company_id, source: "link", ...details })
+        .select("id")
+        .single();
+  if (saveError) {
     await supabase.from("request_links").update({ used_at: null }).eq("id", link.id);
     return { error: "La demande n'a pas pu être envoyée. Réessayez." };
   }

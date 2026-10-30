@@ -2,6 +2,8 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { listAccounts, type Account } from "@/lib/admin/accounts";
 import { REGION_LABELS, TRADE_LABELS, formatSiret } from "@/lib/company/details";
+import { formatPhone } from "@/lib/format";
+import { setSenderApproval } from "./comptes/actions";
 
 const dateFormatter = new Intl.DateTimeFormat("fr-FR", {
   dateStyle: "medium",
@@ -83,10 +85,34 @@ function AccountCard({ account }: { account: Account }) {
         <AccountDetail label="Métier" value={company?.trade ? TRADE_LABELS[company.trade] : "–"} />
         <AccountDetail label="Région" value={company?.region ? REGION_LABELS[company.region] : "–"} />
         <AccountDetail label="SIRET" value={company?.siret ? formatSiret(company.siret) : "–"} />
-        <AccountDetail label="Expéditeur SMS" value={company?.sms_sender_name ?? "–"} />
+        <AccountDetail
+          label="Expéditeur SMS"
+          value={company ? `${company.sms_sender_name} · ${company.sms_sender_approved ? "validé" : "à enregistrer"}` : "–"}
+        />
+        <AccountDetail
+          label="Réponse automatique"
+          value={
+            company?.phone_number
+              ? `${formatPhone(company.phone_number)} · ${company.auto_reply_enabled ? "activée" : "en pause"}`
+              : "Non activée"
+          }
+        />
         <AccountDetail label="Créé le" value={formatDate(account.createdAt)} />
         <AccountDetail label="Dernière connexion" value={formatDate(account.lastSignInAt)} />
       </dl>
+
+      {company && (
+        <form action={setSenderApproval.bind(null, company.id, !company.sms_sender_approved)} className="mt-4">
+          <button
+            type="submit"
+            className="min-h-11 rounded-xl border-2 border-stone-200 px-4 text-sm font-semibold text-stone-800 hover:border-stone-900"
+          >
+            {company.sms_sender_approved
+              ? "Retirer la validation de l'expéditeur"
+              : `Marquer « ${company.sms_sender_name} » comme enregistré`}
+          </button>
+        </form>
+      )}
     </li>
   );
 }

@@ -34,7 +34,7 @@ export const SUBPROCESSORS: Subprocessor[] = [
     purpose: "Numéros virtuels, renvoi d'appel et envoi des SMS",
     dataLocation: "États-Unis",
     transferSafeguard: DPF_OR_SCC,
-    inService: false,
+    inService: true,
   },
   {
     name: "Stripe Payments Europe Ltd",

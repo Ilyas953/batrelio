@@ -13,7 +13,7 @@ export default function ArtisanSpacePage() {
 }
 
 async function Dashboard() {
-  const { companyName, missingQuoteDetails, newRequests, pendingQuotes, signedQuotes } = await getDashboard();
+  const { companyName, missingQuoteDetails, autoReply, newRequests, pendingQuotes, signedQuotes } = await getDashboard();
   const now = new Date();
 
   return (
@@ -24,13 +24,15 @@ async function Dashboard() {
 
       {missingQuoteDetails.length > 0 && <MissingDetailsBanner missing={missingQuoteDetails} />}
 
+      {autoReply && <AutoReplyCard phoneNumber={autoReply.phoneNumber} enabled={autoReply.enabled} />}
+
       <RequestLinkPanel />
 
       <Section
         title="À traiter"
         count={newRequests.length}
         highlight
-        emptyMessage="Aucune nouvelle demande. Envoyez un lien de demande à un client : sa demande arrivera ici."
+        emptyMessage="Aucune nouvelle demande. Les appels manqués et les demandes envoyées par lien arrivent ici."
       >
         {newRequests.map((request) => (
           <RequestCard key={request.id} request={request} now={now} />
@@ -74,6 +76,57 @@ function MissingDetailsBanner({ missing }: { missing: string[] }) {
       </Link>
     </div>
   );
+}
+
+function AutoReplyCard({ phoneNumber, enabled }: { phoneNumber: string | null; enabled: boolean }) {
+  if (phoneNumber && enabled) {
+    return (
+      <Link
+        href="/espace/reponse-automatique"
+        className="flex items-center justify-between gap-3 rounded-3xl bg-emerald-50 px-5 py-4 text-base text-emerald-900"
+      >
+        <span>
+          <strong>Réponse automatique activée</strong> · {formatPhone(phoneNumber)}
+        </span>
+        <span aria-hidden="true">→</span>
+      </Link>
+    );
+  }
+
+  return (
+    <div className="rounded-3xl bg-stone-900 p-5 text-white sm:p-6">
+      <p className="text-lg font-bold">
+        {phoneNumber ? "Réponse automatique en pause" : "Ne perdez plus les appels que vous ne prenez pas"}
+      </p>
+      <p className="mt-1 text-base text-stone-300">
+        Votre client entend un message à votre nom et reçoit un SMS pour décrire son besoin.
+      </p>
+      <Link
+        href="/espace/reponse-automatique"
+        className="mt-4 inline-flex min-h-12 items-center rounded-2xl bg-orange-600 px-5 text-base font-semibold text-white hover:bg-orange-700"
+      >
+        {phoneNumber ? "Réactiver" : "Activer la réponse automatique"}
+      </Link>
+    </div>
+  );
+}
+
+// What happened to a caller who has not described their need yet.
+function describeWaitingCall(request: NewRequest): string {
+  const latestCall = request.calls.toSorted((a, b) => b.created_at.localeCompare(a.created_at))[0];
+  switch (latestCall?.sms_status) {
+    case "sent":
+    case "delivered":
+      return "Appel manqué. Il a reçu un SMS pour décrire son besoin.";
+    case "failed":
+      return "Appel manqué. Le SMS n'a pas pu lui être envoyé : rappelez-le.";
+    case "skipped_not_mobile":
+      return "Appel manqué depuis une ligne fixe : rappelez-le.";
+    case "skipped_disabled":
+      return "Appel manqué pendant la pause : rappelez-le.";
+    default:
+      return "Appel manqué : rappelez-le.";
+  }
 }
 
 function formatSentAt(quote: DashboardQuote, now: Date): string {
@@ -126,8 +179,10 @@ function RequestCard({ request, now }: { request: NewRequest; now: Date }) {
           <p className="text-lg font-bold text-stone-900">{request.customer_name ?? "Client"}</p>
           <p className="shrink-0 text-sm text-stone-500">{formatTimeAgo(request.created_at, now)}</p>
         </div>
-        {request.description && (
+        {request.description ? (
           <p className="mt-2 line-clamp-3 text-base leading-relaxed text-stone-700">{request.description}</p>
+        ) : (
+          <p className="mt-2 text-base text-stone-500">{describeWaitingCall(request)}</p>
         )}
         {request.address && <p className="mt-2 text-sm text-stone-500">{request.address}</p>}
         <p className="mt-3 flex flex-wrap gap-2 text-sm font-semibold">

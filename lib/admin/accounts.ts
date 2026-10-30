@@ -11,7 +11,8 @@ export type Account = {
   isAdmin: boolean;
   company: Pick<
     Tables<"companies">,
-    "id" | "name" | "sms_sender_name" | "siret" | "trade" | "region"
+    | "id" | "name" | "sms_sender_name" | "sms_sender_approved" | "siret" | "trade" | "region"
+    | "phone_number" | "auto_reply_enabled"
   > | null;
 };
 
@@ -23,7 +24,9 @@ export async function listAccounts(): Promise<Account[]> {
 
   const [usersResult, companiesResult] = await Promise.all([
     supabase.auth.admin.listUsers({ perPage: MAX_USERS_PER_PAGE }),
-    supabase.from("companies").select("id, owner_id, name, sms_sender_name, siret, trade, region"),
+    supabase
+      .from("companies")
+      .select("id, owner_id, name, sms_sender_name, sms_sender_approved, siret, trade, region, phone_number, auto_reply_enabled"),
   ]);
   if (usersResult.error) throw usersResult.error;
   if (companiesResult.error) throw companiesResult.error;

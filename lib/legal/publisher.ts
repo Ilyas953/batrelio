@@ -39,4 +39,4 @@ export const CNIL = {
 
 // Bump the version whenever the terms change: signups record the version they accepted.
 export const LEGAL_VERSION = "2026-10-29";
-export const LEGAL_LAST_UPDATED = "29 octobre 2026";
+export const LEGAL_LAST_UPDATED = "30 octobre 2026";

@@ -17,6 +17,7 @@ export type Database = {
       companies: {
         Row: {
           address_line: string | null
+          auto_reply_enabled: boolean
           city: string | null
           contact_email: string | null
           contact_phone: string | null
@@ -33,10 +34,13 @@ export type Database = {
           naf_code: string | null
           name: string
           owner_id: string
+          phone_number: string | null
+          phone_number_sid: string | null
           postal_code: string | null
           region: Database["public"]["Enums"]["region"] | null
           share_capital_cents: number | null
           siret: string | null
+          sms_sender_approved: boolean
           sms_sender_name: string
           terms_accepted_at: string | null
           terms_version: string | null
@@ -47,6 +51,7 @@ export type Database = {
         }
         Insert: {
           address_line?: string | null
+          auto_reply_enabled?: boolean
           city?: string | null
           contact_email?: string | null
           contact_phone?: string | null
@@ -63,10 +68,13 @@ export type Database = {
           naf_code?: string | null
           name: string
           owner_id: string
+          phone_number?: string | null
+          phone_number_sid?: string | null
           postal_code?: string | null
           region?: Database["public"]["Enums"]["region"] | null
           share_capital_cents?: number | null
           siret?: string | null
+          sms_sender_approved?: boolean
           sms_sender_name: string
           terms_accepted_at?: string | null
           terms_version?: string | null
@@ -77,6 +85,7 @@ export type Database = {
         }
         Update: {
           address_line?: string | null
+          auto_reply_enabled?: boolean
           city?: string | null
           contact_email?: string | null
           contact_phone?: string | null
@@ -93,10 +102,13 @@ export type Database = {
           naf_code?: string | null
           name?: string
           owner_id?: string
+          phone_number?: string | null
+          phone_number_sid?: string | null
           postal_code?: string | null
           region?: Database["public"]["Enums"]["region"] | null
           share_capital_cents?: number | null
           siret?: string | null
+          sms_sender_approved?: boolean
           sms_sender_name?: string
           terms_accepted_at?: string | null
           terms_version?: string | null
@@ -106,6 +118,54 @@ export type Database = {
           vat_regime?: Database["public"]["Enums"]["vat_regime"] | null
         }
         Relationships: []
+      }
+      missed_calls: {
+        Row: {
+          call_sid: string
+          caller_phone: string | null
+          company_id: string
+          created_at: string
+          id: string
+          request_id: string | null
+          sms_sid: string | null
+          sms_status: string
+        }
+        Insert: {
+          call_sid: string
+          caller_phone?: string | null
+          company_id: string
+          created_at?: string
+          id?: string
+          request_id?: string | null
+          sms_sid?: string | null
+          sms_status?: string
+        }
+        Update: {
+          call_sid?: string
+          caller_phone?: string | null
+          company_id?: string
+          created_at?: string
+          id?: string
+          request_id?: string | null
+          sms_sid?: string | null
+          sms_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "missed_calls_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "missed_calls_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "requests"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       quotes: {
         Row: {

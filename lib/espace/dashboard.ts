@@ -15,7 +15,7 @@ export async function getDashboard() {
     supabase.from("companies").select("*").maybeSingle(),
     supabase
       .from("requests")
-      .select("id, source, customer_name, customer_phone, description, address, created_at, photos:request_photos(count)")
+      .select("id, source, customer_name, customer_phone, description, address, created_at, photos:request_photos(count), calls:missed_calls(sms_status, created_at)")
       .eq("status", "new")
       .order("created_at", { ascending: false }),
     supabase
@@ -38,6 +38,9 @@ export async function getDashboard() {
   return {
     companyName: company.data?.name ?? null,
     missingQuoteDetails: company.data ? listMissingQuoteDetails(company.data) : [],
+    autoReply: company.data
+      ? { phoneNumber: company.data.phone_number, enabled: company.data.auto_reply_enabled }
+      : null,
     newRequests: newRequests.data ?? [],
     pendingQuotes: pendingQuotes.data ?? [],
     signedQuotes: signedQuotes.data ?? [],
