@@ -54,6 +54,10 @@ function toSignUpErrorMessage(error: AuthError): string {
     case "over_request_rate_limit":
     case "over_email_send_rate_limit":
       return "Trop de tentatives. Réessayez dans quelques minutes.";
+    // Supabase settings, not the artisan's fault: Authentication > Sign In / Providers.
+    case "email_provider_disabled":
+    case "signup_disabled":
+      return "Les inscriptions sont momentanément indisponibles. Réessayez un peu plus tard.";
     default:
       return "Le compte n'a pas pu être créé. Réessayez.";
   }
@@ -83,7 +87,11 @@ export async function signUp(_previous: SignUpState, formData: FormData): Promis
       },
     },
   });
-  if (error) return { error: toSignUpErrorMessage(error), values };
+  if (error) {
+    // The artisan gets a plain message; the real cause goes to the server logs.
+    console.error(`Inscription refusée par Supabase : ${error.code ?? error.status} ${error.message}`);
+    return { error: toSignUpErrorMessage(error), values };
+  }
 
   // No session: email confirmation is enabled, the account opens from the link.
   if (!data.session) return { checkEmail: true, values };
