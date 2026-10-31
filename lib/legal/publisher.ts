@@ -6,15 +6,18 @@ import { PRODUCTION_SITE_URL } from "@/lib/site";
 
 const TO_COMPLETE = (what: string) => `[À compléter : ${what}]`;
 
+// Batrelio is published by a sole trader (entreprise individuelle, SIREN 132 122 201, created on
+// 24 October 2026). The name must read "First name Last name EI" (loi n° 2022-172 du 14 février 2022).
+// A sole trader has no share capital.
 export const PUBLISHER = {
   brand: "Batrelio",
-  legalName: TO_COMPLETE("raison sociale"),
-  legalForm: TO_COMPLETE("forme juridique, ex. SAS"),
-  // Only for a company: remove the line on the legal notice for a sole trader.
-  shareCapital: TO_COMPLETE("capital social, ex. 1 000 €"),
-  address: TO_COMPLETE("adresse du siège social"),
-  siren: TO_COMPLETE("numéro SIREN"),
-  registration: TO_COMPLETE("immatriculation, ex. RCS Paris ou registre national des entreprises"),
+  legalName: TO_COMPLETE("prénom et nom, suivis de « EI »"),
+  legalForm: "Entreprise individuelle (EI)",
+  shareCapital: null as string | null,
+  // A professional publisher must display an address: the registered one, or a domiciliation.
+  address: TO_COMPLETE("adresse de l'entreprise"),
+  siren: "132 122 201",
+  registration: "Registre national des entreprises (RNE)",
   vatNumber: TO_COMPLETE("numéro de TVA intracommunautaire"),
   publicationDirector: TO_COMPLETE("nom du directeur de la publication"),
   email: TO_COMPLETE("adresse e-mail de contact"),

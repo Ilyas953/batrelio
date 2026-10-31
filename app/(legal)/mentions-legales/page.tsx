@@ -20,7 +20,7 @@ export default function LegalNoticePage() {
             ["Nom commercial", PUBLISHER.brand],
             ["Raison sociale", PUBLISHER.legalName],
             ["Forme juridique", PUBLISHER.legalForm],
-            ["Capital social", PUBLISHER.shareCapital],
+            ...(PUBLISHER.shareCapital ? [["Capital social", PUBLISHER.shareCapital] as [string, string]] : []),
             ["Siège social", PUBLISHER.address],
             ["SIREN", PUBLISHER.siren],
             ["Immatriculation", PUBLISHER.registration],
