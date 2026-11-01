@@ -5,10 +5,8 @@ Ces points-là dépendent de toi, d'un professionnel ou des prestataires.
 
 ## Avant la mise en ligne
 
-1. **Compléter l'identité de la société** dans `lib/legal/publisher.ts` : raison sociale, forme
-   juridique, capital, siège, SIREN, immatriculation, TVA, directeur de la publication, e-mail,
-   téléphone, e-mail données personnelles. Tant qu'un champ affiche « [À compléter …] », les
-   mentions légales ne sont pas conformes.
+1. **Identité de l'éditeur** : fait (Ilyas BENAMARA EI, `lib/legal/publisher.ts`). À tenir à jour en
+   cas de déménagement ou de changement de numéro.
 2. **Vérifier le téléphone de l'hébergeur Vercel** dans `lib/legal/publisher.ts`
    (obligatoire dans les mentions légales ; pris d'une source tierce, à confirmer sur vercel.com).
 3. **Faire relire par un avocat** : CGV, politique de confidentialité, accord de traitement.
@@ -19,7 +17,7 @@ Ces points-là dépendent de toi, d'un professionnel ou des prestataires.
    - Vercel : DPA inclus dans ses conditions, à télécharger et archiver ;
    - Twilio, Stripe, Brevo : à leur mise en service.
    Archiver les PDF : ils prouvent que les transferts hors UE sont encadrés.
-5. **Compléter le registre** `docs/rgpd/registre-des-traitements.md` avec l'identité de la société.
+5. **Registre** `docs/rgpd/registre-des-traitements.md` : identité remplie, à tenir à jour.
 
 ## À chaque nouveau prestataire (Twilio, Stripe, Brevo…)
 

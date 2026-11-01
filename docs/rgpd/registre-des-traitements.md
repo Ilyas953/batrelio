@@ -5,9 +5,9 @@ Dernière mise à jour : 29 octobre 2026.
 
 ## Responsable du traitement
 
-- Société : [À compléter : raison sociale, forme juridique]
-- Adresse : [À compléter : siège social]
-- Contact données personnelles : [À compléter : e-mail]
+- Entreprise : Ilyas BENAMARA EI, entreprise individuelle (micro-entreprise), SIREN 132 122 201
+- Adresse : 22 résidence du Parc Le Nôtre, 95310 Saint-Ouen-l'Aumône
+- Contact données personnelles : contact@batrelio.com
 - Délégué à la protection des données : non désigné (pas obligatoire, article 37 du RGPD)
 
 Les valeurs publiques correspondantes sont dans `lib/legal/publisher.ts`.

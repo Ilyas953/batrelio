@@ -1,21 +1,18 @@
-// Identity of the company that publishes and sells Batrelio, printed on every legal page.
-// Values in brackets must be filled in before going live: a legal page with a missing
-// mention is not compliant (loi n° 2004-575 du 21 juin 2004, LCEN).
+// Identity of the business that publishes and sells Batrelio, printed on every legal page.
+// A professional publisher must show all of it (loi n° 2004-575 du 21 juin 2004, LCEN).
 
 import { PRODUCTION_SITE_URL } from "@/lib/site";
-
-const TO_COMPLETE = (what: string) => `[À compléter : ${what}]`;
 
 // Batrelio is published by a sole trader (entreprise individuelle, SIREN 132 122 201, created on
 // 24 October 2026). The name must read "First name Last name EI" (loi n° 2022-172 du 14 février 2022).
 // A sole trader has no share capital.
 export const PUBLISHER = {
   brand: "Batrelio",
-  legalName: TO_COMPLETE("prénom et nom, suivis de « EI »"),
+  legalName: "Ilyas BENAMARA EI",
   legalForm: "Entreprise individuelle (EI)",
   shareCapital: null as string | null,
   // A professional publisher must display an address: the registered one, or a domiciliation.
-  address: TO_COMPLETE("adresse de l'entreprise"),
+  address: "22 résidence du Parc Le Nôtre, 95310 Saint-Ouen-l'Aumône",
   siren: "132 122 201",
   registration: "Registre national des entreprises (RNE)",
   // Micro-entreprise under the VAT franchise (franchise en base, art. 293 B du CGI): no VAT is
@@ -23,9 +20,9 @@ export const PUBLISHER = {
   // the franchise threshold, and add the VAT number.
   vatRegime: "franchise" as "franchise" | "subject",
   vatNumber: null as string | null,
-  publicationDirector: TO_COMPLETE("nom du directeur de la publication"),
+  publicationDirector: "Ilyas BENAMARA",
   email: "contact@batrelio.com",
-  phone: TO_COMPLETE("numéro de téléphone"),
+  phone: "07 83 58 57 92",
   // Where people send privacy requests (art. 12 to 22 RGPD).
   privacyEmail: "contact@batrelio.com",
   website: PRODUCTION_SITE_URL,
