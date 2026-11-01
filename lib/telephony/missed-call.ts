@@ -4,6 +4,7 @@ import type { Tables } from "@/lib/supabase/database.types";
 import { chooseSmsSender, sendSms } from "./index";
 import { missedCallSms } from "./messages";
 import { isFrenchMobile, isIdentifiedCaller } from "./phone-rules";
+import type { SmsStatus } from "./sms-status";
 
 const RECENT_CALL_WINDOW_MS = 24 * 60 * 60 * 1000;
 
@@ -12,18 +13,30 @@ export type AnsweringCompany = Pick<
   "id" | "name" | "sms_sender_name" | "sms_sender_approved" | "auto_reply_enabled" | "contact_phone"
 >;
 
-type SmsDecision = "send" | Exclude<Tables<"missed_calls">["sms_status"], "pending" | "sent" | "delivered" | "failed">;
+type SmsDecision = "send" | Exclude<SmsStatus, "pending" | "sent" | "delivered" | "failed" | "skipped_recent">;
+
+type Admin = ReturnType<typeof createAdminClient>;
+
+// Numbers the artisan chose never to auto-reply to (family, suppliers…).
+export async function isExcludedCaller(companyId: string, callerPhone: string | undefined): Promise<boolean> {
+  if (!isIdentifiedCaller(callerPhone)) return false;
+  const { count } = await createAdminClient()
+    .from("auto_reply_exclusions")
+    .select("id", { count: "exact", head: true })
+    .eq("company_id", companyId)
+    .eq("phone", callerPhone);
+  return (count ?? 0) > 0;
+}
 
 // Called while the greeting plays: decides whether this caller gets an SMS.
-export function decideSms(company: AnsweringCompany, callerPhone: string | undefined): SmsDecision {
+export function decideSms(company: AnsweringCompany, callerPhone: string | undefined, isExcluded: boolean): SmsDecision {
   if (!isIdentifiedCaller(callerPhone)) return "skipped_anonymous";
   if (callerPhone === company.contact_phone) return "skipped_own_number";
+  if (isExcluded) return "skipped_excluded";
   if (!company.auto_reply_enabled) return "skipped_disabled";
   if (!isFrenchMobile(callerPhone)) return "skipped_not_mobile";
   return "send";
 }
-
-type Admin = ReturnType<typeof createAdminClient>;
 
 async function findRecentRequestId(supabase: Admin, companyId: string, callerPhone: string): Promise<string | null> {
   const since = new Date(Date.now() - RECENT_CALL_WINDOW_MS).toISOString();
@@ -64,6 +77,7 @@ export async function handleMissedCall(params: {
   company: AnsweringCompany;
   callSid: string;
   callerPhone: string | undefined;
+  isExcluded: boolean;
   siteUrl: string;
 }): Promise<void> {
   const { company, callSid, siteUrl } = params;
@@ -78,11 +92,18 @@ export async function handleMissedCall(params: {
     .single();
   if (error) return;
 
-  const recordOutcome = (fields: Partial<Tables<"missed_calls">>) =>
+  const recordOutcome = (fields: { sms_status: SmsStatus; request_id?: string; sms_sid?: string }) =>
     supabase.from("missed_calls").update(fields).eq("id", call.id);
 
   if (!callerPhone) {
     await recordOutcome({ sms_status: "skipped_anonymous" });
+    return;
+  }
+
+  const decision = decideSms(company, callerPhone, params.isExcluded);
+  // Not a customer: no request in "À traiter", only the line in the call history.
+  if (decision === "skipped_own_number" || decision === "skipped_excluded") {
+    await recordOutcome({ sms_status: decision });
     return;
   }
 
@@ -92,13 +113,7 @@ export async function handleMissedCall(params: {
     return;
   }
 
-  const decision = decideSms(company, callerPhone);
-  if (decision === "skipped_own_number") {
-    await recordOutcome({ sms_status: decision });
-    return;
-  }
-
-  // The artisan sees every identified caller in "À traiter", SMS or not, to call them back.
+  // The artisan sees every customer in "À traiter", SMS or not, to call them back.
   const { requestId, token } = await createRequestWithLink(supabase, company.id, callerPhone);
   if (decision !== "send") {
     await recordOutcome({ sms_status: decision, request_id: requestId });

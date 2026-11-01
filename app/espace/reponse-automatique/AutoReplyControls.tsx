@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { FormError } from "@/components/ui/form";
-import { activateAutoReply, setAutoReplyEnabled } from "./actions";
+import { FormError, TextField } from "@/components/ui/form";
+import { activateAutoReply, addExclusion, excludeCaller, removeExclusion, setAutoReplyEnabled } from "./actions";
 
 const PRIMARY_BUTTON =
   "flex min-h-14 w-full items-center justify-center rounded-2xl bg-orange-600 px-6 text-lg font-semibold text-white hover:bg-orange-700 disabled:opacity-60";
@@ -79,5 +79,69 @@ export function ForwardingCode({ code, label }: { code: string; label: string })
         </a>
       </div>
     </div>
+  );
+}
+
+export function ExclusionForm() {
+  const { error, isPending, run } = useServerAction();
+
+  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    run(() => addExclusion(formData));
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <TextField
+        label="Numéro à exclure"
+        name="phone"
+        type="text"
+        inputMode="tel"
+        autoComplete="off"
+        required
+        placeholder="06 12 34 56 78"
+      />
+      <TextField label="Qui est-ce ? (facultatif)" name="label" maxLength={60} placeholder="Fournisseur bois" />
+      <FormError message={error} />
+      <button type="submit" disabled={isPending} className={SECONDARY_BUTTON}>
+        {isPending ? "Ajout…" : "Ajouter ce numéro"}
+      </button>
+    </form>
+  );
+}
+
+const SMALL_BUTTON =
+  "min-h-11 shrink-0 rounded-xl border-2 border-stone-200 px-3 text-sm font-semibold text-stone-800 hover:border-stone-900 disabled:opacity-60";
+
+export function RemoveExclusionButton({ exclusionId }: { exclusionId: string }) {
+  const { error, isPending, run } = useServerAction();
+
+  return (
+    <>
+      <button type="button" disabled={isPending} onClick={() => run(() => removeExclusion(exclusionId))} className={SMALL_BUTTON}>
+        {isPending ? "…" : "Retirer"}
+      </button>
+      {error && <p className="text-sm text-red-700">{error}</p>}
+    </>
+  );
+}
+
+export function ExcludeCallerButton({ phone }: { phone: string }) {
+  const { error, isPending, run } = useServerAction();
+
+  return (
+    <>
+      <button
+        type="button"
+        disabled={isPending}
+        onClick={() => run(() => excludeCaller(phone))}
+        className={SMALL_BUTTON}
+        title="Ne plus envoyer de SMS à ce numéro"
+      >
+        {isPending ? "…" : "Exclure"}
+      </button>
+      {error && <p className="text-sm text-red-700">{error}</p>}
+    </>
   );
 }

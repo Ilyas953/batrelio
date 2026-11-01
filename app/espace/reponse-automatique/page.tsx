@@ -4,7 +4,16 @@ import { requireUser } from "@/lib/auth/session";
 import { formatPhone, formatTimeAgo } from "@/lib/format";
 import type { Tables } from "@/lib/supabase/database.types";
 import { getFallbackSmsSender } from "@/lib/telephony/config";
-import { ActivateButton, ForwardingCode, PauseToggle } from "./AutoReplyControls";
+import { isIdentifiedCaller } from "@/lib/telephony/phone-rules";
+import { toSmsStatus, type SmsStatus } from "@/lib/telephony/sms-status";
+import {
+  ActivateButton,
+  ExcludeCallerButton,
+  ExclusionForm,
+  ForwardingCode,
+  PauseToggle,
+  RemoveExclusionButton,
+} from "./AutoReplyControls";
 
 const RECENT_CALLS = 10;
 
@@ -34,11 +43,15 @@ async function AutoReplySettings() {
     .maybeSingle();
   if (!company) return <p className="text-lg text-stone-600">Aucune entreprise n&apos;est liée à ce compte.</p>;
 
-  const { data: calls } = await supabase
-    .from("missed_calls")
-    .select("id, caller_phone, sms_status, created_at")
-    .order("created_at", { ascending: false })
-    .limit(RECENT_CALLS);
+  const [{ data: calls }, { data: exclusions }] = await Promise.all([
+    supabase
+      .from("missed_calls")
+      .select("id, caller_phone, sms_status, created_at")
+      .order("created_at", { ascending: false })
+      .limit(RECENT_CALLS),
+    supabase.from("auto_reply_exclusions").select("id, phone, label").order("created_at", { ascending: false }),
+  ]);
+  const excludedPhones = new Set((exclusions ?? []).map((exclusion) => exclusion.phone));
 
   return (
     <div className="space-y-6">
@@ -47,7 +60,8 @@ async function AutoReplySettings() {
         <>
           <StatusCard enabled={company.auto_reply_enabled} phoneNumber={company.phone_number} />
           <ForwardingCard phoneNumber={company.phone_number} />
-          <RecentCalls calls={calls ?? []} />
+          <RecentCalls calls={calls ?? []} excludedPhones={excludedPhones} />
+          <ExclusionsCard exclusions={exclusions ?? []} />
         </>
       ) : (
         <Card title="Activer">
@@ -138,7 +152,7 @@ function ForwardingCard({ phoneNumber }: { phoneNumber: string }) {
   );
 }
 
-const SMS_STATUS_LABELS: Record<Tables<"missed_calls">["sms_status"], string> = {
+const SMS_STATUS_LABELS: Record<SmsStatus, string> = {
   pending: "En cours",
   sent: "SMS envoyé",
   delivered: "SMS reçu",
@@ -148,11 +162,12 @@ const SMS_STATUS_LABELS: Record<Tables<"missed_calls">["sms_status"], string> = 
   skipped_not_mobile: "Pas de SMS : ligne fixe",
   skipped_own_number: "Votre propre numéro",
   skipped_recent: "Déjà prévenu aujourd'hui",
+  skipped_excluded: "Numéro exclu",
 };
 
 type Call = Pick<Tables<"missed_calls">, "id" | "caller_phone" | "sms_status" | "created_at">;
 
-function RecentCalls({ calls }: { calls: Call[] }) {
+function RecentCalls({ calls, excludedPhones }: { calls: Call[]; excludedPhones: Set<string> }) {
   const now = new Date();
 
   return (
@@ -161,23 +176,59 @@ function RecentCalls({ calls }: { calls: Call[] }) {
         <p className="text-base text-stone-500">Aucun appel pour l&apos;instant.</p>
       ) : (
         <ul className="divide-y divide-stone-200">
-          {calls.map((call) => (
-            <li key={call.id} className="flex items-center justify-between gap-3 py-3">
-              <div>
-                <p className="font-semibold text-stone-900">
-                  {call.caller_phone ? formatPhone(call.caller_phone) : "Numéro masqué"}
-                </p>
-                <p className="text-sm text-stone-500">{formatTimeAgo(call.created_at, now)}</p>
+          {calls.map((call) => {
+            const status = toSmsStatus(call.sms_status);
+            const excludablePhone =
+              isIdentifiedCaller(call.caller_phone) && !excludedPhones.has(call.caller_phone) ? call.caller_phone : null;
+
+            return (
+              <li key={call.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
+                <div className="min-w-0">
+                  <p className="font-semibold text-stone-900">
+                    {call.caller_phone ? formatPhone(call.caller_phone) : "Numéro masqué"}
+                  </p>
+                  <p className="text-sm text-stone-500">{formatTimeAgo(call.created_at, now)}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`rounded-full px-3 py-1 text-sm font-semibold ${status === "failed" ? "bg-red-50 text-red-700" : "bg-stone-100 text-stone-700"}`}
+                  >
+                    {SMS_STATUS_LABELS[status]}
+                  </span>
+                  {excludablePhone && <ExcludeCallerButton phone={excludablePhone} />}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </Card>
+  );
+}
+
+type Exclusion = Pick<Tables<"auto_reply_exclusions">, "id" | "phone" | "label">;
+
+function ExclusionsCard({ exclusions }: { exclusions: Exclusion[] }) {
+  return (
+    <Card title="Numéros exclus">
+      <p className="text-base text-stone-600">
+        Famille, fournisseurs, associés : ces numéros ne reçoivent jamais de SMS, et leurs appels n&apos;arrivent pas
+        dans vos demandes.
+      </p>
+      {exclusions.length > 0 && (
+        <ul className="divide-y divide-stone-200">
+          {exclusions.map((exclusion) => (
+            <li key={exclusion.id} className="flex items-center justify-between gap-3 py-3">
+              <div className="min-w-0">
+                <p className="font-semibold text-stone-900">{formatPhone(exclusion.phone)}</p>
+                {exclusion.label && <p className="truncate text-sm text-stone-500">{exclusion.label}</p>}
               </div>
-              <span
-                className={`shrink-0 rounded-full px-3 py-1 text-sm font-semibold ${call.sms_status === "failed" ? "bg-red-50 text-red-700" : "bg-stone-100 text-stone-700"}`}
-              >
-                {SMS_STATUS_LABELS[call.sms_status]}
-              </span>
+              <RemoveExclusionButton exclusionId={exclusion.id} />
             </li>
           ))}
         </ul>
       )}
+      <ExclusionForm />
     </Card>
   );
 }

@@ -14,6 +14,38 @@ export type Database = {
   }
   public: {
     Tables: {
+      auto_reply_exclusions: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          label: string | null
+          phone: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          label?: string | null
+          phone: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          label?: string | null
+          phone?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "auto_reply_exclusions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       companies: {
         Row: {
           address_line: string | null

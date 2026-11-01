@@ -7,7 +7,7 @@ import {
   greetingWithoutSms,
   toVoiceResponse,
 } from "@/lib/telephony/messages";
-import { decideSms, handleMissedCall } from "@/lib/telephony/missed-call";
+import { decideSms, handleMissedCall, isExcludedCaller } from "@/lib/telephony/missed-call";
 
 const UNASSIGNED_NUMBER_MESSAGE = "Ce numéro n'est pas attribué. Merci de votre appel.";
 
@@ -29,13 +29,14 @@ export async function POST(request: Request) {
     .maybeSingle();
   if (!company || !params.CallSid) return voiceResponse(UNASSIGNED_NUMBER_MESSAGE);
 
+  const isExcluded = await isExcludedCaller(company.id, params.From);
   after(() =>
-    handleMissedCall({ company, callSid: params.CallSid, callerPhone: params.From, siteUrl }).catch((error) =>
-      console.error(`Appel manqué ${params.CallSid} non traité :`, error),
+    handleMissedCall({ company, callSid: params.CallSid, callerPhone: params.From, isExcluded, siteUrl }).catch(
+      (error) => console.error(`Appel manqué ${params.CallSid} non traité :`, error),
     ),
   );
 
-  const decision = decideSms(company, params.From);
+  const decision = decideSms(company, params.From, isExcluded);
   if (decision === "send") return voiceResponse(greetingWithSms(company.name));
   if (decision === "skipped_anonymous") return voiceResponse(greetingForHiddenCaller(company.name));
   return voiceResponse(greetingWithoutSms(company.name));
