@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useSyncExternalStore, useTransition, type FormEvent } from "react";
+import { LinkIcon } from "@/components/landing/icons";
 import { FormError, TextField } from "@/components/ui/form";
 import { createRequestLink, type CreatedLink } from "./liens/actions";
 
@@ -63,15 +64,23 @@ export function RequestLinkPanel() {
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className={`${SHARE_BUTTON_CLASSES} bg-stone-900 text-white hover:bg-stone-700`}
+        className="flex items-start gap-4 rounded-3xl bg-white p-5 text-left shadow-sm ring-1 ring-stone-200 transition hover:ring-stone-300"
       >
-        Demander des infos à un client
+        <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-stone-900 text-white">
+          <LinkIcon />
+        </span>
+        <span className="min-w-0">
+          <span className="block text-lg font-bold text-stone-900">Demander des infos à un client</span>
+          <span className="mt-1 block text-sm text-stone-600">
+            Envoyez-lui un lien : il décrit son besoin et ajoute ses photos.
+          </span>
+        </span>
       </button>
     );
   }
 
   return (
-    <section className="space-y-5 rounded-3xl bg-white p-5 shadow-sm sm:p-6">
+    <section className="space-y-5 rounded-3xl bg-white p-5 shadow-sm ring-1 ring-stone-200 sm:col-span-2 sm:p-6">
       <div className="flex items-start justify-between gap-4">
         <div>
           <h2 className="text-xl font-bold text-stone-900">Lien de demande</h2>

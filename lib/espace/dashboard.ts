@@ -1,8 +1,11 @@
 import "server-only";
 import { requireUser } from "@/lib/auth/session";
 import { listMissingQuoteDetails } from "@/lib/company/legal";
+import { PHOTO_BUCKET } from "@/lib/requests/limits";
 
 const RECENT_SIGNED_QUOTES = 5;
+const PHOTO_PREVIEWS_PER_REQUEST = 3;
+const PHOTO_PREVIEW_LIFETIME_SECONDS = 60 * 60;
 
 const QUOTE_COLUMNS =
   "id, total_cents, deposit_cents, sent_at, signed_at, deposit_paid_at, request:requests(customer_name, customer_phone)";
@@ -15,7 +18,7 @@ export async function getDashboard() {
     supabase.from("companies").select("*").maybeSingle(),
     supabase
       .from("requests")
-      .select("id, source, customer_name, customer_phone, description, address, created_at, photos:request_photos(count), calls:missed_calls(sms_status, created_at)")
+      .select("id, source, customer_name, customer_phone, description, address, created_at, photos:request_photos(storage_path, created_at), calls:missed_calls(sms_status, created_at)")
       .eq("status", "new")
       .order("created_at", { ascending: false }),
     supabase
@@ -35,13 +38,31 @@ export async function getDashboard() {
     if (result.error) throw result.error;
   }
 
+  const requests = newRequests.data ?? [];
+  const previewPaths = requests.map((request) =>
+    request.photos
+      .toSorted((a, b) => a.created_at.localeCompare(b.created_at))
+      .slice(0, PHOTO_PREVIEWS_PER_REQUEST)
+      .map((photo) => photo.storage_path),
+  );
+  // One call signs every preview on the page.
+  const allPaths = previewPaths.flat();
+  const { data: signed } = allPaths.length
+    ? await supabase.storage.from(PHOTO_BUCKET).createSignedUrls(allPaths, PHOTO_PREVIEW_LIFETIME_SECONDS)
+    : { data: [] };
+  const urlByPath = new Map((signed ?? []).flatMap((photo) => (photo.path && photo.signedUrl ? [[photo.path, photo.signedUrl]] : [])));
+
   return {
     companyName: company.data?.name ?? null,
     missingQuoteDetails: company.data ? listMissingQuoteDetails(company.data) : [],
     autoReply: company.data
       ? { phoneNumber: company.data.phone_number, enabled: company.data.auto_reply_enabled }
       : null,
-    newRequests: newRequests.data ?? [],
+    newRequests: requests.map((request, index) => ({
+      ...request,
+      photoCount: request.photos.length,
+      photoPreviews: previewPaths[index].flatMap((path) => urlByPath.get(path) ?? []),
+    })),
     pendingQuotes: pendingQuotes.data ?? [],
     signedQuotes: signedQuotes.data ?? [],
   };
