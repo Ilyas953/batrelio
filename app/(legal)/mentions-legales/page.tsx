@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ExternalLink, LegalDocument, LegalFacts, LegalSection } from "@/components/legal/LegalDocument";
-import { PUBLISHER, WEBSITE_HOST } from "@/lib/legal/publisher";
+import { PUBLISHER, VAT_FRANCHISE_MENTION, WEBSITE_HOST, isVatFranchise } from "@/lib/legal/publisher";
 
 export const metadata: Metadata = {
   title: "Mentions légales · Batrelio",
@@ -21,10 +21,10 @@ export default function LegalNoticePage() {
             ["Raison sociale", PUBLISHER.legalName],
             ["Forme juridique", PUBLISHER.legalForm],
             ...(PUBLISHER.shareCapital ? [["Capital social", PUBLISHER.shareCapital] as [string, string]] : []),
-            ["Siège social", PUBLISHER.address],
+            ["Adresse", PUBLISHER.address],
             ["SIREN", PUBLISHER.siren],
             ["Immatriculation", PUBLISHER.registration],
-            ["TVA intracommunautaire", PUBLISHER.vatNumber],
+            ["TVA", isVatFranchise() ? VAT_FRANCHISE_MENTION : (PUBLISHER.vatNumber ?? "")],
             ["E-mail", PUBLISHER.email],
             ["Téléphone", PUBLISHER.phone],
             ["Directeur de la publication", PUBLISHER.publicationDirector],

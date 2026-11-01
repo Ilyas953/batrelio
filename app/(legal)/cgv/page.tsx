@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { LegalDocument, LegalList, LegalSection } from "@/components/legal/LegalDocument";
-import { PUBLISHER } from "@/lib/legal/publisher";
+import { PUBLISHER, VAT_FRANCHISE_MENTION, isVatFranchise } from "@/lib/legal/publisher";
 import { OFFER } from "@/lib/offer";
 
 export const metadata: Metadata = {
@@ -92,7 +92,9 @@ export default function TermsPage() {
       <LegalSection title="6. Prix et paiement">
         <LegalList
           items={[
-            `L'abonnement coûte ${OFFER.pricePerMonth} € hors taxes par mois. La TVA est ajoutée au taux en vigueur.`,
+            isVatFranchise()
+              ? `L'abonnement coûte ${OFFER.pricePerMonth} € par mois. Batrelio bénéficie de la franchise en base de TVA : ${VAT_FRANCHISE_MENTION}. Si Batrelio devient redevable de la TVA, le prix devient ${OFFER.pricePerMonth} € hors taxes, TVA en sus, après information au moins 30 jours à l'avance.`
+              : `L'abonnement coûte ${OFFER.pricePerMonth} € hors taxes par mois. La TVA est ajoutée au taux en vigueur.`,
             "Il est payable mensuellement et d'avance, par carte bancaire, via notre prestataire de paiement Stripe. Une facture est émise pour chaque paiement.",
             "Si des frais liés à l'usage (par exemple un volume de SMS) devaient s'ajouter, ils seraient indiqués clairement avant toute souscription.",
             "Les frais éventuellement facturés par votre propre opérateur téléphonique pour le renvoi d'appel restent à votre charge : renseignez-vous auprès de lui.",

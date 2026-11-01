@@ -18,14 +18,24 @@ export const PUBLISHER = {
   address: TO_COMPLETE("adresse de l'entreprise"),
   siren: "132 122 201",
   registration: "Registre national des entreprises (RNE)",
-  vatNumber: TO_COMPLETE("numéro de TVA intracommunautaire"),
+  // Micro-entreprise under the VAT franchise (franchise en base, art. 293 B du CGI): no VAT is
+  // charged and every price and invoice must say so. Switch to "subject" if turnover exceeds
+  // the franchise threshold, and add the VAT number.
+  vatRegime: "franchise" as "franchise" | "subject",
+  vatNumber: null as string | null,
   publicationDirector: TO_COMPLETE("nom du directeur de la publication"),
-  email: TO_COMPLETE("adresse e-mail de contact"),
+  email: "contact@batrelio.com",
   phone: TO_COMPLETE("numéro de téléphone"),
   // Where people send privacy requests (art. 12 to 22 RGPD).
-  privacyEmail: TO_COMPLETE("adresse e-mail pour les données personnelles"),
+  privacyEmail: "contact@batrelio.com",
   website: PRODUCTION_SITE_URL,
 } as const;
+
+export const VAT_FRANCHISE_MENTION = "TVA non applicable, art. 293 B du CGI";
+
+export function isVatFranchise(): boolean {
+  return PUBLISHER.vatRegime === "franchise";
+}
 
 // Hosting provider of the website, required on the legal notice (LCEN).
 // Check the phone number on vercel.com before going live.

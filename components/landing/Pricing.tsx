@@ -1,3 +1,4 @@
+import { VAT_FRANCHISE_MENTION, isVatFranchise } from "@/lib/legal/publisher";
 import { OFFER } from "@/lib/offer";
 import { CtaButton } from "./CtaButton";
 import { CheckIcon } from "./icons";
@@ -28,8 +29,9 @@ export function Pricing() {
             <span className="text-6xl font-extrabold tracking-tight text-stone-900">
               {OFFER.pricePerMonth}&nbsp;€
             </span>
-            <span className="text-lg text-stone-500">HT / mois</span>
+            <span className="text-lg text-stone-500">{isVatFranchise() ? "/ mois" : "HT / mois"}</span>
           </p>
+          {isVatFranchise() && <p className="mt-1 text-sm text-stone-500">{VAT_FRANCHISE_MENTION}</p>}
           <p className="mt-2 text-stone-600">
             {OFFER.trialDays} jours gratuits pour essayer. Sans engagement.
           </p>
