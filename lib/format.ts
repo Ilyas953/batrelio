@@ -33,3 +33,15 @@ export function formatTimeAgo(isoDate: string, now: Date): string {
     RELATIVE_TIME_STEPS.findLast(([, seconds]) => secondsAgo >= seconds) ?? RELATIVE_TIME_STEPS[0];
   return relativeTimeFormatter.format(-Math.floor(secondsAgo / unitSeconds), unit);
 }
+
+const priceFormatter = new Intl.NumberFormat("fr-FR", {
+  style: "currency",
+  currency: "EUR",
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+// Quotes need the cents: 1 234,50 €.
+export function formatPrice(cents: number): string {
+  return priceFormatter.format(cents / 100);
+}

@@ -199,45 +199,140 @@ export type Database = {
           },
         ]
       }
-      quotes: {
+      quote_lines: {
         Row: {
+          category: Database["public"]["Enums"]["quote_line_category"]
           company_id: string
           created_at: string
+          designation: string
+          id: string
+          position: number
+          quantity: number
+          quote_id: string
+          unit: string
+          unit_price_cents: number | null
+          vat_rate_bp: number
+        }
+        Insert: {
+          category?: Database["public"]["Enums"]["quote_line_category"]
+          company_id: string
+          created_at?: string
+          designation: string
+          id?: string
+          position: number
+          quantity: number
+          quote_id: string
+          unit: string
+          unit_price_cents?: number | null
+          vat_rate_bp?: number
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["quote_line_category"]
+          company_id?: string
+          created_at?: string
+          designation?: string
+          id?: string
+          position?: number
+          quantity?: number
+          quote_id?: string
+          unit?: string
+          unit_price_cents?: number | null
+          vat_rate_bp?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_lines_quote_id_company_id_fkey"
+            columns: ["quote_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id", "company_id"]
+          },
+        ]
+      }
+      quotes: {
+        Row: {
+          ai_notes: string | null
+          company_id: string
+          company_snapshot: Json | null
+          created_at: string
+          customer_address: string | null
+          customer_name: string | null
           deposit_cents: number | null
           deposit_paid_at: string | null
+          deposit_percent: number | null
           id: string
+          notes: string | null
+          number: string | null
+          public_token: string
           request_id: string
           sent_at: string | null
           signed_at: string | null
           status: Database["public"]["Enums"]["quote_status"]
+          subtotal_cents: number
+          title: string | null
           total_cents: number
           updated_at: string
+          validity_days: number
+          vat_cents: number
+          waste_management: string | null
+          work_duration: string | null
+          work_start_date: string | null
         }
         Insert: {
+          ai_notes?: string | null
           company_id: string
+          company_snapshot?: Json | null
           created_at?: string
+          customer_address?: string | null
+          customer_name?: string | null
           deposit_cents?: number | null
           deposit_paid_at?: string | null
+          deposit_percent?: number | null
           id?: string
+          notes?: string | null
+          number?: string | null
+          public_token?: string
           request_id: string
           sent_at?: string | null
           signed_at?: string | null
           status?: Database["public"]["Enums"]["quote_status"]
-          total_cents: number
+          subtotal_cents?: number
+          title?: string | null
+          total_cents?: number
           updated_at?: string
+          validity_days?: number
+          vat_cents?: number
+          waste_management?: string | null
+          work_duration?: string | null
+          work_start_date?: string | null
         }
         Update: {
+          ai_notes?: string | null
           company_id?: string
+          company_snapshot?: Json | null
           created_at?: string
+          customer_address?: string | null
+          customer_name?: string | null
           deposit_cents?: number | null
           deposit_paid_at?: string | null
+          deposit_percent?: number | null
           id?: string
+          notes?: string | null
+          number?: string | null
+          public_token?: string
           request_id?: string
           sent_at?: string | null
           signed_at?: string | null
           status?: Database["public"]["Enums"]["quote_status"]
+          subtotal_cents?: number
+          title?: string | null
           total_cents?: number
           updated_at?: string
+          validity_days?: number
+          vat_cents?: number
+          waste_management?: string | null
+          work_duration?: string | null
+          work_start_date?: string | null
         }
         Relationships: [
           {
@@ -388,7 +483,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      replace_quote_lines: {
+        Args: { p_lines: Json; p_quote_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       legal_form:
@@ -400,6 +498,7 @@ export type Database = {
         | "sa"
         | "snc"
         | "autre"
+      quote_line_category: "labor" | "material" | "travel" | "waste" | "other"
       quote_status: "draft" | "sent" | "signed" | "declined"
       region:
         | "auvergne-rhone-alpes"
@@ -562,6 +661,7 @@ export const Constants = {
   public: {
     Enums: {
       legal_form: ["ei", "eurl", "sarl", "sasu", "sas", "sa", "snc", "autre"],
+      quote_line_category: ["labor", "material", "travel", "waste", "other"],
       quote_status: ["draft", "sent", "signed", "declined"],
       region: [
         "auvergne-rhone-alpes",

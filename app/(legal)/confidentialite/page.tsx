@@ -126,6 +126,7 @@ export default function PrivacyPolicyPage() {
               .
             </>,
             "Votre numéro nous est transmis automatiquement par l'opérateur téléphonique, parce que vous avez appelé l'artisan.",
+            "Pour préparer le devis, la description de votre besoin et vos photos peuvent être analysées par un service d'intelligence artificielle (Anthropic). Il ne les utilise pas pour entraîner ses modèles, et l'artisan relit et chiffre lui-même chaque devis.",
             "Pour exercer vos droits, adressez-vous à l'artisan. Vous pouvez aussi nous écrire : nous transmettrons votre demande à l'artisan concerné et l'aiderons à y répondre.",
           ]}
         />

@@ -2,7 +2,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { getRequestDetail } from "@/lib/espace/request-detail";
-import { formatPhone, formatTimeAgo } from "@/lib/format";
+import { formatPhone, formatPrice, formatTimeAgo } from "@/lib/format";
+import { MakeQuoteButton } from "./MakeQuoteButton";
+
+// Preparing a quote with the AI can take several dozen seconds.
+export const maxDuration = 120;
+
+const QUOTE_STATUS_LABELS = { draft: "Brouillon", sent: "Envoyé", signed: "Signé", declined: "Refusé" } as const;
 
 export default function RequestDetailPage({ params }: PageProps<"/espace/demandes/[id]">) {
   return (
@@ -43,6 +49,8 @@ async function RequestDetail({ requestId }: { requestId: string }) {
       >
         Appeler le {formatPhone(request.customer_phone)}
       </a>
+
+      <QuotesSection request={request} />
 
       {request.description && (
         <section className="rounded-3xl bg-white p-5 sm:p-6">
@@ -85,5 +93,47 @@ async function RequestDetail({ requestId }: { requestId: string }) {
         </section>
       )}
     </article>
+  );
+}
+
+type RequestWithQuotes = NonNullable<Awaited<ReturnType<typeof getRequestDetail>>>;
+
+function QuotesSection({ request }: { request: RequestWithQuotes }) {
+  const quotes = request.quotes.toSorted((a, b) => b.created_at.localeCompare(a.created_at));
+  const draft = quotes.find((quote) => quote.status === "draft");
+
+  return (
+    <section className="space-y-3">
+      {quotes.length > 0 && (
+        <ul className="space-y-2">
+          {quotes.map((quote) => (
+            <li key={quote.id}>
+              <Link
+                href={`/espace/devis/${quote.id}`}
+                className="flex items-center justify-between gap-3 rounded-2xl bg-white p-4 ring-1 ring-stone-200 hover:ring-stone-300"
+              >
+                <span>
+                  <span className="block font-semibold text-stone-900">
+                    Devis {quote.number ? `n° ${quote.number}` : ""}
+                  </span>
+                  <span className="text-sm text-stone-500">{QUOTE_STATUS_LABELS[quote.status]}</span>
+                </span>
+                <span className="font-bold tabular-nums text-stone-900">{formatPrice(quote.total_cents)}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+      {draft ? (
+        <Link
+          href={`/espace/devis/${draft.id}`}
+          className="flex min-h-14 items-center justify-center rounded-2xl bg-stone-900 px-5 text-lg font-semibold text-white hover:bg-stone-700"
+        >
+          Reprendre le devis
+        </Link>
+      ) : (
+        <MakeQuoteButton requestId={request.id} label={quotes.length ? "Faire un autre devis" : "Faire le devis"} />
+      )}
+    </section>
   );
 }

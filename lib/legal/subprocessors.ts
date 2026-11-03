@@ -37,6 +37,13 @@ export const SUBPROCESSORS: Subprocessor[] = [
     inService: true,
   },
   {
+    name: "Anthropic PBC",
+    purpose: "Préparation automatique des devis (IA) à partir de la demande et des photos du client",
+    dataLocation: "États-Unis",
+    transferSafeguard: DPF_OR_SCC,
+    inService: true,
+  },
+  {
     name: "Stripe Payments Europe Ltd",
     purpose: "Paiement de l'abonnement et des acomptes",
     dataLocation: "Union européenne et États-Unis",

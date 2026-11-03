@@ -40,8 +40,13 @@ Ces points-là dépendent de toi, d'un professionnel ou des prestataires.
   aussi appeler `storage.from("request-photos").remove(...)`.
 - **SMS après appel manqué** : aucun contenu publicitaire (sinon c'est de la prospection, soumise au
   consentement préalable, article L. 34-5 du Code des postes et des communications électroniques).
-- **Devis et signature en ligne** : faire valider les mentions obligatoires et le droit de
-  rétractation de 14 jours pour les clients particuliers (contrat à distance).
+- **Devis** : la page `/devis/[jeton]` affiche les mentions obligatoires (identité, SIRET, TVA ou
+  franchise, assurance, médiateur, validité, début et durée, déchets AGEC, rétractation de 14 jours
+  avec formulaire type, bon pour accord). À faire valider par un avocat, en particulier :
+  - l'acompte « à l'acceptation » : pour un contrat conclu **hors établissement** (signé chez le
+    client), aucun paiement ne peut être reçu avant 7 jours (art. L. 221-10 C. conso) ;
+  - l'exception de rétractation pour les réparations urgentes (art. L. 221-28) ;
+  - la TVA à taux réduit (10 %, 5,5 %), qui dépend de conditions à vérifier avec le client.
 - **Suppression automatique** des demandes sans suite après 3 ans (recommandation CNIL, prévue dans
   l'accord de traitement) : à programmer, par exemple avec `pg_cron` dans Supabase.
 - **Suppression de compte** : aujourd'hui sur demande par e-mail ; un bouton dans l'espace serait un plus.

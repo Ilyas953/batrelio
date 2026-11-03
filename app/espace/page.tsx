@@ -355,7 +355,11 @@ function QuoteRow({ quote, detail, signed = false }: QuoteRowProps) {
   const depositReceived = signed && quote.deposit_paid_at !== null;
 
   return (
-    <li className="flex items-center gap-4 rounded-3xl bg-white p-4 shadow-sm ring-1 ring-stone-200 sm:p-5">
+    <li>
+      <Link
+        href={`/espace/devis/${quote.id}`}
+        className="flex items-center gap-4 rounded-3xl bg-white p-4 shadow-sm ring-1 ring-stone-200 transition hover:ring-stone-300 sm:p-5"
+      >
       <span
         className={`grid size-11 shrink-0 place-items-center rounded-2xl ${signed ? "bg-emerald-100 text-emerald-700" : "bg-stone-100 text-stone-600"}`}
       >
@@ -366,6 +370,7 @@ function QuoteRow({ quote, detail, signed = false }: QuoteRowProps) {
         <p className={`text-sm ${depositReceived ? "font-semibold text-emerald-700" : "text-stone-500"}`}>{detail}</p>
       </div>
       <p className="shrink-0 text-xl font-extrabold tabular-nums text-stone-900">{formatCents(quote.total_cents)}</p>
+      </Link>
     </li>
   );
 }

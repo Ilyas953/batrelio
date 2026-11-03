@@ -1,41 +1,16 @@
 "use client";
 
-import { useState, useSyncExternalStore, useTransition, type FormEvent } from "react";
+import { useState, useTransition, type FormEvent } from "react";
 import { LinkIcon } from "@/components/landing/icons";
 import { FormError, TextField } from "@/components/ui/form";
+import { SHARE_BUTTON_CLASSES, ShareLinkButtons } from "@/components/ui/ShareLinkButtons";
 import { createRequestLink, type CreatedLink } from "./liens/actions";
-
-const subscribeToNothing = () => () => {};
-
-// The native share sheet exists on phones only, and never during server rendering.
-function useCanShare(): boolean {
-  return useSyncExternalStore(
-    subscribeToNothing,
-    () => typeof navigator.share === "function",
-    () => false,
-  );
-}
-
-// sms:+33…?&body= works on both iOS and Android.
-function toSmsHref(link: CreatedLink): string {
-  return `sms:${link.customerPhone ?? ""}?&body=${encodeURIComponent(link.shareText)}`;
-}
-
-function toWhatsAppHref(link: CreatedLink): string {
-  const recipient = link.customerPhone?.replace("+", "") ?? "";
-  return `https://wa.me/${recipient}?text=${encodeURIComponent(link.shareText)}`;
-}
-
-const SHARE_BUTTON_CLASSES =
-  "flex min-h-14 w-full items-center justify-center rounded-2xl px-5 text-lg font-semibold";
 
 export function RequestLinkPanel() {
   const [isOpen, setIsOpen] = useState(false);
   const [link, setLink] = useState<CreatedLink>();
   const [error, setError] = useState<string>();
-  const [copied, setCopied] = useState(false);
   const [isCreating, startCreating] = useTransition();
-  const canShare = useCanShare();
 
   function handleCreate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -48,14 +23,8 @@ export function RequestLinkPanel() {
     });
   }
 
-  async function handleCopy(url: string) {
-    await navigator.clipboard.writeText(url);
-    setCopied(true);
-  }
-
   function reset() {
     setLink(undefined);
-    setCopied(false);
     setError(undefined);
   }
 
@@ -103,34 +72,7 @@ export function RequestLinkPanel() {
 
       {link ? (
         <div className="space-y-3">
-          <p className="break-all rounded-2xl bg-stone-100 px-4 py-3 font-mono text-sm text-stone-800">{link.url}</p>
-          {canShare && (
-            <button
-              type="button"
-              onClick={() => navigator.share({ text: link.shareText }).catch(() => {})}
-              className={`${SHARE_BUTTON_CLASSES} bg-orange-600 text-white hover:bg-orange-700`}
-            >
-              Partager le lien
-            </button>
-          )}
-          <a href={toSmsHref(link)} className={`${SHARE_BUTTON_CLASSES} border-2 border-stone-200 text-stone-900 hover:border-stone-900`}>
-            Envoyer par SMS
-          </a>
-          <a
-            href={toWhatsAppHref(link)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`${SHARE_BUTTON_CLASSES} border-2 border-stone-200 text-stone-900 hover:border-stone-900`}
-          >
-            Envoyer par WhatsApp
-          </a>
-          <button
-            type="button"
-            onClick={() => handleCopy(link.url)}
-            className={`${SHARE_BUTTON_CLASSES} border-2 border-stone-200 text-stone-900 hover:border-stone-900`}
-          >
-            {copied ? "Lien copié ✓" : "Copier le lien"}
-          </button>
+          <ShareLinkButtons link={link} />
           <p className="text-sm text-stone-500">Valable 30 jours, pour une seule demande.</p>
           <button type="button" onClick={reset} className="text-base font-semibold text-orange-700 underline">
             Créer un autre lien

@@ -12,7 +12,7 @@ export async function getRequestDetail(requestId: string) {
 
   const { data: request, error } = await supabase
     .from("requests")
-    .select("id, source, status, customer_name, customer_phone, description, address, created_at, photos:request_photos(storage_path, created_at)")
+    .select("id, source, status, customer_name, customer_phone, description, address, created_at, photos:request_photos(storage_path, created_at), quotes(id, status, number, total_cents, created_at)")
     .eq("id", requestId)
     .maybeSingle();
   if (error) throw error;
