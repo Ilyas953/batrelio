@@ -86,5 +86,5 @@ export async function saveCompanyProfile(formData: FormData): Promise<{ error: s
   if (error) return { error: "Les modifications n'ont pas pu être enregistrées. Réessayez." };
   if (data.length === 0) return { error: "Aucune entreprise n'est liée à ce compte." };
 
-  redirect(safeReturnTo(formData.get("returnTo"), "/espace"));
+  redirect(safeReturnTo(formData.get("returnTo"), "/espace/reglages"));
 }

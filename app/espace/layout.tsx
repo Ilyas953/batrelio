@@ -3,8 +3,8 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { Logo } from "@/components/landing/Logo";
 import { LegalLinks } from "@/components/legal/LegalLinks";
-import { signOut } from "@/lib/auth/actions";
 import { getOptionalClaims, isTestAccount } from "@/lib/auth/session";
+import { BottomTabBar, HeaderTabs } from "./TabBar";
 
 export const metadata: Metadata = {
   title: "Mon espace · Batrelio",
@@ -21,31 +21,18 @@ export default function ArtisanSpaceLayout({ children }: LayoutProps<"/espace">)
           <Link href="/espace" aria-label="Batrelio, mon espace">
             <Logo className="text-stone-900" />
           </Link>
-          <nav className="flex items-center gap-1">
-            <Link
-              href="/espace/entreprise"
-              className="inline-flex min-h-11 items-center rounded-xl px-3 text-[15px] font-semibold text-stone-600 hover:bg-stone-100 hover:text-stone-900"
-            >
-              Mon entreprise
-            </Link>
-            <form action={signOut}>
-              <button
-                type="submit"
-                className="min-h-11 rounded-xl px-3 text-[15px] font-semibold text-stone-600 hover:bg-stone-100 hover:text-stone-900"
-              >
-                Déconnexion
-              </button>
-            </form>
-          </nav>
+          <HeaderTabs />
         </div>
       </header>
       <Suspense fallback={null}>
         <TestAccountBanner />
       </Suspense>
       <main className="mx-auto w-full max-w-2xl flex-1 px-4 pb-16 pt-8 sm:px-6">{children}</main>
-      <footer className="border-t border-stone-200">
+      {/* Room for the bottom tab bar on phones. */}
+      <footer className="border-t border-stone-200 pb-20 sm:pb-0">
         <LegalLinks className="mx-auto max-w-2xl px-4 py-6 sm:px-6" />
       </footer>
+      <BottomTabBar />
     </>
   );
 }

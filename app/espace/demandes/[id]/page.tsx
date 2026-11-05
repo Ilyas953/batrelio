@@ -14,7 +14,7 @@ export default function RequestDetailPage({ params }: PageProps<"/espace/demande
   return (
     <>
       <Link href="/espace" className="text-base font-semibold text-stone-500 hover:text-stone-900">
-        ← Retour
+        ← Demandes
       </Link>
       <Suspense fallback={<p className="mt-8 text-lg text-stone-500">Chargement…</p>}>
         {params.then(({ id }) => (

@@ -170,8 +170,8 @@ export function QuoteEditor({ editor }: { editor: EditorQuote }) {
         <h2 className="text-2xl font-extrabold text-stone-900">Devis prêt à envoyer ✓</h2>
         <p className="text-base text-stone-600">Envoyez ce lien à votre client : il y verra le devis complet.</p>
         <ShareLinkButtons link={sent} />
-        <Link href="/espace" className="block text-center text-base font-semibold text-orange-700 underline">
-          Retour au tableau de bord
+        <Link href="/espace/devis" className="block text-center text-base font-semibold text-orange-700 underline">
+          Voir tous mes devis
         </Link>
       </section>
     );

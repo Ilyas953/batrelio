@@ -13,8 +13,8 @@ const STATUS_LABELS = { draft: "Brouillon", sent: "Envoyé", signed: "Signé", d
 export default function QuotePage({ params }: PageProps<"/espace/devis/[id]">) {
   return (
     <>
-      <Link href="/espace" className="text-base font-semibold text-stone-500 hover:text-stone-900">
-        ← Retour
+      <Link href="/espace/devis" className="text-base font-semibold text-stone-500 hover:text-stone-900">
+        ← Devis
       </Link>
       <Suspense fallback={<p className="mt-8 text-lg text-stone-500">Chargement du devis…</p>}>
         {params.then(({ id }) => (

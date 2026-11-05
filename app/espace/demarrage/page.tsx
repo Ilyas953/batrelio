@@ -68,7 +68,7 @@ async function SetupGuide() {
       </ol>
 
       <Link href="/espace" className="block text-center text-base font-semibold text-stone-500 underline">
-        {currentStep ? "Continuer plus tard" : "Aller au tableau de bord"}
+        {currentStep ? "Continuer plus tard" : "Voir mes demandes"}
       </Link>
     </div>
   );
@@ -85,7 +85,7 @@ function AllDone() {
         href="/espace"
         className="mt-4 inline-flex min-h-12 items-center rounded-2xl bg-white px-5 text-base font-semibold text-emerald-800 hover:bg-emerald-50"
       >
-        Aller au tableau de bord
+        Voir mes demandes
       </Link>
     </section>
   );

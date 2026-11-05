@@ -10,8 +10,9 @@ import {
   PhoneIcon,
   PhoneMissedIcon,
 } from "@/components/landing/icons";
-import { getDashboard, type DashboardQuote, type NewRequest } from "@/lib/espace/dashboard";
-import { formatCents, formatPhone, formatTimeAgo } from "@/lib/format";
+import { Section } from "@/components/espace/lists";
+import { getDashboard, type HandledRequest, type NewRequest } from "@/lib/espace/dashboard";
+import { formatPhone, formatTimeAgo } from "@/lib/format";
 import { RequestLinkPanel } from "./RequestLinkPanel";
 
 export default function ArtisanSpacePage() {
@@ -30,7 +31,7 @@ const todayFormatter = new Intl.DateTimeFormat("fr-FR", {
 });
 
 async function Dashboard() {
-  const { companyName, missingQuoteDetails, setup, autoReply, newRequests, pendingQuotes, signedQuotes } = await getDashboard();
+  const { companyName, missingQuoteDetails, setup, autoReply, newRequests, handledRequests, quoteCounts } = await getDashboard();
   const setupPending = setup !== null && setup.doneCount < setup.total;
   const now = new Date();
 
@@ -39,7 +40,7 @@ async function Dashboard() {
       <Welcome
         companyName={companyName}
         today={todayFormatter.format(now)}
-        counts={{ toHandle: newRequests.length, pending: pendingQuotes.length, signed: signedQuotes.length }}
+        counts={{ toHandle: newRequests.length, ...quoteCounts }}
       />
 
       {setupPending ? (
@@ -69,36 +70,48 @@ async function Dashboard() {
         ))}
       </Section>
 
-      <Section
-        id="en-attente"
-        title="En attente de signature"
-        count={pendingQuotes.length}
-        empty={{
-          icon: <DocumentIcon className="size-7" />,
-          title: "Aucun devis en attente",
-          detail: "Les devis envoyés à vos clients apparaîtront ici jusqu'à leur signature.",
-        }}
-      >
-        {pendingQuotes.map((quote) => (
-          <QuoteRow key={quote.id} quote={quote} detail={`Envoyé ${formatSentAt(quote, now)}`} />
-        ))}
-      </Section>
-
-      <Section
-        id="signes"
-        title="Signés"
-        count={signedQuotes.length}
-        empty={{
-          icon: <CheckIcon className="size-7" />,
-          title: "Aucun devis signé pour l'instant",
-          detail: "Vos devis signés et leurs acomptes s'afficheront ici.",
-        }}
-      >
-        {signedQuotes.map((quote) => (
-          <QuoteRow key={quote.id} quote={quote} detail={formatDeposit(quote)} signed />
-        ))}
-      </Section>
+      {handledRequests.length > 0 && (
+        <Section
+          id="traitees"
+          title="Traitées récemment"
+          count={handledRequests.length}
+          empty={{ icon: <CheckIcon className="size-7" />, title: "", detail: "" }}
+        >
+          {handledRequests.map((request) => (
+            <HandledRequestRow key={request.id} request={request} now={now} />
+          ))}
+        </Section>
+      )}
     </div>
+  );
+}
+
+const HANDLED_STATUS_LABELS: Record<Exclude<HandledRequest["status"], "new">, string> = {
+  quoted: "Devis envoyé",
+  visit_proposed: "Visite proposée",
+  closed: "Clôturée",
+};
+
+function HandledRequestRow({ request, now }: { request: HandledRequest; now: Date }) {
+  const status = request.status === "new" ? "" : HANDLED_STATUS_LABELS[request.status];
+
+  return (
+    <li>
+      <Link
+        href={`/espace/demandes/${request.id}`}
+        className="flex items-center gap-4 rounded-3xl bg-white p-4 shadow-sm ring-1 ring-stone-200 transition hover:ring-stone-300 sm:p-5"
+      >
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-lg font-bold text-stone-900">
+            {request.customer_name ?? formatPhone(request.customer_phone)}
+          </p>
+          <p className="truncate text-sm text-stone-500">
+            {status} · {formatTimeAgo(request.created_at, now)}
+          </p>
+        </div>
+        <ArrowRightIcon className="size-5 shrink-0 text-stone-400" />
+      </Link>
+    </li>
   );
 }
 
@@ -112,8 +125,8 @@ function summarize(toHandle: number): string {
 function Welcome({ companyName, today, counts }: { companyName: string | null; today: string; counts: Counts }) {
   const stats = [
     { href: "#a-traiter", label: "À traiter", value: counts.toHandle, accent: counts.toHandle > 0 },
-    { href: "#en-attente", label: "En attente", value: counts.pending, accent: false },
-    { href: "#signes", label: "Signés", value: counts.signed, accent: false },
+    { href: "/espace/devis#en-attente", label: "En attente", value: counts.pending, accent: false },
+    { href: "/espace/devis#signes", label: "Signés", value: counts.signed, accent: false },
   ];
 
   return (
@@ -175,7 +188,7 @@ function SetupCard({ doneCount, total }: { doneCount: number; total: number }) {
 function MissingDetailsBanner({ missing }: { missing: string[] }) {
   return (
     <Link
-      href="/espace/entreprise"
+      href="/espace/entreprise?retour=/espace"
       className="flex items-center gap-4 rounded-3xl border-2 border-amber-200 bg-amber-50 p-5 transition-colors hover:border-amber-300"
     >
       <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-amber-100 text-amber-800">
@@ -235,55 +248,6 @@ function describeWaitingCall(request: NewRequest): string {
     default:
       return "Rappelez-le pour connaître son besoin.";
   }
-}
-
-function formatSentAt(quote: DashboardQuote, now: Date): string {
-  return quote.sent_at ? formatTimeAgo(quote.sent_at, now) : "";
-}
-
-function formatDeposit(quote: DashboardQuote): string {
-  if (!quote.deposit_cents) return "Sans acompte";
-  const deposit = formatCents(quote.deposit_cents);
-  return quote.deposit_paid_at ? `Acompte de ${deposit} reçu` : `Acompte de ${deposit} en attente`;
-}
-
-type EmptyState = { icon: React.ReactNode; title: string; detail: string };
-
-type SectionProps = {
-  id: string;
-  title: string;
-  count: number;
-  empty: EmptyState;
-  highlight?: boolean;
-  children: React.ReactNode;
-};
-
-function Section({ id, title, count, empty, highlight = false, children }: SectionProps) {
-  const badgeClasses = highlight && count > 0 ? "bg-orange-600 text-white" : "bg-stone-200 text-stone-700";
-
-  return (
-    <section id={id} className="scroll-mt-20">
-      <h2 className="mb-3 flex items-center gap-3 text-xl font-bold text-stone-900">
-        {title}
-        <span className={`grid min-w-8 place-items-center rounded-full px-2.5 py-0.5 text-base ${badgeClasses}`}>
-          {count}
-        </span>
-      </h2>
-      {count === 0 ? (
-        <div className="flex items-center gap-4 rounded-3xl border-2 border-dashed border-stone-200 p-5">
-          <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-stone-100 text-stone-400">
-            {empty.icon}
-          </span>
-          <span>
-            <span className="block font-semibold text-stone-700">{empty.title}</span>
-            <span className="block text-sm text-stone-500">{empty.detail}</span>
-          </span>
-        </div>
-      ) : (
-        <ul className="space-y-3">{children}</ul>
-      )}
-    </section>
-  );
 }
 
 // "Mme Le Goff" -> "LG", "Paul Roux" -> "PR". Null when there is no name to show.
@@ -376,32 +340,6 @@ function RequestCard({ request, now }: { request: NewRequest; now: Date }) {
           Voir
         </Link>
       </div>
-    </li>
-  );
-}
-
-type QuoteRowProps = { quote: DashboardQuote; detail: string; signed?: boolean };
-
-function QuoteRow({ quote, detail, signed = false }: QuoteRowProps) {
-  const depositReceived = signed && quote.deposit_paid_at !== null;
-
-  return (
-    <li>
-      <Link
-        href={`/espace/devis/${quote.id}`}
-        className="flex items-center gap-4 rounded-3xl bg-white p-4 shadow-sm ring-1 ring-stone-200 transition hover:ring-stone-300 sm:p-5"
-      >
-      <span
-        className={`grid size-11 shrink-0 place-items-center rounded-2xl ${signed ? "bg-emerald-100 text-emerald-700" : "bg-stone-100 text-stone-600"}`}
-      >
-        {signed ? <CheckIcon className="size-5" /> : <DocumentIcon className="size-5" />}
-      </span>
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-lg font-bold text-stone-900">{quote.request.customer_name ?? "Client"}</p>
-        <p className={`text-sm ${depositReceived ? "font-semibold text-emerald-700" : "text-stone-500"}`}>{detail}</p>
-      </div>
-      <p className="shrink-0 text-xl font-extrabold tabular-nums text-stone-900">{formatCents(quote.total_cents)}</p>
-      </Link>
     </li>
   );
 }

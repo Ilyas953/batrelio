@@ -50,7 +50,8 @@ describe("setup guide", () => {
 
 describe("return address after a form", () => {
   it("only sends the artisan back to known pages", () => {
-    expect(safeReturnTo("/espace/demarrage", "/espace")).toBe("/espace/demarrage");
+    expect(safeReturnTo("/espace/demarrage", "/espace/reglages")).toBe("/espace/demarrage");
+    expect(safeReturnTo("/espace", "/espace/reglages")).toBe("/espace");
     expect(safeReturnTo("https://evil.example", "/espace")).toBe("/espace");
     expect(safeReturnTo("//evil.example", "/espace")).toBe("/espace");
     expect(safeReturnTo("/admin", "/espace")).toBe("/espace");

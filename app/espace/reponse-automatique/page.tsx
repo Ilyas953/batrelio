@@ -20,8 +20,8 @@ const RECENT_CALLS = 10;
 export default function AutoReplyPage() {
   return (
     <>
-      <Link href="/espace" className="text-base font-semibold text-stone-500 hover:text-stone-900">
-        ← Retour
+      <Link href="/espace/reglages" className="text-base font-semibold text-stone-500 hover:text-stone-900">
+        ← Réglages
       </Link>
       <h1 className="mb-2 mt-4 text-3xl font-extrabold tracking-tight text-stone-900">Réponse automatique</h1>
       <p className="mb-8 text-lg text-stone-600">

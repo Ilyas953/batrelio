@@ -4,12 +4,9 @@ import { listMissingQuoteDetails } from "@/lib/company/legal";
 import { computeSetupSteps } from "./setup";
 import { PHOTO_BUCKET } from "@/lib/requests/limits";
 
-const RECENT_SIGNED_QUOTES = 5;
+const RECENT_HANDLED_REQUESTS = 10;
 const PHOTO_PREVIEWS_PER_REQUEST = 3;
 const PHOTO_PREVIEW_LIFETIME_SECONDS = 60 * 60;
-
-const QUOTE_COLUMNS =
-  "id, total_cents, deposit_cents, sent_at, signed_at, deposit_paid_at, request:requests(customer_name, customer_phone)";
 
 function countSetupSteps(...args: Parameters<typeof computeSetupSteps>) {
   const steps = computeSetupSteps(...args);
@@ -20,7 +17,7 @@ function countSetupSteps(...args: Parameters<typeof computeSetupSteps>) {
 export async function getDashboard() {
   const { supabase } = await requireUser();
 
-  const [company, newRequests, pendingQuotes, signedQuotes, calls] = await Promise.all([
+  const [company, newRequests, handledRequests, pendingQuotes, signedQuotes, calls] = await Promise.all([
     supabase.from("companies").select("*").maybeSingle(),
     supabase
       .from("requests")
@@ -28,20 +25,18 @@ export async function getDashboard() {
       .eq("status", "new")
       .order("created_at", { ascending: false }),
     supabase
-      .from("quotes")
-      .select(QUOTE_COLUMNS)
-      .eq("status", "sent")
-      .order("sent_at", { ascending: false }),
-    supabase
-      .from("quotes")
-      .select(QUOTE_COLUMNS)
-      .eq("status", "signed")
-      .order("signed_at", { ascending: false })
-      .limit(RECENT_SIGNED_QUOTES),
+      .from("requests")
+      .select("id, status, customer_name, customer_phone, description, created_at")
+      .neq("status", "new")
+      .order("created_at", { ascending: false })
+      .limit(RECENT_HANDLED_REQUESTS),
+    // The quotes themselves are listed in the Devis tab: only their counts are shown here.
+    supabase.from("quotes").select("id", { count: "exact", head: true }).eq("status", "sent"),
+    supabase.from("quotes").select("id", { count: "exact", head: true }).eq("status", "signed"),
     supabase.from("missed_calls").select("id", { count: "exact", head: true }),
   ]);
 
-  for (const result of [company, newRequests, pendingQuotes, signedQuotes]) {
+  for (const result of [company, newRequests, handledRequests, pendingQuotes, signedQuotes]) {
     if (result.error) throw result.error;
   }
 
@@ -71,11 +66,11 @@ export async function getDashboard() {
       photoCount: request.photos.length,
       photoPreviews: previewPaths[index].flatMap((path) => urlByPath.get(path) ?? []),
     })),
-    pendingQuotes: pendingQuotes.data ?? [],
-    signedQuotes: signedQuotes.data ?? [],
+    handledRequests: handledRequests.data ?? [],
+    quoteCounts: { pending: pendingQuotes.count ?? 0, signed: signedQuotes.count ?? 0 },
   };
 }
 
 export type Dashboard = Awaited<ReturnType<typeof getDashboard>>;
 export type NewRequest = Dashboard["newRequests"][number];
-export type DashboardQuote = Dashboard["pendingQuotes"][number];
+export type HandledRequest = Dashboard["handledRequests"][number];
