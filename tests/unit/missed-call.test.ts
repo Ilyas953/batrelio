@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { greetingWithSms, missedCallSms } from "@/lib/telephony/messages";
+import { GREETING_NEXT_STEPS, defaultGreetingIntro, greetingWithSms, missedCallSms, toVoiceResponse } from "@/lib/telephony/messages";
+import { DEFAULT_GREETING_VOICE, GREETING_VOICES, findGreetingVoice } from "@/lib/telephony/voices";
 import { chooseGreeting, decideSms, type AnsweringCompany } from "@/lib/telephony/missed-call";
 import { isFrenchMobile, isIdentifiedCaller } from "@/lib/telephony/phone-rules";
 
@@ -10,6 +11,7 @@ const company: AnsweringCompany = {
   sms_sender_approved: false,
   auto_reply_enabled: true,
   contact_phone: "+33611111111",
+  greeting_intro: null,
 };
 const CUSTOMER_MOBILE = "+33639981234";
 
@@ -43,20 +45,65 @@ describe("who gets an SMS after a missed call", () => {
 
 describe("what the caller hears", () => {
   it("announces the SMS only when one is sent", () => {
-    expect(chooseGreeting("send", company.name)).toBe(greetingWithSms(company.name));
-    expect(chooseGreeting("send", company.name)).toContain("SMS");
-    expect(chooseGreeting("skipped_not_mobile", company.name)).not.toContain("SMS");
-    expect(chooseGreeting("skipped_disabled", company.name)).not.toContain("SMS");
+    expect(chooseGreeting("send", company)).toBe(greetingWithSms(company.name));
+    expect(chooseGreeting("send", company)).toContain("SMS");
+    expect(chooseGreeting("skipped_not_mobile", company)).not.toContain("SMS");
+    expect(chooseGreeting("skipped_disabled", company)).not.toContain("SMS");
   });
 
   it("asks a hidden caller to call back", () => {
-    expect(chooseGreeting("skipped_anonymous", company.name)).toContain("masqué");
+    expect(chooseGreeting("skipped_anonymous", company)).toContain("masqué");
   });
 
   it("always says the company name", () => {
     for (const decision of ["send", "skipped_anonymous", "skipped_excluded"] as const) {
-      expect(chooseGreeting(decision, company.name)).toContain(company.name);
+      expect(chooseGreeting(decision, company)).toContain(company.name);
     }
+  });
+});
+
+describe("personalised greeting", () => {
+  const custom = { ...company, greeting_intro: "Bonjour, c'est Pierre de Toitures Martin, je suis sur un toit" };
+
+  it("starts with the artisan's words, then always says what happens next", () => {
+    expect(chooseGreeting("send", custom)).toBe(`${custom.greeting_intro}. ${GREETING_NEXT_STEPS.withSms}`);
+    expect(chooseGreeting("skipped_not_mobile", custom)).toBe(`${custom.greeting_intro}. ${GREETING_NEXT_STEPS.withoutSms}`);
+    expect(chooseGreeting("skipped_anonymous", custom)).toBe(`${custom.greeting_intro}. ${GREETING_NEXT_STEPS.hiddenCaller}`);
+  });
+
+  it("does not double the final punctuation", () => {
+    expect(chooseGreeting("send", { ...company, greeting_intro: "Bonjour !" })).toBe(`Bonjour ! ${GREETING_NEXT_STEPS.withSms}`);
+  });
+
+  it("falls back to the default when left empty", () => {
+    expect(chooseGreeting("send", { ...company, greeting_intro: "   " })).toBe(
+      `${defaultGreetingIntro(company.name)} ${GREETING_NEXT_STEPS.withSms}`,
+    );
+  });
+});
+
+describe("greeting voice", () => {
+  it("reads the greeting with the chosen voice, in French", () => {
+    const twiml = toVoiceResponse("Bonjour", "remi-ai");
+    expect(twiml).toContain('voice="Polly.Rémi-Generative"');
+    expect(twiml).toContain('language="fr-FR"');
+    expect(twiml).toContain("<Hangup/>");
+  });
+
+  it("keeps the proven voice when nothing or an unknown voice is stored", () => {
+    expect(findGreetingVoice(null).id).toBe(DEFAULT_GREETING_VOICE);
+    expect(findGreetingVoice("removed-voice").id).toBe(DEFAULT_GREETING_VOICE);
+    expect(toVoiceResponse("Bonjour")).toContain('voice="Polly.Lea"');
+  });
+
+  it("cannot be used to inject TwiML through the artisan's text", () => {
+    const twiml = toVoiceResponse('Bonjour</Say><Dial>+33612345678</Dial><Say>', "classic");
+    expect(twiml).not.toContain("<Dial>");
+    expect(twiml).toContain("&lt;Dial&gt;");
+  });
+
+  it("offers only voice ids the database accepts", () => {
+    for (const voice of GREETING_VOICES) expect(voice.id).toMatch(/^[a-z0-9-]{1,40}$/);
   });
 });
 

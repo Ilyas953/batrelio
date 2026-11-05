@@ -55,6 +55,8 @@ export type Database = {
           contact_email: string | null
           contact_phone: string | null
           created_at: string
+          greeting_intro: string | null
+          greeting_voice: string | null
           id: string
           insurance_coverage_area: string | null
           insurance_policy_number: string | null
@@ -70,6 +72,7 @@ export type Database = {
           phone_number: string | null
           phone_number_sid: string | null
           postal_code: string | null
+          quote_message: string | null
           region: Database["public"]["Enums"]["region"] | null
           share_capital_cents: number | null
           siret: string | null
@@ -90,6 +93,8 @@ export type Database = {
           contact_email?: string | null
           contact_phone?: string | null
           created_at?: string
+          greeting_intro?: string | null
+          greeting_voice?: string | null
           id?: string
           insurance_coverage_area?: string | null
           insurance_policy_number?: string | null
@@ -105,6 +110,7 @@ export type Database = {
           phone_number?: string | null
           phone_number_sid?: string | null
           postal_code?: string | null
+          quote_message?: string | null
           region?: Database["public"]["Enums"]["region"] | null
           share_capital_cents?: number | null
           siret?: string | null
@@ -125,6 +131,8 @@ export type Database = {
           contact_email?: string | null
           contact_phone?: string | null
           created_at?: string
+          greeting_intro?: string | null
+          greeting_voice?: string | null
           id?: string
           insurance_coverage_area?: string | null
           insurance_policy_number?: string | null
@@ -140,6 +148,7 @@ export type Database = {
           phone_number?: string | null
           phone_number_sid?: string | null
           postal_code?: string | null
+          quote_message?: string | null
           region?: Database["public"]["Enums"]["region"] | null
           share_capital_cents?: number | null
           siret?: string | null

@@ -92,3 +92,8 @@ export async function createMessage(params: { to: string; from: string; body: st
     StatusCallback: params.statusCallback,
   });
 }
+
+// Outgoing call that plays the given TwiML, e.g. to let an artisan hear their greeting.
+export async function createCall(params: { to: string; from: string; twiml: string }) {
+  return twilioRequest<{ sid: string }>("POST", "/Calls.json", { To: params.to, From: params.from, Twiml: params.twiml });
+}

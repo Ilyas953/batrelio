@@ -10,8 +10,12 @@ const RECENT_CALL_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 export type AnsweringCompany = Pick<
   Tables<"companies">,
-  "id" | "name" | "sms_sender_name" | "sms_sender_approved" | "auto_reply_enabled" | "contact_phone"
+  "id" | "name" | "sms_sender_name" | "sms_sender_approved" | "auto_reply_enabled" | "contact_phone" | "greeting_intro"
 >;
+
+// Columns to read for a call: the voice is only needed to answer it.
+export const ANSWERING_COMPANY_COLUMNS =
+  "id, name, sms_sender_name, sms_sender_approved, auto_reply_enabled, contact_phone, greeting_intro, greeting_voice";
 
 type SmsDecision = "send" | Exclude<SmsStatus, "pending" | "sent" | "delivered" | "failed" | "skipped_recent">;
 
@@ -39,10 +43,10 @@ export function decideSms(company: AnsweringCompany, callerPhone: string | undef
 }
 
 // What the caller hears, decided before the request is created.
-export function chooseGreeting(decision: SmsDecision, companyName: string): string {
-  if (decision === "send") return greetingWithSms(companyName);
-  if (decision === "skipped_anonymous") return greetingForHiddenCaller(companyName);
-  return greetingWithoutSms(companyName);
+export function chooseGreeting(decision: SmsDecision, company: Pick<AnsweringCompany, "name" | "greeting_intro">): string {
+  if (decision === "send") return greetingWithSms(company.name, company.greeting_intro);
+  if (decision === "skipped_anonymous") return greetingForHiddenCaller(company.name, company.greeting_intro);
+  return greetingWithoutSms(company.name, company.greeting_intro);
 }
 
 async function findRecentRequestId(supabase: Admin, companyId: string, callerPhone: string): Promise<string | null> {

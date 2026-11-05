@@ -2,6 +2,7 @@ import "server-only";
 import { getFallbackSmsSender, getNumberPurchaseSettings, getPublicSiteUrl } from "./config";
 import {
   TwilioError,
+  createCall,
   createMessage,
   findAvailableFrenchNumber,
   isValidTwilioSignature,
@@ -76,6 +77,16 @@ export async function sendSms(to: string, from: string, body: string, siteUrl: s
       statusCallback: webhookUrl(siteUrl, WEBHOOK_PATHS.smsStatus),
     });
     return { status: "sent", sid: message.sid };
+  } catch (error) {
+    return { status: "failed", reason: error instanceof TwilioError ? `${error.code}: ${error.message}` : String(error) };
+  }
+}
+
+// Calls the artisan from their own Batrelio number and reads the greeting, exactly as callers hear it.
+export async function playGreetingByPhone(to: string, from: string, twiml: string): Promise<SentSms> {
+  try {
+    const call = await createCall({ to, from, twiml });
+    return { status: "sent", sid: call.sid };
   } catch (error) {
     return { status: "failed", reason: error instanceof TwilioError ? `${error.code}: ${error.message}` : String(error) };
   }

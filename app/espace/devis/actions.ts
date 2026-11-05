@@ -7,6 +7,7 @@ import { listMissingQuoteDetails } from "@/lib/company/legal";
 import { TRADE_LABELS } from "@/lib/company/details";
 import { DEFAULT_DEPOSIT_PERCENT } from "@/lib/quotes/catalog";
 import { suggestQuoteDraft, type QuoteDraft } from "@/lib/quotes/ai-draft";
+import { quoteShareText } from "@/lib/quotes/share-message";
 import { chargesVat, toCompanySnapshot } from "@/lib/quotes/company-snapshot";
 import { QuoteEditorInputSchema, listMissingBeforeSending, type QuoteEditorInput } from "@/lib/quotes/editor-input";
 import { computeTotals, depositCents } from "@/lib/quotes/totals";
@@ -252,7 +253,7 @@ export async function sendQuote(quoteId: string, raw: unknown): Promise<{ error:
     sent: {
       url,
       customerPhone: sentQuote.request.customer_phone,
-      shareText: `Bonjour, voici votre devis de ${company.name} : ${url}`,
+      shareText: quoteShareText(company, url),
     },
   };
 }

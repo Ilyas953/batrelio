@@ -56,6 +56,14 @@ async function AutoReplySettings() {
   return (
     <div className="space-y-6">
       <SenderCard company={company} />
+      <Card title="Votre message d'accueil">
+        <p className="text-base text-stone-700">
+          Voix et texte de votre message vocal, et message d&apos;envoi de vos devis.{" "}
+          <Link href="/espace/messages" className="font-semibold text-orange-700 underline">
+            Personnaliser
+          </Link>
+        </p>
+      </Card>
       {company.phone_number ? (
         <>
           <StatusCard enabled={company.auto_reply_enabled} phoneNumber={company.phone_number} />

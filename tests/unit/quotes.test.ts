@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { defaultQuoteMessage, quoteShareText } from "@/lib/quotes/share-message";
 import { listMissingBeforeSending, QuoteEditorInputSchema, type QuoteEditorInput } from "@/lib/quotes/editor-input";
 import {
   centsToInput,
@@ -131,5 +132,24 @@ describe("what the server accepts from the quote editor", () => {
 
   it("refuses a line without description", () => {
     expect(QuoteEditorInputSchema.safeParse({ ...base, lines: [{ ...line, designation: "  " }] }).success).toBe(false);
+  });
+});
+
+describe("message sent with a quote", () => {
+  const url = "https://batrelio.com/devis/0123456789abcdef0123456789abcdef";
+
+  it("keeps Batrelio's wording by default", () => {
+    expect(quoteShareText({ name: "Toitures Martin", quote_message: null }, url)).toBe(
+      `Bonjour, voici votre devis de Toitures Martin : ${url}`,
+    );
+  });
+
+  it("uses the artisan's words and always ends with the link", () => {
+    const text = quoteShareText({ name: "Toitures Martin", quote_message: "Bonsoir, comme promis voici le devis." }, url);
+    expect(text).toBe(`Bonsoir, comme promis voici le devis. ${url}`);
+  });
+
+  it("never sends an empty message", () => {
+    expect(quoteShareText({ name: "Toitures Martin", quote_message: "  " }, url)).toBe(`${defaultQuoteMessage("Toitures Martin")} ${url}`);
   });
 });

@@ -33,6 +33,7 @@ export async function getQuoteForEditor(quoteId: string) {
     quote: quote.data,
     lines: lines.data ?? [],
     companyName: company.data.name,
+    quoteMessage: company.data.quote_message,
     chargesVat: company.data.vat_regime === "subject",
     missingCompanyDetails: listMissingQuoteDetails(company.data),
   };

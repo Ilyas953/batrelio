@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { ShareLinkButtons } from "@/components/ui/ShareLinkButtons";
 import { formatPrice } from "@/lib/format";
 import { getQuoteForEditor, type EditorQuote } from "@/lib/quotes/queries";
+import { quoteShareText } from "@/lib/quotes/share-message";
 import { getSiteOrigin } from "@/lib/requests/site-origin";
 import { QuoteEditor } from "./QuoteEditor";
 
@@ -48,7 +49,7 @@ async function QuoteScreen({ quoteId }: { quoteId: string }) {
 }
 
 async function SentQuote({ editor }: { editor: EditorQuote }) {
-  const { quote, companyName } = editor;
+  const { quote, companyName, quoteMessage } = editor;
   const url = `${await getSiteOrigin()}/devis/${quote.public_token}`;
 
   return (
@@ -67,9 +68,12 @@ async function SentQuote({ editor }: { editor: EditorQuote }) {
         link={{
           url,
           customerPhone: quote.request.customer_phone,
-          shareText: `Bonjour, voici votre devis de ${companyName} : ${url}`,
+          shareText: quoteShareText({ name: companyName, quote_message: quoteMessage }, url),
         }}
       />
+      <Link href="/espace/messages" className="block text-center text-base font-semibold text-orange-700 underline">
+        Modifier le message d&apos;envoi
+      </Link>
     </section>
   );
 }

@@ -2,6 +2,7 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
+  ANSWERING_COMPANY_COLUMNS,
   chooseGreeting,
   decideSms,
   handleMissedCall,
@@ -20,13 +21,13 @@ const showSmsInstead: SmsDelivery = async () => ({ status: "sent", sid: `SIM-${r
 export async function simulateMissedCall(companyId: string, callerPhone: string | undefined, siteUrl: string) {
   const { data: company, error } = await createAdminClient()
     .from("companies")
-    .select("id, name, sms_sender_name, sms_sender_approved, auto_reply_enabled, contact_phone")
+    .select(ANSWERING_COMPANY_COLUMNS)
     .eq("id", companyId)
     .single();
   if (error) throw error;
 
   const isExcluded = await isExcludedCaller(company.id, callerPhone);
-  const greeting = chooseGreeting(decideSms(company, callerPhone, isExcluded), company.name);
+  const greeting = chooseGreeting(decideSms(company, callerPhone, isExcluded), company);
   const outcome = await handleMissedCall({
     company,
     callSid: `SIM-${randomUUID()}`,

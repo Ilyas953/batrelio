@@ -165,7 +165,10 @@ function StepContent({ step, company, isTest }: StepContentProps) {
         return (
           <p>
             Votre numéro : <strong className="text-stone-900">{formatPhone(company.phone_number ?? "")}</strong> · SMS
-            envoyés au nom de <strong className="font-mono text-stone-900">{company.sms_sender_name}</strong>
+            envoyés au nom de <strong className="font-mono text-stone-900">{company.sms_sender_name}</strong> ·{" "}
+            <Link href="/espace/messages" className={SECONDARY_LINK}>
+              personnaliser le message vocal
+            </Link>
           </p>
         );
       }
