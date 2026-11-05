@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth/session";
+import { safeReturnTo } from "@/lib/espace/return-to";
 import { toE164Phone } from "@/lib/company/legal";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { connectPhoneNumber, provisionPhoneNumber, type ProvisionResult } from "@/lib/telephony";
@@ -21,7 +22,7 @@ async function assignedNumbers(): Promise<Set<string>> {
   return new Set(data.flatMap((company) => (company.phone_number ? [company.phone_number] : [])));
 }
 
-export async function activateAutoReply(): Promise<{ error: string }> {
+export async function activateAutoReply(returnTo?: string): Promise<{ error: string }> {
   const { supabase } = await requireUser();
 
   const siteUrl = getPublicSiteUrl();
@@ -54,7 +55,7 @@ export async function activateAutoReply(): Promise<{ error: string }> {
   const { error } = await supabase.from("companies").update({ auto_reply_enabled: true }).eq("id", company.id);
   if (error) return { error: "La réponse automatique n'a pas pu être activée. Réessayez." };
 
-  redirect(PAGE);
+  redirect(safeReturnTo(returnTo, PAGE));
 }
 
 export async function setAutoReplyEnabled(enabled: boolean): Promise<{ error: string }> {
@@ -105,4 +106,16 @@ export async function removeExclusion(exclusionId: string): Promise<{ error: str
   if (error) return { error: "Le numéro n'a pas pu être retiré. Réessayez." };
 
   redirect(PAGE);
+}
+
+// Setup guide: the artisan dialled the forwarding code. The first forwarded call confirms it.
+export async function confirmCallForwarding(): Promise<{ error: string }> {
+  const { supabase, claims } = await requireUser();
+  const { error } = await supabase
+    .from("companies")
+    .update({ call_forwarding_confirmed_at: new Date().toISOString() })
+    .eq("owner_id", claims.sub);
+  if (error) return { error: "Le réglage n'a pas pu être enregistré. Réessayez." };
+
+  redirect("/espace/demarrage");
 }

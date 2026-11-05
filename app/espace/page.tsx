@@ -30,7 +30,8 @@ const todayFormatter = new Intl.DateTimeFormat("fr-FR", {
 });
 
 async function Dashboard() {
-  const { companyName, missingQuoteDetails, autoReply, newRequests, pendingQuotes, signedQuotes } = await getDashboard();
+  const { companyName, missingQuoteDetails, setup, autoReply, newRequests, pendingQuotes, signedQuotes } = await getDashboard();
+  const setupPending = setup !== null && setup.doneCount < setup.total;
   const now = new Date();
 
   return (
@@ -41,7 +42,11 @@ async function Dashboard() {
         counts={{ toHandle: newRequests.length, pending: pendingQuotes.length, signed: signedQuotes.length }}
       />
 
-      {missingQuoteDetails.length > 0 && <MissingDetailsBanner missing={missingQuoteDetails} />}
+      {setupPending ? (
+        <SetupCard doneCount={setup.doneCount} total={setup.total} />
+      ) : (
+        missingQuoteDetails.length > 0 && <MissingDetailsBanner missing={missingQuoteDetails} />
+      )}
 
       <div className="grid gap-3 sm:grid-cols-2">
         {autoReply && <AutoReplyTile phoneNumber={autoReply.phoneNumber} enabled={autoReply.enabled} />}
@@ -139,6 +144,32 @@ function Welcome({ companyName, today, counts }: { companyName: string | null; t
 // "votre assurance et votre médiateur", "votre SIRET, votre TVA et votre assurance".
 function joinWithEt(items: string[]): string {
   return items.length < 2 ? items.join("") : `${items.slice(0, -1).join(", ")} et ${items.at(-1)}`;
+}
+
+// Shown until the setup guide is complete: the one thing a new artisan has to finish.
+function SetupCard({ doneCount, total }: { doneCount: number; total: number }) {
+  const progress = Math.round((doneCount / total) * 100);
+
+  return (
+    <Link
+      href="/espace/demarrage"
+      className="block rounded-3xl bg-white p-5 shadow-sm ring-2 ring-orange-500 transition hover:ring-orange-600 sm:p-6"
+    >
+      <span className="flex items-center justify-between gap-4">
+        <span className="text-lg font-bold text-stone-900">Terminez la mise en place</span>
+        <span className="text-sm font-semibold text-stone-600">
+          {doneCount} sur {total}
+        </span>
+      </span>
+      <span className="mt-3 block h-3 overflow-hidden rounded-full bg-stone-200">
+        <span className="block h-full rounded-full bg-orange-600" style={{ width: `${progress}%` }} />
+      </span>
+      <span className="mt-3 flex items-center justify-between gap-4 text-base text-stone-600">
+        Encore quelques minutes et vos appels manqués recevront un SMS.
+        <ArrowRightIcon className="size-5 shrink-0 text-orange-700" />
+      </span>
+    </Link>
+  );
 }
 
 function MissingDetailsBanner({ missing }: { missing: string[] }) {

@@ -1,6 +1,7 @@
 import "server-only";
 import { requireUser } from "@/lib/auth/session";
 import { listMissingQuoteDetails } from "@/lib/company/legal";
+import { computeSetupSteps } from "./setup";
 import { PHOTO_BUCKET } from "@/lib/requests/limits";
 
 const RECENT_SIGNED_QUOTES = 5;
@@ -10,11 +11,16 @@ const PHOTO_PREVIEW_LIFETIME_SECONDS = 60 * 60;
 const QUOTE_COLUMNS =
   "id, total_cents, deposit_cents, sent_at, signed_at, deposit_paid_at, request:requests(customer_name, customer_phone)";
 
+function countSetupSteps(...args: Parameters<typeof computeSetupSteps>) {
+  const steps = computeSetupSteps(...args);
+  return { doneCount: steps.filter((step) => step.done).length, total: steps.length };
+}
+
 // Everything the artisan needs at a glance. RLS restricts every query to their own company.
 export async function getDashboard() {
   const { supabase } = await requireUser();
 
-  const [company, newRequests, pendingQuotes, signedQuotes] = await Promise.all([
+  const [company, newRequests, pendingQuotes, signedQuotes, calls] = await Promise.all([
     supabase.from("companies").select("*").maybeSingle(),
     supabase
       .from("requests")
@@ -32,6 +38,7 @@ export async function getDashboard() {
       .eq("status", "signed")
       .order("signed_at", { ascending: false })
       .limit(RECENT_SIGNED_QUOTES),
+    supabase.from("missed_calls").select("id", { count: "exact", head: true }),
   ]);
 
   for (const result of [company, newRequests, pendingQuotes, signedQuotes]) {
@@ -55,6 +62,7 @@ export async function getDashboard() {
   return {
     companyName: company.data?.name ?? null,
     missingQuoteDetails: company.data ? listMissingQuoteDetails(company.data) : [],
+    setup: company.data ? countSetupSteps(company.data, (calls.count ?? 0) > 0) : null,
     autoReply: company.data
       ? { phoneNumber: company.data.phone_number, enabled: company.data.auto_reply_enabled }
       : null,

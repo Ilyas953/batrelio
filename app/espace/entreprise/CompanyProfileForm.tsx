@@ -37,7 +37,7 @@ function suggestVatNumber(siret: string): string {
   return /^[0-9]{14}$/.test(digits) ? toVatNumber(digits.slice(0, 9)) : "FR12 345678901";
 }
 
-export function CompanyProfileForm({ initialValues }: { initialValues: ProfileValues }) {
+export function CompanyProfileForm({ initialValues, returnTo }: { initialValues: ProfileValues; returnTo: string }) {
   const formRef = useRef<HTMLFormElement>(null);
   const [values, setValues] = useState(initialValues);
   // Remounts the fields with new default values after a SIRET lookup.
@@ -81,6 +81,7 @@ export function CompanyProfileForm({ initialValues }: { initialValues: ProfileVa
 
   return (
     <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
+      <input type="hidden" name="returnTo" value={returnTo} />
       <div key={fieldsKey} className="space-y-6">
         <Fieldset title="Votre numéro SIRET" description="On remplit le reste pour vous.">
           <TextField
@@ -197,6 +198,7 @@ export function CompanyProfileForm({ initialValues }: { initialValues: ProfileVa
         </Fieldset>
 
         <Fieldset
+          id="assurance"
           title="Assurance professionnelle"
           description="Obligatoire sur vos devis. Tout est écrit sur votre attestation d'assurance (décennale)."
         >
@@ -257,11 +259,11 @@ export function CompanyProfileForm({ initialValues }: { initialValues: ProfileVa
   );
 }
 
-type FieldsetProps = { title: string; description?: string; children: React.ReactNode };
+type FieldsetProps = { id?: string; title: string; description?: string; children: React.ReactNode };
 
-function Fieldset({ title, description, children }: FieldsetProps) {
+function Fieldset({ id, title, description, children }: FieldsetProps) {
   return (
-    <fieldset className="space-y-5 rounded-3xl bg-white p-6 shadow-sm sm:p-8">
+    <fieldset id={id} className="scroll-mt-20 space-y-5 rounded-3xl bg-white p-6 shadow-sm sm:p-8">
       <legend className="sr-only">{title}</legend>
       <div>
         <h2 className="text-xl font-bold text-stone-900">{title}</h2>

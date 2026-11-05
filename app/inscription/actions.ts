@@ -96,5 +96,6 @@ export async function signUp(_previous: SignUpState, formData: FormData): Promis
   // No session: email confirmation is enabled, the account opens from the link.
   if (!data.session) return { checkEmail: true, values };
 
-  redirect("/espace");
+  // New artisans start with the setup guide.
+  redirect("/espace/demarrage");
 }

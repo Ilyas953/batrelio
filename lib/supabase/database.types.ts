@@ -50,6 +50,7 @@ export type Database = {
         Row: {
           address_line: string | null
           auto_reply_enabled: boolean
+          call_forwarding_confirmed_at: string | null
           city: string | null
           contact_email: string | null
           contact_phone: string | null
@@ -84,6 +85,7 @@ export type Database = {
         Insert: {
           address_line?: string | null
           auto_reply_enabled?: boolean
+          call_forwarding_confirmed_at?: string | null
           city?: string | null
           contact_email?: string | null
           contact_phone?: string | null
@@ -118,6 +120,7 @@ export type Database = {
         Update: {
           address_line?: string | null
           auto_reply_enabled?: boolean
+          call_forwarding_confirmed_at?: string | null
           city?: string | null
           contact_email?: string | null
           contact_phone?: string | null

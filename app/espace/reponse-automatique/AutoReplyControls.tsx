@@ -2,7 +2,14 @@
 
 import { useState, useTransition } from "react";
 import { FormError, TextField } from "@/components/ui/form";
-import { activateAutoReply, addExclusion, excludeCaller, removeExclusion, setAutoReplyEnabled } from "./actions";
+import {
+  activateAutoReply,
+  addExclusion,
+  confirmCallForwarding,
+  excludeCaller,
+  removeExclusion,
+  setAutoReplyEnabled,
+} from "./actions";
 
 const PRIMARY_BUTTON =
   "flex min-h-14 w-full items-center justify-center rounded-2xl bg-orange-600 px-6 text-lg font-semibold text-white hover:bg-orange-700 disabled:opacity-60";
@@ -21,12 +28,12 @@ function useServerAction() {
   return { error, isPending, run };
 }
 
-export function ActivateButton() {
+export function ActivateButton({ returnTo }: { returnTo?: string }) {
   const { error, isPending, run } = useServerAction();
 
   return (
     <div className="space-y-3">
-      <button type="button" disabled={isPending} onClick={() => run(activateAutoReply)} className={PRIMARY_BUTTON}>
+      <button type="button" disabled={isPending} onClick={() => run(() => activateAutoReply(returnTo))} className={PRIMARY_BUTTON}>
         {isPending ? "Attribution de votre numéro…" : "Activer la réponse automatique"}
       </button>
       <FormError message={error} />
@@ -143,5 +150,18 @@ export function ExcludeCallerButton({ phone }: { phone: string }) {
       </button>
       {error && <p className="text-sm text-red-700">{error}</p>}
     </>
+  );
+}
+
+export function ConfirmForwardingButton() {
+  const { error, isPending, run } = useServerAction();
+
+  return (
+    <div className="space-y-2">
+      <button type="button" disabled={isPending} onClick={() => run(confirmCallForwarding)} className={PRIMARY_BUTTON}>
+        {isPending ? "Enregistrement…" : "C'est fait, j'ai composé le code"}
+      </button>
+      <FormError message={error} />
+    </div>
   );
 }
