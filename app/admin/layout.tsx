@@ -7,6 +7,8 @@ export const metadata: Metadata = {
   robots: { index: false },
 };
 
+const NAV_LINK = "inline-flex min-h-11 items-center rounded-xl px-3 text-[15px] font-semibold text-stone-600 hover:bg-stone-100 hover:text-stone-900";
+
 // Access is checked in every page and Server Function, not here:
 // layouts do not re-render on every navigation.
 export default function AdminLayout({ children }: LayoutProps<"/admin">) {
@@ -17,6 +19,14 @@ export default function AdminLayout({ children }: LayoutProps<"/admin">) {
           <Link href="/admin" className="text-lg font-bold text-stone-900">
             Batrelio <span className="font-medium text-orange-600">admin</span>
           </Link>
+          <nav aria-label="Menu admin" className="flex flex-1 items-center gap-1">
+            <Link href="/admin" className={NAV_LINK}>
+              Comptes
+            </Link>
+            <Link href="/admin/missions" className={NAV_LINK}>
+              Missions
+            </Link>
+          </nav>
           <form action={signOut}>
             <button
               type="submit"

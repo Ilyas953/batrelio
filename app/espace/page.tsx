@@ -3,10 +3,12 @@ import { Suspense } from "react";
 import {
   ArrowRightIcon,
   BellIcon,
+  CalendarIcon,
   CheckIcon,
   ClockIcon,
   DocumentIcon,
   FlagIcon,
+  ForwardIcon,
   InboxIcon,
   LinkIcon,
   MapPinIcon,
@@ -18,6 +20,7 @@ import { IconTile, StatusPill, type Tone } from "@/components/espace/tones";
 import { withReturnTo } from "@/lib/espace/return-to";
 import { getDashboard, type HandledRequest, type NewRequest } from "@/lib/espace/dashboard";
 import { formatPhone, formatTimeAgo } from "@/lib/format";
+import { formatVisitShort } from "@/lib/requests/visit";
 import { RequestLinkPanel } from "./RequestLinkPanel";
 
 const HOME = "/espace";
@@ -101,7 +104,8 @@ async function Dashboard() {
 const HANDLED_STATUS: Record<HandledRequest["status"], { label: string; tone: Tone; Icon: typeof CheckIcon }> = {
   new: { label: "À traiter", tone: "orange", Icon: BellIcon },
   quoted: { label: "Devis envoyé", tone: "sky", Icon: DocumentIcon },
-  visit_proposed: { label: "Visite proposée", tone: "violet", Icon: MapPinIcon },
+  visit_proposed: { label: "Visite proposée", tone: "emerald", Icon: CalendarIcon },
+  shared: { label: "Mission partagée", tone: "violet", Icon: ForwardIcon },
   closed: { label: "Clôturée", tone: "stone", Icon: CheckIcon },
 };
 
@@ -123,7 +127,9 @@ function HandledRequestRow({ request, now }: { request: HandledRequest; now: Dat
           </p>
           <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-sm text-stone-500">
             <StatusPill tone={status.tone}>{status.label}</StatusPill>
-            {formatTimeAgo(request.created_at, now)}
+            {request.visit_at && request.status !== "shared"
+              ? `Visite ${formatVisitShort(request.visit_at)}`
+              : formatTimeAgo(request.created_at, now)}
           </p>
         </div>
         <ArrowRightIcon className="size-5 shrink-0 text-stone-400" />

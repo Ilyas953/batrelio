@@ -12,7 +12,7 @@ export async function getRequestDetail(requestId: string) {
 
   const { data: request, error } = await supabase
     .from("requests")
-    .select("id, source, status, customer_name, customer_phone, description, address, created_at, photos:request_photos(storage_path, created_at), quotes(id, status, number, total_cents, created_at)")
+    .select("id, source, status, customer_name, customer_phone, description, address, visit_at, created_at, company:companies(name), photos:request_photos(storage_path, created_at), quotes(id, status, number, total_cents, created_at), missions:shared_missions(status, created_at)")
     .eq("id", requestId)
     .maybeSingle();
   if (error) throw error;
@@ -25,8 +25,13 @@ export async function getRequestDetail(requestId: string) {
     ? await supabase.storage.from(PHOTO_BUCKET).createSignedUrls(paths, PHOTO_URL_LIFETIME_SECONDS)
     : { data: [] };
 
+  // One share per request at most (unique in the database).
+  const missions = Array.isArray(request.missions) ? request.missions : [request.missions].filter((mission) => mission !== null);
+
   return {
     ...request,
+    companyName: request.company?.name ?? "",
+    sharedMission: missions[0] ?? null,
     photoUrls: (signed ?? []).flatMap((photo) => (photo.signedUrl ? [photo.signedUrl] : [])),
   };
 }

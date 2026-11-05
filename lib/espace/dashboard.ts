@@ -26,7 +26,7 @@ export async function getDashboard() {
       .order("created_at", { ascending: false }),
     supabase
       .from("requests")
-      .select("id, status, customer_name, customer_phone, description, created_at")
+      .select("id, status, customer_name, customer_phone, description, visit_at, created_at")
       .neq("status", "new")
       .order("created_at", { ascending: false })
       .limit(RECENT_HANDLED_REQUESTS),

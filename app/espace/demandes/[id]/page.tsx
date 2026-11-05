@@ -2,12 +2,15 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { BackLink } from "@/components/espace/BackLink";
-import { CameraIcon, LinkIcon, MapPinIcon, MessageIcon, PhoneIcon, PhoneMissedIcon } from "@/components/landing/icons";
+import { CameraIcon, ForwardIcon, LinkIcon, MapPinIcon, MessageIcon, PhoneIcon, PhoneMissedIcon } from "@/components/landing/icons";
 import { QuoteStatusPill, QuoteStatusTile } from "@/components/espace/places";
 import { IconTile, type Tone } from "@/components/espace/tones";
 import { getRequestDetail } from "@/lib/espace/request-detail";
 import { formatPhone, formatPrice, formatTimeAgo } from "@/lib/format";
+import { MISSION_STATUS_FOR_ARTISAN } from "@/lib/missions/shared-mission";
+import { formatVisit, toVisitInputs, visitMessage } from "@/lib/requests/visit";
 import { MakeQuoteButton } from "./MakeQuoteButton";
+import { ShareMissionPanel, VisitPanel, type ExistingVisit } from "./RequestActions";
 
 // Preparing a quote with the AI can take several dozen seconds.
 export const maxDuration = 120;
@@ -52,7 +55,7 @@ async function RequestDetail({ requestId }: { requestId: string }) {
         Appeler le {formatPhone(request.customer_phone)}
       </a>
 
-      <QuotesSection request={request} />
+      <RequestActions request={request} />
 
       {request.description && (
         <section className="rounded-3xl bg-white p-5 sm:p-6">
@@ -100,9 +103,23 @@ async function RequestDetail({ requestId }: { requestId: string }) {
 
 type RequestWithQuotes = NonNullable<Awaited<ReturnType<typeof getRequestDetail>>>;
 
-function QuotesSection({ request }: { request: RequestWithQuotes }) {
+function toExistingVisit(request: RequestWithQuotes): ExistingVisit | null {
+  if (!request.visit_at) return null;
+  return {
+    label: formatVisit(request.visit_at),
+    ...toVisitInputs(request.visit_at),
+    message: {
+      shareText: visitMessage({ companyName: request.companyName, customerName: request.customer_name, visitAt: request.visit_at }),
+      customerPhone: request.customer_phone,
+    },
+  };
+}
+
+// Three answers to a request: a quote, a visit, or sharing the mission with Batrelio.
+function RequestActions({ request }: { request: RequestWithQuotes }) {
   const quotes = request.quotes.toSorted((a, b) => b.created_at.localeCompare(a.created_at));
   const draft = quotes.find((quote) => quote.status === "draft");
+  const mission = request.sharedMission;
 
   return (
     <section className="space-y-3">
@@ -129,16 +146,38 @@ function QuotesSection({ request }: { request: RequestWithQuotes }) {
           ))}
         </ul>
       )}
-      {draft ? (
-        <Link
-          href={`/espace/devis/${draft.id}`}
-          className="flex min-h-14 items-center justify-center rounded-2xl bg-stone-900 px-5 text-lg font-semibold text-white hover:bg-stone-700"
-        >
-          Reprendre le devis
-        </Link>
+      {mission ? (
+        <SharedMissionCard status={mission.status} />
       ) : (
-        <MakeQuoteButton requestId={request.id} label={quotes.length ? "Faire un autre devis" : "Faire le devis"} />
+        <>
+          {draft ? (
+            <Link
+              href={`/espace/devis/${draft.id}`}
+              className="flex min-h-14 items-center justify-center rounded-2xl bg-stone-900 px-5 text-lg font-semibold text-white hover:bg-stone-700"
+            >
+              Reprendre le devis
+            </Link>
+          ) : (
+            <MakeQuoteButton requestId={request.id} label={quotes.length ? "Faire un autre devis" : "Faire le devis"} />
+          )}
+          <VisitPanel requestId={request.id} existing={toExistingVisit(request)} minDate={toVisitInputs(new Date()).date} />
+          <ShareMissionPanel requestId={request.id} />
+        </>
       )}
+    </section>
+  );
+}
+
+function SharedMissionCard({ status }: { status: keyof typeof MISSION_STATUS_FOR_ARTISAN }) {
+  return (
+    <section className="flex items-start gap-4 rounded-3xl bg-violet-50 p-5 ring-1 ring-violet-200 sm:p-6">
+      <IconTile tone="violet">
+        <ForwardIcon />
+      </IconTile>
+      <div>
+        <p className="text-lg font-bold text-violet-950">Mission partagée</p>
+        <p className="mt-1 text-base text-violet-900">{MISSION_STATUS_FOR_ARTISAN[status]}</p>
+      </div>
     </section>
   );
 }

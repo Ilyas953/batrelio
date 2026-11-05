@@ -5,7 +5,7 @@ import { useFormStatus } from "react-dom";
 type TextFieldProps = {
   label: string;
   name: string;
-  type?: "text" | "email" | "password";
+  type?: "text" | "email" | "password" | "date" | "time";
   hint?: string;
 } & Omit<React.InputHTMLAttributes<HTMLInputElement>, "type" | "name">;
 

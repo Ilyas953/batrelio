@@ -18,14 +18,14 @@ export function createContext(base, actionIds) {
     console.log(`  ${ok ? "✓" : "✗"} ${label}${!ok && detail ? `  → ${detail}` : ""}`);
   };
 
-  async function makeUser({ test = false, companyName = "Entreprise E2E" } = {}) {
+  async function makeUser({ test = false, isAdmin = false, companyName = "Entreprise E2E" } = {}) {
     const email = `e2e-${randomBytes(4).toString("hex")}@example.com`;
     const password = randomBytes(18).toString("base64url");
     const { data, error } = await admin.auth.admin.createUser({
       email,
       password,
       email_confirm: true,
-      app_metadata: test ? { test_account: true } : {},
+      app_metadata: { ...(test ? { test_account: true } : {}), ...(isAdmin ? { role: "admin" } : {}) },
       user_metadata: { company_name: companyName, sms_sender_name: "E2ETEST", trade: "couvreur", terms_version: "e2e" },
     });
     if (error) throw error;

@@ -5,7 +5,8 @@ SaaS pour artisans (couvreurs, élagueurs, paysagistes, plombiers…). Promesse 
 
 Périmètre V1 (ne rien coder en dehors sans validation)
 Appel manqué un
-Hors V1 : dashboard de résultats, devis vocal, partage de mission, app mobile native.
+Ajouté à la V1 (validé le 5 novembre 2026) : proposer une visite, partager une mission (placée à la main depuis l'admin).
+Hors V1 : dashboard de résultats, devis vocal, app mobile native.
 
 Stack
 Next.js (App Router) + TypeScript strict, déployé sur Vercel 

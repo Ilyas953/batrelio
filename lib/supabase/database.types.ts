@@ -475,6 +475,7 @@ export type Database = {
           id: string
           source: Database["public"]["Enums"]["request_source"]
           status: Database["public"]["Enums"]["request_status"]
+          visit_at: string | null
         }
         Insert: {
           address?: string | null
@@ -486,6 +487,7 @@ export type Database = {
           id?: string
           source?: Database["public"]["Enums"]["request_source"]
           status?: Database["public"]["Enums"]["request_status"]
+          visit_at?: string | null
         }
         Update: {
           address?: string | null
@@ -497,6 +499,7 @@ export type Database = {
           id?: string
           source?: Database["public"]["Enums"]["request_source"]
           status?: Database["public"]["Enums"]["request_status"]
+          visit_at?: string | null
         }
         Relationships: [
           {
@@ -505,6 +508,47 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      shared_missions: {
+        Row: {
+          admin_note: string | null
+          artisan_note: string | null
+          company_id: string
+          created_at: string
+          id: string
+          request_id: string
+          status: Database["public"]["Enums"]["mission_status"]
+          updated_at: string
+        }
+        Insert: {
+          admin_note?: string | null
+          artisan_note?: string | null
+          company_id: string
+          created_at?: string
+          id?: string
+          request_id: string
+          status?: Database["public"]["Enums"]["mission_status"]
+          updated_at?: string
+        }
+        Update: {
+          admin_note?: string | null
+          artisan_note?: string | null
+          company_id?: string
+          created_at?: string
+          id?: string
+          request_id?: string
+          status?: Database["public"]["Enums"]["mission_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shared_missions_request_id_company_id_fkey"
+            columns: ["request_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "requests"
+            referencedColumns: ["id", "company_id"]
           },
         ]
       }
@@ -532,6 +576,7 @@ export type Database = {
         | "sa"
         | "snc"
         | "autre"
+      mission_status: "to_place" | "in_progress" | "placed" | "abandoned"
       quote_line_category: "labor" | "material" | "travel" | "waste" | "other"
       quote_status: "draft" | "sent" | "signed" | "declined"
       region:
@@ -554,7 +599,7 @@ export type Database = {
         | "la-reunion"
         | "mayotte"
       request_source: "missed_call" | "link"
-      request_status: "new" | "quoted" | "visit_proposed" | "closed"
+      request_status: "new" | "quoted" | "visit_proposed" | "closed" | "shared"
       trade:
         | "couvreur"
         | "elagueur"
@@ -695,6 +740,7 @@ export const Constants = {
   public: {
     Enums: {
       legal_form: ["ei", "eurl", "sarl", "sasu", "sas", "sa", "snc", "autre"],
+      mission_status: ["to_place", "in_progress", "placed", "abandoned"],
       quote_line_category: ["labor", "material", "travel", "waste", "other"],
       quote_status: ["draft", "sent", "signed", "declined"],
       region: [
@@ -718,7 +764,7 @@ export const Constants = {
         "mayotte",
       ],
       request_source: ["missed_call", "link"],
-      request_status: ["new", "quoted", "visit_proposed", "closed"],
+      request_status: ["new", "quoted", "visit_proposed", "closed", "shared"],
       trade: [
         "couvreur",
         "elagueur",
