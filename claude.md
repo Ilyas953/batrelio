@@ -21,13 +21,16 @@ proxy.ts : rafraîchit la session Supabase à chaque requête
 supabase/migrations/ : migrations SQL, une par changement de schéma
 Commandes
 npm run dev / build / lint
+npm run typecheck : vérifier les types (sans build)
+npm test : tests rapides de la logique métier (tests/unit, sans serveur ni base, quelques secondes)
+npm run test:e2e : après npm run build, parcours réels sur un serveur local et la base Supabase de .env.local (données jetables supprimées à la fin, aucun numéro acheté ni SMS envoyé)
 npm run db:new <nom> : créer une migration
 npm run db:push : appliquer les migrations sur le projet Supabase lié
 npm run db:types : régénérer lib/supabase/database.types.ts (après chaque migration)
 npm run db:link -- --project-ref <ref> : lier le projet (après npx supabase login)
 Règles de code
 Petites fonctions, noms explicites en anglais, textes de l'interface en français
-Après chaque modification : lancer lint, build et tests, et corriger les erreurs
+Après chaque modification : lancer lint, typecheck, npm test et build, et corriger les erreurs ; npm run test:e2e avant chaque mise en ligne. Toute nouvelle règle métier ou correction de bug vient avec son test
 Une fonctionnalité = une branche, commits fréquents
 Fournisseurs externes (SMS, appels, paiements) derrière une fonction unique, pour pouvoir en changer
 Sécurité (non négociable)

@@ -1,0 +1,21 @@
+# Runs on every push: types, lint and the fast tests. No secret is needed (nothing reaches Supabase).
+# The end-to-end suites (npm run test:e2e) run locally, against the Supabase project of .env.local.
+name: Vérifications
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
