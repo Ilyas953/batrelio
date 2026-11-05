@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
+import { BackLink } from "@/components/espace/BackLink";
 import { requireTestAccount } from "@/lib/auth/session";
 import { formatPhone } from "@/lib/format";
 import { randomFictionMobile } from "@/lib/simulation/fiction-numbers";
@@ -13,9 +14,12 @@ export const metadata: Metadata = {
 
 export default function SimulatorPage() {
   return (
-    <Suspense fallback={<p className="text-lg text-stone-500">Chargement…</p>}>
-      <Simulator />
-    </Suspense>
+    <>
+      <BackLink href="/espace/reglages" label="Réglages" />
+      <Suspense fallback={<p className="mt-4 text-lg text-stone-500">Chargement…</p>}>
+        <Simulator />
+      </Suspense>
+    </>
   );
 }
 
@@ -29,7 +33,7 @@ async function Simulator() {
     .maybeSingle();
 
   return (
-    <div className="space-y-6">
+    <div className="mt-4 space-y-6">
       <header>
         <h1 className="text-3xl font-extrabold tracking-tight text-stone-900">Simulateur</h1>
         <p className="mt-2 text-lg text-stone-600">

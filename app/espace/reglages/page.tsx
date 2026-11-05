@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { ArrowRightIcon, CheckIcon, DocumentIcon, MessageIcon, PhoneMissedIcon, SettingsIcon } from "@/components/landing/icons";
 import { signOut } from "@/lib/auth/actions";
+import { withReturnTo } from "@/lib/espace/return-to";
 import { getSetup } from "@/lib/espace/setup";
 import { formatPhone } from "@/lib/format";
 import { findGreetingVoice } from "@/lib/telephony/voices";
@@ -46,7 +47,7 @@ async function SettingsList() {
   return (
     <ul className="space-y-3">
       <SettingsRow
-        href="/espace/demarrage"
+        href={withReturnTo("/espace/demarrage", "/espace/reglages")}
         icon={setupDone ? <CheckIcon /> : <SettingsIcon />}
         title="Mise en place"
         detail={setupDone ? "Terminée : revoir le guide" : `${doneCount} étape${doneCount > 1 ? "s" : ""} sur ${steps.length} · à terminer`}

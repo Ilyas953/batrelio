@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import { BackLink } from "@/components/espace/BackLink";
 import { getRequestDetail } from "@/lib/espace/request-detail";
 import { formatPhone, formatPrice, formatTimeAgo } from "@/lib/format";
 import { MakeQuoteButton } from "./MakeQuoteButton";
@@ -13,9 +14,7 @@ const QUOTE_STATUS_LABELS = { draft: "Brouillon", sent: "Envoyé", signed: "Sign
 export default function RequestDetailPage({ params }: PageProps<"/espace/demandes/[id]">) {
   return (
     <>
-      <Link href="/espace" className="text-base font-semibold text-stone-500 hover:text-stone-900">
-        ← Demandes
-      </Link>
+      <BackLink href="/espace" label="Demandes" />
       <Suspense fallback={<p className="mt-8 text-lg text-stone-500">Chargement…</p>}>
         {params.then(({ id }) => (
           <RequestDetail requestId={id} />

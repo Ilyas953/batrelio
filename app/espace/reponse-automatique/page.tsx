@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
+import { ReturnBackLink } from "@/components/espace/BackLink";
+import { withReturnTo } from "@/lib/espace/return-to";
 import { requireUser } from "@/lib/auth/session";
 import { formatPhone, formatTimeAgo } from "@/lib/format";
 import type { Tables } from "@/lib/supabase/database.types";
@@ -16,13 +18,12 @@ import {
 } from "./AutoReplyControls";
 
 const RECENT_CALLS = 10;
+const PAGE = "/espace/reponse-automatique";
 
-export default function AutoReplyPage() {
+export default function AutoReplyPage({ searchParams }: PageProps<"/espace/reponse-automatique">) {
   return (
     <>
-      <Link href="/espace/reglages" className="text-base font-semibold text-stone-500 hover:text-stone-900">
-        ← Réglages
-      </Link>
+      <ReturnBackLink searchParams={searchParams} fallback="/espace/reglages" />
       <h1 className="mb-2 mt-4 text-3xl font-extrabold tracking-tight text-stone-900">Réponse automatique</h1>
       <p className="mb-8 text-lg text-stone-600">
         Quand vous ne décrochez pas, votre client entend un message à votre nom et reçoit un SMS pour vous décrire
@@ -59,7 +60,7 @@ async function AutoReplySettings() {
       <Card title="Votre message d'accueil">
         <p className="text-base text-stone-700">
           Voix et texte de votre message vocal, et message d&apos;envoi de vos devis.{" "}
-          <Link href="/espace/messages" className="font-semibold text-orange-700 underline">
+          <Link href={withReturnTo("/espace/messages", PAGE)} className="font-semibold text-orange-700 underline">
             Personnaliser
           </Link>
         </p>
@@ -102,7 +103,7 @@ function SenderCard({ company }: { company: Company }) {
     <Card title="Le SMS envoyé à vos clients">
       <p className="text-base text-stone-700">
         Nom d&apos;expéditeur : <strong className="font-mono">{company.sms_sender_name}</strong> ·{" "}
-        <Link href="/espace/entreprise" className="font-semibold text-orange-700 underline">
+        <Link href={withReturnTo("/espace/entreprise", PAGE)} className="font-semibold text-orange-700 underline">
           modifier
         </Link>
       </p>

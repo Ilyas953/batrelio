@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import { BackLink } from "@/components/espace/BackLink";
 import { ShareLinkButtons } from "@/components/ui/ShareLinkButtons";
 import { formatPrice } from "@/lib/format";
+import { withReturnTo } from "@/lib/espace/return-to";
 import { getQuoteForEditor, type EditorQuote } from "@/lib/quotes/queries";
 import { quoteShareText } from "@/lib/quotes/share-message";
 import { getSiteOrigin } from "@/lib/requests/site-origin";
@@ -13,9 +15,7 @@ const STATUS_LABELS = { draft: "Brouillon", sent: "Envoyé", signed: "Signé", d
 export default function QuotePage({ params }: PageProps<"/espace/devis/[id]">) {
   return (
     <>
-      <Link href="/espace/devis" className="text-base font-semibold text-stone-500 hover:text-stone-900">
-        ← Devis
-      </Link>
+      <BackLink href="/espace/devis" label="Devis" />
       <Suspense fallback={<p className="mt-8 text-lg text-stone-500">Chargement du devis…</p>}>
         {params.then(({ id }) => (
           <QuoteScreen quoteId={id} />
@@ -41,6 +41,9 @@ async function QuoteScreen({ quoteId }: { quoteId: string }) {
           {quote.title || "Nouveau devis"}
         </h1>
         {quote.customer_name && <p className="mt-1 text-base text-stone-600">Pour {quote.customer_name}</p>}
+        <Link href={`/espace/demandes/${quote.request_id}`} className="mt-2 inline-block text-base font-semibold text-orange-700 underline">
+          Voir la demande du client
+        </Link>
       </header>
 
       {quote.status === "draft" ? <QuoteEditor editor={editor} /> : <SentQuote editor={editor} />}
@@ -71,7 +74,7 @@ async function SentQuote({ editor }: { editor: EditorQuote }) {
           shareText: quoteShareText({ name: companyName, quote_message: quoteMessage }, url),
         }}
       />
-      <Link href="/espace/messages" className="block text-center text-base font-semibold text-orange-700 underline">
+      <Link href={withReturnTo("/espace/messages", `/espace/devis/${quote.id}`)} className="block text-center text-base font-semibold text-orange-700 underline">
         Modifier le message d&apos;envoi
       </Link>
     </section>

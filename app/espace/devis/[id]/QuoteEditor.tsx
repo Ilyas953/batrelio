@@ -28,6 +28,7 @@ import {
 } from "@/lib/quotes/totals";
 import { formatPrice } from "@/lib/format";
 import { deleteQuote, saveQuote, sendQuote } from "../actions";
+import { withReturnTo } from "@/lib/espace/return-to";
 
 type EditableLine = {
   key: string;
@@ -193,7 +194,7 @@ export function QuoteEditor({ editor }: { editor: EditorQuote }) {
 
       {editor.missingCompanyDetails.length > 0 && (
         <Link
-          href="/espace/entreprise"
+          href={withReturnTo("/espace/entreprise", `/espace/devis/${quote.id}`)}
           className="block rounded-3xl border-2 border-amber-200 bg-amber-50 p-5 text-base text-amber-900"
         >
           Pour envoyer ce devis, complétez d&apos;abord votre entreprise : il manque{" "}

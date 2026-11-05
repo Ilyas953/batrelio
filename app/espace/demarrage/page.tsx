@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
+import { ReturnBackLink } from "@/components/espace/BackLink";
 import { CheckIcon } from "@/components/landing/icons";
+import { returnLink, withReturnTo, type ReturnLink } from "@/lib/espace/return-to";
 import { getSetup, hasCompanyIdentity, type SetupStep, type SetupStepId } from "@/lib/espace/setup";
 import { formatPhone } from "@/lib/format";
 import type { Tables } from "@/lib/supabase/database.types";
@@ -13,7 +15,7 @@ export const metadata: Metadata = {
 };
 
 const GUIDE = "/espace/demarrage";
-const COMPANY_PAGE = `/espace/entreprise?retour=${GUIDE}`;
+const COMPANY_PAGE = withReturnTo("/espace/entreprise", GUIDE);
 
 const STEP_TITLES: Record<SetupStepId, string> = {
   company: "Votre entreprise",
@@ -23,24 +25,32 @@ const STEP_TITLES: Record<SetupStepId, string> = {
   test: "Faites un essai",
 };
 
-export default function SetupGuidePage() {
+// Reached from the Demandes tab (new artisans) or from Réglages: "later" goes back there.
+const DEFAULT_RETURN = "/espace";
+
+export default function SetupGuidePage({ searchParams }: PageProps<"/espace/demarrage">) {
   return (
-    <Suspense fallback={<p className="text-lg text-stone-500">Chargement…</p>}>
-      <SetupGuide />
-    </Suspense>
+    <>
+      <ReturnBackLink searchParams={searchParams} fallback={DEFAULT_RETURN} />
+      <Suspense fallback={<p className="mt-4 text-lg text-stone-500">Chargement…</p>}>
+        {searchParams.then((params) => (
+          <SetupGuide later={returnLink(params.retour, DEFAULT_RETURN)} />
+        ))}
+      </Suspense>
+    </>
   );
 }
 
-async function SetupGuide() {
+async function SetupGuide({ later }: { later: ReturnLink }) {
   const setup = await getSetup();
-  if (!setup) return <p className="text-lg text-stone-600">Aucune entreprise n&apos;est liée à ce compte.</p>;
+  if (!setup) return <p className="mt-4 text-lg text-stone-600">Aucune entreprise n&apos;est liée à ce compte.</p>;
 
   const { company, steps, doneCount, isTest } = setup;
   const currentStep = steps.find((step) => !step.done)?.id;
   const progress = Math.round((doneCount / steps.length) * 100);
 
   return (
-    <div className="space-y-6">
+    <div className="mt-4 space-y-6">
       <header>
         <h1 className="text-3xl font-extrabold tracking-tight text-stone-900">Mettez Batrelio en place</h1>
         <p className="mt-2 text-lg text-stone-600">5 étapes, une dizaine de minutes. Vous pouvez vous arrêter et reprendre quand vous voulez.</p>
@@ -67,7 +77,10 @@ async function SetupGuide() {
         ))}
       </ol>
 
-      <Link href="/espace" className="block text-center text-base font-semibold text-stone-500 underline">
+      <Link
+        href={currentStep ? later.href : "/espace"}
+        className="flex min-h-12 items-center justify-center text-base font-semibold text-stone-600 underline"
+      >
         {currentStep ? "Continuer plus tard" : "Voir mes demandes"}
       </Link>
     </div>
@@ -166,7 +179,7 @@ function StepContent({ step, company, isTest }: StepContentProps) {
           <p>
             Votre numéro : <strong className="text-stone-900">{formatPhone(company.phone_number ?? "")}</strong> · SMS
             envoyés au nom de <strong className="font-mono text-stone-900">{company.sms_sender_name}</strong> ·{" "}
-            <Link href="/espace/messages" className={SECONDARY_LINK}>
+            <Link href={withReturnTo("/espace/messages", GUIDE)} className={SECONDARY_LINK}>
               personnaliser le message vocal
             </Link>
           </p>
@@ -176,7 +189,7 @@ function StepContent({ step, company, isTest }: StepContentProps) {
         return (
           <>
             <p>Votre réponse automatique est en pause : vos clients ne reçoivent pas de SMS.</p>
-            <Link href="/espace/reponse-automatique" className={PRIMARY_LINK}>
+            <Link href={withReturnTo("/espace/reponse-automatique", GUIDE)} className={PRIMARY_LINK}>
               La réactiver
             </Link>
           </>
@@ -221,7 +234,7 @@ function StepContent({ step, company, isTest }: StepContentProps) {
         return (
           <p>
             Premier appel reçu : tout fonctionne.{" "}
-            <Link href="/espace/reponse-automatique" className={SECONDARY_LINK}>
+            <Link href={withReturnTo("/espace/reponse-automatique", GUIDE)} className={SECONDARY_LINK}>
               Voir l&apos;historique
             </Link>
           </p>

@@ -11,9 +11,12 @@ import {
   PhoneMissedIcon,
 } from "@/components/landing/icons";
 import { Section } from "@/components/espace/lists";
+import { withReturnTo } from "@/lib/espace/return-to";
 import { getDashboard, type HandledRequest, type NewRequest } from "@/lib/espace/dashboard";
 import { formatPhone, formatTimeAgo } from "@/lib/format";
 import { RequestLinkPanel } from "./RequestLinkPanel";
+
+const HOME = "/espace";
 
 export default function ArtisanSpacePage() {
   return (
@@ -49,11 +52,6 @@ async function Dashboard() {
         missingQuoteDetails.length > 0 && <MissingDetailsBanner missing={missingQuoteDetails} />
       )}
 
-      <div className="grid gap-3 sm:grid-cols-2">
-        {autoReply && <AutoReplyTile phoneNumber={autoReply.phoneNumber} enabled={autoReply.enabled} />}
-        <RequestLinkPanel />
-      </div>
-
       <Section
         id="a-traiter"
         title="À traiter"
@@ -69,6 +67,12 @@ async function Dashboard() {
           <RequestCard key={request.id} request={request} now={now} />
         ))}
       </Section>
+
+      {/* After the requests: on a phone, what the artisan came for is visible without scrolling. */}
+      <div className="grid gap-3 sm:grid-cols-2">
+        {autoReply && <AutoReplyTile phoneNumber={autoReply.phoneNumber} enabled={autoReply.enabled} />}
+        <RequestLinkPanel />
+      </div>
 
       {handledRequests.length > 0 && (
         <Section
@@ -188,7 +192,7 @@ function SetupCard({ doneCount, total }: { doneCount: number; total: number }) {
 function MissingDetailsBanner({ missing }: { missing: string[] }) {
   return (
     <Link
-      href="/espace/entreprise?retour=/espace"
+      href={withReturnTo("/espace/entreprise", HOME)}
       className="flex items-center gap-4 rounded-3xl border-2 border-amber-200 bg-amber-50 p-5 transition-colors hover:border-amber-300"
     >
       <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-amber-100 text-amber-800">
@@ -212,7 +216,7 @@ function AutoReplyTile({ phoneNumber, enabled }: { phoneNumber: string | null; e
 
   return (
     <Link
-      href="/espace/reponse-automatique"
+      href={withReturnTo("/espace/reponse-automatique", HOME)}
       className="flex items-start gap-4 rounded-3xl bg-white p-5 shadow-sm ring-1 ring-stone-200 transition hover:ring-stone-300"
     >
       <span
@@ -348,10 +352,6 @@ function DashboardSkeleton() {
   return (
     <div aria-busy="true" aria-label="Chargement de votre tableau de bord" className="animate-pulse space-y-8">
       <div className="h-52 rounded-3xl bg-stone-200" />
-      <div className="grid gap-3 sm:grid-cols-2">
-        <div className="h-28 rounded-3xl bg-stone-200" />
-        <div className="h-28 rounded-3xl bg-stone-200" />
-      </div>
       <div className="space-y-3">
         <div className="h-7 w-40 rounded-full bg-stone-200" />
         <div className="h-44 rounded-3xl bg-stone-200" />

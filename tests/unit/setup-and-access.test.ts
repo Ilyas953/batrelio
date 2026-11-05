@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { hasAdminRole, isTestAccount } from "@/lib/auth/session";
-import { safeReturnTo } from "@/lib/espace/return-to";
+import { returnLink, safeReturnTo, withReturnTo } from "@/lib/espace/return-to";
 import { computeSetupSteps, hasCompanyIdentity } from "@/lib/espace/setup";
 import { blankCompany, IDENTIFIED, INSURED } from "./fixtures";
 
@@ -57,6 +57,24 @@ describe("return address after a form", () => {
     expect(safeReturnTo("/admin", "/espace")).toBe("/espace");
     expect(safeReturnTo(undefined, "/espace")).toBe("/espace");
     expect(safeReturnTo(["/espace/demarrage"], "/espace")).toBe("/espace");
+    expect(safeReturnTo("/espace/devis/../../admin", "/espace")).toBe("/espace");
+    expect(safeReturnTo("/espace/devis/not-a-quote", "/espace")).toBe("/espace");
+    expect(safeReturnTo("constructor", "/espace")).toBe("/espace");
+  });
+
+  it("names the page on the back link", () => {
+    const quotePage = "/espace/devis/0b6f1c2e-6a4f-4d3b-9c1e-2f3a4b5c6d7e";
+    expect(returnLink(quotePage, "/espace/reglages")).toEqual({ href: quotePage, label: "Le devis" });
+    expect(returnLink("/espace/reponse-automatique", "/espace/reglages")).toEqual({
+      href: "/espace/reponse-automatique",
+      label: "Réponse automatique",
+    });
+    expect(returnLink(undefined, "/espace/reglages")).toEqual({ href: "/espace/reglages", label: "Réglages" });
+    expect(returnLink("https://evil.example", "/espace")).toEqual({ href: "/espace", label: "Demandes" });
+  });
+
+  it("builds a link that brings the artisan back", () => {
+    expect(withReturnTo("/espace/messages", "/espace/demarrage")).toBe("/espace/messages?retour=/espace/demarrage");
   });
 });
 

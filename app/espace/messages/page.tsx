@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Suspense } from "react";
+import { ReturnBackLink } from "@/components/espace/BackLink";
 import { isTestAccount, requireUser } from "@/lib/auth/session";
 import { formatPhone } from "@/lib/format";
 import { defaultQuoteMessage } from "@/lib/quotes/share-message";
@@ -13,12 +13,10 @@ export const metadata: Metadata = {
   robots: { index: false },
 };
 
-export default function MessagesPage() {
+export default function MessagesPage({ searchParams }: PageProps<"/espace/messages">) {
   return (
     <>
-      <Link href="/espace/reglages" className="text-base font-semibold text-stone-500 hover:text-stone-900">
-        ← Réglages
-      </Link>
+      <ReturnBackLink searchParams={searchParams} fallback="/espace/reglages" />
       <h1 className="mb-2 mt-4 text-3xl font-extrabold tracking-tight text-stone-900">Vos messages</h1>
       <p className="mb-8 text-lg text-stone-600">
         Tout fonctionne déjà avec nos messages. Personnalisez-les seulement si vous le souhaitez.
