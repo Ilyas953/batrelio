@@ -12,7 +12,7 @@ export type SetupStep = { id: SetupStepId; done: boolean };
 
 type Company = Tables<"companies">;
 
-function hasCompanyIdentity(company: Company): boolean {
+export function hasCompanyIdentity(company: Company): boolean {
   return Boolean(
     company.siret &&
       company.legal_name &&

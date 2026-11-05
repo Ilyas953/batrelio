@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { toSmsSenderNameOrFallback } from "@/lib/company/sms-sender";
 import { isTrade, type Trade } from "@/lib/company/details";
 import { LEGAL_VERSION } from "@/lib/legal/publisher";
+import { TOO_MANY_ATTEMPTS, isAllowedFromThisVisitor } from "@/lib/security/rate-limit";
 import { createClient } from "@/lib/supabase/server";
 
 const MIN_PASSWORD_LENGTH = 8;
@@ -69,6 +70,7 @@ export async function signUp(_previous: SignUpState, formData: FormData): Promis
   const acceptedTerms = formData.get("acceptTerms") === "on";
   const validationError = findSignUpValidationError(values, password, acceptedTerms);
   if (validationError) return { error: validationError, values };
+  if (!(await isAllowedFromThisVisitor("signUpPerIp"))) return { error: TOO_MANY_ATTEMPTS, values };
 
   const origin = (await headers()).get("origin") ?? "";
   const supabase = await createClient();

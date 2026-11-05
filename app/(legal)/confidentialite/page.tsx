@@ -52,9 +52,9 @@ const PROCESSING_ROWS = [
   ],
   [
     "Sécuriser le service et prévenir la fraude",
-    "Journaux de connexion (date, heure, adresse IP, appareil)",
+    "Journaux de connexion (date, heure, adresse IP, appareil) ; compteurs de tentatives de connexion, d'inscription et d'envoi de demande, où l'adresse IP et l'e-mail ne figurent que sous forme hachée (irréversible)",
     "Intérêt légitime (6.1.f)",
-    "12 mois maximum, conformément aux recommandations de la CNIL",
+    "12 mois maximum pour les journaux, conformément aux recommandations de la CNIL ; 24 heures pour les compteurs de tentatives",
   ],
 ];
 

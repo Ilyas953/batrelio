@@ -3,6 +3,8 @@
 import { redirect } from "next/navigation";
 import { isTestAccount, requireUser } from "@/lib/auth/session";
 import { safeReturnTo } from "@/lib/espace/return-to";
+import { hasCompanyIdentity } from "@/lib/espace/setup";
+import { consumeRateLimit } from "@/lib/security/rate-limit";
 import { toE164Phone } from "@/lib/company/legal";
 import { assignFictionNumber } from "@/lib/simulation/test-accounts";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -15,7 +17,21 @@ const PROVISION_ERRORS: Record<Exclude<ProvisionResult["status"], "ok">, string>
   no_regulatory_bundle:
     "Les numéros Batrelio ne sont pas encore disponibles : le dossier réglementaire est en cours de validation. Réessayez dans quelques jours.",
   no_number_available: "Aucun numéro n'est disponible pour le moment. Réessayez un peu plus tard.",
+  purchase_limit_reached:
+    "Beaucoup d'activations aujourd'hui : votre numéro sera disponible demain. Pour aller plus vite, écrivez-nous à contact@batrelio.com.",
 };
+
+const DEFAULT_NUMBER_PURCHASES_PER_DAY = 3;
+const DAY_SECONDS = 24 * 60 * 60;
+
+// Each number is billed every month: a burst of sign-ups must not buy dozens of them.
+// The cap is shared by everybody; numbers already owned and free are reused without counting.
+async function mayPurchaseNumber(): Promise<boolean> {
+  const limit = Number(process.env.MAX_NUMBER_PURCHASES_PER_DAY) || DEFAULT_NUMBER_PURCHASES_PER_DAY;
+  const allowed = await consumeRateLimit("numberPurchase", "all-accounts", { limit, windowSeconds: DAY_SECONDS });
+  if (!allowed) console.error(`Achat de numéro refusé : plafond de ${limit} achats par jour atteint.`);
+  return allowed;
+}
 
 async function assignedNumbers(): Promise<Set<string>> {
   const { data, error } = await createAdminClient().from("companies").select("phone_number").not("phone_number", "is", null);
@@ -40,7 +56,7 @@ async function assignProviderNumber(company: {
       return null;
     }
 
-    const result = await provisionPhoneNumber(siteUrl, await assignedNumbers());
+    const result = await provisionPhoneNumber(siteUrl, await assignedNumbers(), mayPurchaseNumber);
     if (result.status !== "ok") return PROVISION_ERRORS[result.status];
 
     // Only the server writes the number; the condition keeps a double tap from overwriting it.
@@ -65,8 +81,12 @@ async function assignTestNumber(company: { id: string; phone_number: string | nu
 export async function activateAutoReply(returnTo?: string): Promise<{ error: string }> {
   const { supabase, claims } = await requireUser();
 
-  const { data: company } = await supabase.from("companies").select("id, phone_number, phone_number_sid").maybeSingle();
+  const { data: company } = await supabase.from("companies").select("*").maybeSingle();
   if (!company) return { error: "Aucune entreprise n'est liée à ce compte." };
+  // A number is only given to an identified business (and the operator requires one).
+  if (!company.phone_number && !hasCompanyIdentity(company)) {
+    return { error: "Renseignez d'abord votre entreprise (SIRET, adresse et TVA) : un numéro n'est attribué qu'à une entreprise identifiée." };
+  }
 
   const assignError = isTestAccount(claims.app_metadata)
     ? await assignTestNumber(company)

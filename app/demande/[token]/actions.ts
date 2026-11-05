@@ -1,6 +1,7 @@
 "use server";
 
 import { toE164Phone } from "@/lib/company/legal";
+import { TOO_MANY_ATTEMPTS, isAllowedFromThisVisitor } from "@/lib/security/rate-limit";
 import {
   MAX_ADDRESS_LENGTH,
   MAX_CUSTOMER_NAME_LENGTH,
@@ -60,6 +61,7 @@ async function storePhotos(supabase: Admin, companyId: string, requestId: string
 // Public: the customer has no account. The single-use token is the only credential.
 export async function submitCustomerRequest(token: string, formData: FormData): Promise<SubmitRequestResult> {
   if (!isWellFormedToken(token)) return { error: "Ce lien n'est pas valide." };
+  if (!(await isAllowedFromThisVisitor("customerRequestPerIp"))) return { error: TOO_MANY_ATTEMPTS };
 
   const request = readCustomerRequest(formData);
   if ("error" in request) return request;

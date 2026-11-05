@@ -72,7 +72,7 @@ Les valeurs publiques correspondantes sont dans `lib/legal/publisher.ts`.
 |---|---|
 | Finalité | Sécuriser le service, détecter les abus |
 | Base légale | Intérêt légitime (art. 6.1.f) |
-| Données | Journaux de connexion (date, IP, appareil) tenus par Supabase et Vercel |
+| Données | Journaux de connexion (date, IP, appareil) tenus par Supabase et Vercel ; compteurs de tentatives (connexion, inscription, formulaire client) : empreinte SHA-256 de l'IP ou de l'e-mail, jamais en clair, effacés sous 24 h |
 | Durée | 12 mois maximum (recommandation CNIL : 6 mois à 1 an) |
 
 ### Cookies

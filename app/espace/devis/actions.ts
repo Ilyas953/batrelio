@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth/session";
+import type { Tables } from "@/lib/supabase/database.types";
 import { listMissingQuoteDetails } from "@/lib/company/legal";
 import { TRADE_LABELS } from "@/lib/company/details";
 import { DEFAULT_DEPOSIT_PERCENT } from "@/lib/quotes/catalog";
@@ -31,8 +32,13 @@ function defaultLinesFor(draft: QuoteDraft | null, vatRateBp: number) {
   return lines.map((line, position) => ({ ...line, position, unit_price_cents: null, vat_rate_bp: vatRateBp }));
 }
 
-function toAiNotes(draft: QuoteDraft | null): string {
-  if (!draft) return "La proposition automatique n'a pas pu être préparée : complétez les lignes vous-même.";
+const NO_SUGGESTION_NOTES = {
+  unavailable: "La proposition automatique n'a pas pu être préparée : complétez les lignes vous-même.",
+  quota: "Vous avez atteint la limite de propositions automatiques pour aujourd'hui : complétez les lignes vous-même. Elle revient demain.",
+};
+
+function toAiNotes(draft: QuoteDraft | null, withinQuota: boolean): string {
+  if (!draft) return NO_SUGGESTION_NOTES[withinQuota ? "unavailable" : "quota"];
   const points = [...draft.pointsToCheck];
   if (draft.visitRecommended) points.unshift("Une visite semble nécessaire pour chiffrer précisément.");
   return points.join("\n").slice(0, 2000);
@@ -42,6 +48,40 @@ async function signedPhotoUrls(supabase: Supabase, paths: string[]): Promise<str
   if (paths.length === 0) return [];
   const { data } = await supabase.storage.from(PHOTO_BUCKET).createSignedUrls(paths, PHOTO_URL_LIFETIME_SECONDS);
   return (data ?? []).flatMap((photo) => (photo.signedUrl ? [photo.signedUrl] : []));
+}
+
+// Each suggestion is paid for: past the daily quota, the artisan gets a blank draft instead.
+const AI_QUOTES_PER_DAY = 30;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+async function isWithinDailyAiQuota(supabase: Supabase): Promise<boolean> {
+  // RLS: only the artisan's own quotes are counted. Every quote starts from "Faire le devis".
+  const { count, error } = await supabase
+    .from("quotes")
+    .select("id", { count: "exact", head: true })
+    .gte("created_at", new Date(Date.now() - DAY_MS).toISOString());
+  if (error) return false;
+  if ((count ?? 0) >= AI_QUOTES_PER_DAY) {
+    console.error(`Quota de devis IA atteint (${AI_QUOTES_PER_DAY} par jour) : brouillon vide.`);
+    return false;
+  }
+  return true;
+}
+
+async function suggestDraftFor(
+  supabase: Supabase,
+  company: Tables<"companies">,
+  request: { description: string | null; address: string | null; photos: { storage_path: string }[] },
+): Promise<QuoteDraft | null> {
+  const suggestion = await suggestQuoteDraft({
+    companyName: company.name,
+    trade: company.trade ? TRADE_LABELS[company.trade] : null,
+    description: request.description,
+    address: request.address,
+    photoUrls: await signedPhotoUrls(supabase, request.photos.map((photo) => photo.storage_path)),
+  });
+  if (suggestion.status !== "ok") console.error(`Proposition de devis indisponible : ${suggestion.reason}`);
+  return suggestion.status === "ok" ? suggestion.draft : null;
 }
 
 // "Faire le devis": an AI-suggested draft from the request, priced by the artisan afterwards.
@@ -64,15 +104,8 @@ export async function createQuoteFromRequest(requestId: string): Promise<{ error
   const existingDraft = request.quotes.find((quote) => quote.status === "draft");
   if (existingDraft) redirect(`/espace/devis/${existingDraft.id}`);
 
-  const suggestion = await suggestQuoteDraft({
-    companyName: company.name,
-    trade: company.trade ? TRADE_LABELS[company.trade] : null,
-    description: request.description,
-    address: request.address,
-    photoUrls: await signedPhotoUrls(supabase, request.photos.map((photo) => photo.storage_path)),
-  });
-  if (suggestion.status !== "ok") console.error(`Proposition de devis indisponible : ${suggestion.reason}`);
-  const draft = suggestion.status === "ok" ? suggestion.draft : null;
+  const withinQuota = await isWithinDailyAiQuota(supabase);
+  const draft = withinQuota ? await suggestDraftFor(supabase, company, request) : null;
 
   const { data: quote, error } = await supabase
     .from("quotes")
@@ -85,7 +118,7 @@ export async function createQuoteFromRequest(requestId: string): Promise<{ error
       deposit_percent: DEFAULT_DEPOSIT_PERCENT,
       work_duration: draft?.estimatedDuration ?? null,
       waste_management: draft?.wasteManagement ?? null,
-      ai_notes: toAiNotes(draft),
+      ai_notes: toAiNotes(draft, withinQuota),
     })
     .select("id")
     .single();

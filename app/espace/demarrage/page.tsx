@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { CheckIcon } from "@/components/landing/icons";
-import { getSetup, type SetupStep, type SetupStepId } from "@/lib/espace/setup";
+import { getSetup, hasCompanyIdentity, type SetupStep, type SetupStepId } from "@/lib/espace/setup";
 import { formatPhone } from "@/lib/format";
 import type { Tables } from "@/lib/supabase/database.types";
 import { ActivateButton, ConfirmForwardingButton, ForwardingCode } from "../reponse-automatique/AutoReplyControls";
@@ -178,6 +178,9 @@ function StepContent({ step, company, isTest }: StepContentProps) {
             </Link>
           </>
         );
+      }
+      if (!hasCompanyIdentity(company)) {
+        return <p>Renseignez d&apos;abord votre entreprise (étape 1) : un numéro n&apos;est attribué qu&apos;à une entreprise identifiée.</p>;
       }
       return (
         <>

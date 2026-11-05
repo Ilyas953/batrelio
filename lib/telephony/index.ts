@@ -26,10 +26,16 @@ export type ProvisionedNumber = { phoneNumber: string; sid: string };
 export type ProvisionResult =
   | { status: "ok"; number: ProvisionedNumber }
   | { status: "no_regulatory_bundle" }
-  | { status: "no_number_available" };
+  | { status: "no_number_available" }
+  | { status: "purchase_limit_reached" };
 
-// Reuses a number bought in the console and not given to anyone yet; otherwise buys one.
-export async function provisionPhoneNumber(siteUrl: string, assignedNumbers: Set<string>): Promise<ProvisionResult> {
+// Reuses a number bought in the console and not given to anyone yet; otherwise buys one,
+// if mayPurchase (the caller's spending limit) agrees.
+export async function provisionPhoneNumber(
+  siteUrl: string,
+  assignedNumbers: Set<string>,
+  mayPurchase: () => Promise<boolean>,
+): Promise<ProvisionResult> {
   const voiceUrl = webhookUrl(siteUrl, WEBHOOK_PATHS.voice);
 
   const freeNumber = (await listOwnedNumbers()).find((number) => !assignedNumbers.has(number.phone_number));
@@ -43,6 +49,7 @@ export async function provisionPhoneNumber(siteUrl: string, assignedNumbers: Set
 
   const available = await findAvailableFrenchNumber(numberPrefix);
   if (!available) return { status: "no_number_available" };
+  if (!(await mayPurchase())) return { status: "purchase_limit_reached" };
 
   const purchased = await purchaseNumber(available, voiceUrl, bundleSid, addressSid);
   return { status: "ok", number: { phoneNumber: purchased.phone_number, sid: purchased.sid } };
