@@ -1,8 +1,8 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Tables } from "@/lib/supabase/database.types";
-import { chooseSmsSender, sendSms } from "./index";
-import { missedCallSms } from "./messages";
+import { chooseSmsSender, sendSms, type SentSms } from "./index";
+import { greetingForHiddenCaller, greetingWithSms, greetingWithoutSms, missedCallSms } from "./messages";
 import { isFrenchMobile, isIdentifiedCaller } from "./phone-rules";
 import type { SmsStatus } from "./sms-status";
 
@@ -38,6 +38,13 @@ export function decideSms(company: AnsweringCompany, callerPhone: string | undef
   return "send";
 }
 
+// What the caller hears, decided before the request is created.
+export function chooseGreeting(decision: SmsDecision, companyName: string): string {
+  if (decision === "send") return greetingWithSms(companyName);
+  if (decision === "skipped_anonymous") return greetingForHiddenCaller(companyName);
+  return greetingWithoutSms(companyName);
+}
+
 async function findRecentRequestId(supabase: Admin, companyId: string, callerPhone: string): Promise<string | null> {
   const since = new Date(Date.now() - RECENT_CALL_WINDOW_MS).toISOString();
   const { data } = await supabase
@@ -71,16 +78,26 @@ async function createRequestWithLink(supabase: Admin, companyId: string, callerP
   return { requestId: request.id, token: link.token };
 }
 
+export type SmsDelivery = (to: string, from: string, body: string, siteUrl: string) => Promise<SentSms>;
+
+// What happened to the call, for the simulator. Null when the call was already handled.
+export type MissedCallOutcome = {
+  status: SmsStatus;
+  sms?: { from: string; body: string; requestUrl: string };
+};
+
 // Runs after the provider got the greeting. Every outcome is recorded in missed_calls,
 // so the artisan sees the call even when no SMS could be sent.
+// The simulator passes its own deliverSms: everything else runs exactly as for a real call.
 export async function handleMissedCall(params: {
   company: AnsweringCompany;
   callSid: string;
   callerPhone: string | undefined;
   isExcluded: boolean;
   siteUrl: string;
-}): Promise<void> {
-  const { company, callSid, siteUrl } = params;
+  deliverSms?: SmsDelivery;
+}): Promise<MissedCallOutcome | null> {
+  const { company, callSid, siteUrl, deliverSms = sendSms } = params;
   const callerPhone = isIdentifiedCaller(params.callerPhone) ? params.callerPhone : null;
   const supabase = createAdminClient();
 
@@ -90,42 +107,37 @@ export async function handleMissedCall(params: {
     .insert({ company_id: company.id, call_sid: callSid, caller_phone: callerPhone })
     .select("id")
     .single();
-  if (error) return;
+  if (error) return null;
 
-  const recordOutcome = (fields: { sms_status: SmsStatus; request_id?: string; sms_sid?: string }) =>
-    supabase.from("missed_calls").update(fields).eq("id", call.id);
+  const recordOutcome = async (fields: { sms_status: SmsStatus; request_id?: string; sms_sid?: string }) => {
+    await supabase.from("missed_calls").update(fields).eq("id", call.id);
+    return { status: fields.sms_status };
+  };
 
-  if (!callerPhone) {
-    await recordOutcome({ sms_status: "skipped_anonymous" });
-    return;
-  }
+  if (!callerPhone) return recordOutcome({ sms_status: "skipped_anonymous" });
 
   const decision = decideSms(company, callerPhone, params.isExcluded);
   // Not a customer: no request in "À traiter", only the line in the call history.
   if (decision === "skipped_own_number" || decision === "skipped_excluded") {
-    await recordOutcome({ sms_status: decision });
-    return;
+    return recordOutcome({ sms_status: decision });
   }
 
   const recentRequestId = await findRecentRequestId(supabase, company.id, callerPhone);
-  if (recentRequestId) {
-    await recordOutcome({ sms_status: "skipped_recent", request_id: recentRequestId });
-    return;
-  }
+  if (recentRequestId) return recordOutcome({ sms_status: "skipped_recent", request_id: recentRequestId });
 
   // The artisan sees every customer in "À traiter", SMS or not, to call them back.
   const { requestId, token } = await createRequestWithLink(supabase, company.id, callerPhone);
-  if (decision !== "send") {
-    await recordOutcome({ sms_status: decision, request_id: requestId });
-    return;
+  if (decision !== "send") return recordOutcome({ sms_status: decision, request_id: requestId });
+
+  const requestUrl = `${siteUrl}/demande/${token}`;
+  const from = chooseSmsSender(company);
+  const body = missedCallSms(company.name, requestUrl);
+  const sms = await deliverSms(callerPhone, from, body, siteUrl);
+  if (sms.status === "failed") {
+    console.error(`SMS non envoyé pour l'appel ${callSid} : ${sms.reason}`);
+    return recordOutcome({ sms_status: "failed", request_id: requestId });
   }
 
-  const body = missedCallSms(company.name, `${siteUrl}/demande/${token}`);
-  const sms = await sendSms(callerPhone, chooseSmsSender(company), body, siteUrl);
-  await recordOutcome(
-    sms.status === "sent"
-      ? { sms_status: "sent", sms_sid: sms.sid, request_id: requestId }
-      : { sms_status: "failed", request_id: requestId },
-  );
-  if (sms.status === "failed") console.error(`SMS non envoyé pour l'appel ${callSid} : ${sms.reason}`);
+  await recordOutcome({ sms_status: "sent", sms_sid: sms.sid, request_id: requestId });
+  return { status: "sent", sms: { from, body, requestUrl } };
 }

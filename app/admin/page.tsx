@@ -4,6 +4,7 @@ import { listAccounts, type Account } from "@/lib/admin/accounts";
 import { REGION_LABELS, TRADE_LABELS, formatSiret } from "@/lib/company/details";
 import { formatPhone } from "@/lib/format";
 import { setSenderApproval } from "./comptes/actions";
+import { TestAccountPanel } from "./simulation/TestAccountPanel";
 
 const dateFormatter = new Intl.DateTimeFormat("fr-FR", {
   dateStyle: "medium",
@@ -37,11 +38,17 @@ async function AccountList() {
   const accounts = await listAccounts();
 
   if (accounts.length === 0) {
-    return <p className="text-lg text-stone-600">Aucun compte pour l&apos;instant.</p>;
+    return (
+      <>
+        <TestAccountPanel testAccountCount={0} />
+        <p className="text-lg text-stone-600">Aucun compte pour l&apos;instant.</p>
+      </>
+    );
   }
 
   return (
     <>
+      <TestAccountPanel testAccountCount={accounts.filter((account) => account.isTestAccount).length} />
       <p className="mb-4 text-base text-stone-500">
         {accounts.length} compte{accounts.length > 1 ? "s" : ""}
       </p>
@@ -67,6 +74,9 @@ function AccountCard({ account }: { account: Account }) {
               <span className="rounded-full bg-orange-100 px-3 py-0.5 text-sm font-semibold text-orange-800">
                 Admin
               </span>
+            )}
+            {account.isTestAccount && (
+              <span className="rounded-full bg-sky-100 px-3 py-0.5 text-sm font-semibold text-sky-800">Test</span>
             )}
           </div>
           <p className="mt-1 break-all text-base text-stone-600">{account.email}</p>

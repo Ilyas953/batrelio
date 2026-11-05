@@ -1,9 +1,10 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { requireUser } from "@/lib/auth/session";
+import { isTestAccount, requireUser } from "@/lib/auth/session";
 import { safeReturnTo } from "@/lib/espace/return-to";
 import { toE164Phone } from "@/lib/company/legal";
+import { assignFictionNumber } from "@/lib/simulation/test-accounts";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { connectPhoneNumber, provisionPhoneNumber, type ProvisionResult } from "@/lib/telephony";
 import { getPublicSiteUrl, isReachableFromInternet } from "@/lib/telephony/config";
@@ -22,35 +23,55 @@ async function assignedNumbers(): Promise<Set<string>> {
   return new Set(data.flatMap((company) => (company.phone_number ? [company.phone_number] : [])));
 }
 
-export async function activateAutoReply(returnTo?: string): Promise<{ error: string }> {
-  const { supabase } = await requireUser();
-
+// Gives the company a provider number (reused or bought) pointed to our webhook.
+async function assignProviderNumber(company: {
+  id: string;
+  phone_number: string | null;
+  phone_number_sid: string | null;
+}): Promise<string | null> {
   const siteUrl = getPublicSiteUrl();
   if (!siteUrl || !isReachableFromInternet(siteUrl)) {
-    return { error: "La réponse automatique n'est pas encore disponible : l'adresse publique du site (SITE_URL) n'est pas configurée." };
+    return "La réponse automatique n'est pas encore disponible : l'adresse publique du site (SITE_URL) n'est pas configurée.";
   }
-
-  const { data: company } = await supabase.from("companies").select("id, phone_number, phone_number_sid").maybeSingle();
-  if (!company) return { error: "Aucune entreprise n'est liée à ce compte." };
 
   try {
     if (company.phone_number && company.phone_number_sid) {
       await connectPhoneNumber(company.phone_number_sid, siteUrl);
-    } else {
-      const result = await provisionPhoneNumber(siteUrl, await assignedNumbers());
-      if (result.status !== "ok") return { error: PROVISION_ERRORS[result.status] };
-
-      // Only the server writes the number; the condition keeps a double tap from overwriting it.
-      await createAdminClient()
-        .from("companies")
-        .update({ phone_number: result.number.phoneNumber, phone_number_sid: result.number.sid })
-        .eq("id", company.id)
-        .is("phone_number", null);
+      return null;
     }
+
+    const result = await provisionPhoneNumber(siteUrl, await assignedNumbers());
+    if (result.status !== "ok") return PROVISION_ERRORS[result.status];
+
+    // Only the server writes the number; the condition keeps a double tap from overwriting it.
+    await createAdminClient()
+      .from("companies")
+      .update({ phone_number: result.number.phoneNumber, phone_number_sid: result.number.sid })
+      .eq("id", company.id)
+      .is("phone_number", null);
+    return null;
   } catch (error) {
     console.error("Attribution du numéro impossible :", error);
-    return { error: "Le numéro n'a pas pu être attribué. Réessayez dans un instant." };
+    return "Le numéro n'a pas pu être attribué. Réessayez dans un instant.";
   }
+}
+
+// Test accounts get a fictional number: nothing is bought from the provider.
+async function assignTestNumber(company: { id: string; phone_number: string | null }): Promise<string | null> {
+  if (company.phone_number) return null;
+  return (await assignFictionNumber(company.id)) ? null : "Le numéro fictif n'a pas pu être attribué. Réessayez.";
+}
+
+export async function activateAutoReply(returnTo?: string): Promise<{ error: string }> {
+  const { supabase, claims } = await requireUser();
+
+  const { data: company } = await supabase.from("companies").select("id, phone_number, phone_number_sid").maybeSingle();
+  if (!company) return { error: "Aucune entreprise n'est liée à ce compte." };
+
+  const assignError = isTestAccount(claims.app_metadata)
+    ? await assignTestNumber(company)
+    : await assignProviderNumber(company);
+  if (assignError) return { error: assignError };
 
   const { error } = await supabase.from("companies").update({ auto_reply_enabled: true }).eq("id", company.id);
   if (error) return { error: "La réponse automatique n'a pas pu être activée. Réessayez." };

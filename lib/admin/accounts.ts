@@ -1,5 +1,5 @@
 import "server-only";
-import { hasAdminRole, requireAdmin } from "@/lib/auth/session";
+import { hasAdminRole, isTestAccount, requireAdmin } from "@/lib/auth/session";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Tables } from "@/lib/supabase/database.types";
 
@@ -9,6 +9,7 @@ export type Account = {
   createdAt: string;
   lastSignInAt: string | null;
   isAdmin: boolean;
+  isTestAccount: boolean;
   company: Pick<
     Tables<"companies">,
     | "id" | "name" | "sms_sender_name" | "sms_sender_approved" | "siret" | "trade" | "region"
@@ -42,6 +43,7 @@ export async function listAccounts(): Promise<Account[]> {
       createdAt: user.created_at,
       lastSignInAt: user.last_sign_in_at ?? null,
       isAdmin: hasAdminRole(user.app_metadata),
+      isTestAccount: isTestAccount(user.app_metadata),
       company: companiesByOwner.get(user.id) ?? null,
     }))
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));

@@ -1,5 +1,5 @@
 import "server-only";
-import { requireUser } from "@/lib/auth/session";
+import { isTestAccount, requireUser } from "@/lib/auth/session";
 import type { Tables } from "@/lib/supabase/database.types";
 
 // The setup guide: what an artisan does once so Batrelio works. Each step is worked out from
@@ -43,7 +43,7 @@ export function computeSetupSteps(company: Company, hasReceivedCall: boolean): S
 
 // RLS restricts the company and its calls to the artisan's own.
 export async function getSetup() {
-  const { supabase } = await requireUser();
+  const { supabase, claims } = await requireUser();
   const [{ data: company }, { count }] = await Promise.all([
     supabase.from("companies").select("*").maybeSingle(),
     supabase.from("missed_calls").select("id", { count: "exact", head: true }),
@@ -51,5 +51,10 @@ export async function getSetup() {
   if (!company) return null;
 
   const steps = computeSetupSteps(company, (count ?? 0) > 0);
-  return { company, steps, doneCount: steps.filter((step) => step.done).length };
+  return {
+    company,
+    steps,
+    doneCount: steps.filter((step) => step.done).length,
+    isTest: isTestAccount(claims.app_metadata),
+  };
 }

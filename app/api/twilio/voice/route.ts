@@ -1,13 +1,8 @@
 import { after } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { WEBHOOK_PATHS, readVerifiedWebhook } from "@/lib/telephony";
-import {
-  greetingForHiddenCaller,
-  greetingWithSms,
-  greetingWithoutSms,
-  toVoiceResponse,
-} from "@/lib/telephony/messages";
-import { decideSms, handleMissedCall, isExcludedCaller } from "@/lib/telephony/missed-call";
+import { toVoiceResponse } from "@/lib/telephony/messages";
+import { chooseGreeting, decideSms, handleMissedCall, isExcludedCaller } from "@/lib/telephony/missed-call";
 
 const UNASSIGNED_NUMBER_MESSAGE = "Ce numéro n'est pas attribué. Merci de votre appel.";
 
@@ -36,8 +31,5 @@ export async function POST(request: Request) {
     ),
   );
 
-  const decision = decideSms(company, params.From, isExcluded);
-  if (decision === "send") return voiceResponse(greetingWithSms(company.name));
-  if (decision === "skipped_anonymous") return voiceResponse(greetingForHiddenCaller(company.name));
-  return voiceResponse(greetingWithoutSms(company.name));
+  return voiceResponse(chooseGreeting(decideSms(company, params.From, isExcluded), company.name));
 }

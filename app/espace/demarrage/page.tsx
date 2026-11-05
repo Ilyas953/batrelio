@@ -35,7 +35,7 @@ async function SetupGuide() {
   const setup = await getSetup();
   if (!setup) return <p className="text-lg text-stone-600">Aucune entreprise n&apos;est liée à ce compte.</p>;
 
-  const { company, steps, doneCount } = setup;
+  const { company, steps, doneCount, isTest } = setup;
   const currentStep = steps.find((step) => !step.done)?.id;
   const progress = Math.round((doneCount / steps.length) * 100);
 
@@ -62,7 +62,7 @@ async function SetupGuide() {
       <ol className="space-y-3">
         {steps.map((step, index) => (
           <StepCard key={step.id} step={step} number={index + 1} isCurrent={step.id === currentStep}>
-            <StepContent step={step} company={company} />
+            <StepContent step={step} company={company} isTest={isTest} />
           </StepCard>
         ))}
       </ol>
@@ -117,7 +117,11 @@ const PRIMARY_LINK =
   "flex min-h-14 items-center justify-center rounded-2xl bg-orange-600 px-5 text-lg font-semibold text-white hover:bg-orange-700";
 const SECONDARY_LINK = "text-base font-semibold text-orange-700 underline";
 
-function StepContent({ step, company }: { step: SetupStep; company: Tables<"companies"> }) {
+const SIMULATOR = "/espace/simulation";
+
+type StepContentProps = { step: SetupStep; company: Tables<"companies">; isTest: boolean };
+
+function StepContent({ step, company, isTest }: StepContentProps) {
   switch (step.id) {
     case "company":
       return step.done ? (
@@ -178,6 +182,7 @@ function StepContent({ step, company }: { step: SetupStep; company: Tables<"comp
       return (
         <>
           <p>Il reçoit les appels que vous ne prenez pas. Votre numéro habituel ne change pas.</p>
+          {isTest && <p className="text-sm font-semibold text-sky-800">Compte de test : un numéro fictif vous est attribué, rien n&apos;est acheté.</p>}
           <ActivateButton returnTo={GUIDE} />
         </>
       );
@@ -187,6 +192,11 @@ function StepContent({ step, company }: { step: SetupStep; company: Tables<"comp
       if (step.done) return <p>Le renvoi est activé sur votre téléphone. Pour l&apos;arrêter un jour : composez ##004#.</p>;
       return (
         <>
+          {isTest && (
+            <p className="rounded-2xl bg-sky-50 p-4 font-semibold text-sky-900">
+              Compte de test : ne composez pas ce code, le numéro est fictif. Touchez simplement « C&apos;est fait ».
+            </p>
+          )}
           <p>Sur le téléphone que vos clients appellent, composez ce code puis appuyez sur appeler. Un message confirme le renvoi.</p>
           <ForwardingCode
             code={`**004*${formatPhone(company.phone_number).replaceAll(" ", "")}#`}
@@ -209,6 +219,16 @@ function StepContent({ step, company }: { step: SetupStep; company: Tables<"comp
               Voir l&apos;historique
             </Link>
           </p>
+        );
+      }
+      if (isTest) {
+        return (
+          <>
+            <p>Simulez l&apos;appel d&apos;un client : vous voyez ce qu&apos;il entend et le SMS qu&apos;il reçoit.</p>
+            <Link href={SIMULATOR} className={PRIMARY_LINK}>
+              Simuler un appel manqué
+            </Link>
+          </>
         );
       }
       return (

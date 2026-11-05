@@ -13,6 +13,16 @@ export function hasAdminRole(appMetadata: unknown): boolean {
   );
 }
 
+// Test accounts are created by the admin to try the product: their number is fictional and
+// no SMS leaves. Like the role, the flag lives in app_metadata, out of the user's reach.
+export function isTestAccount(appMetadata: unknown): boolean {
+  return (
+    typeof appMetadata === "object" &&
+    appMetadata !== null &&
+    (appMetadata as { test_account?: unknown }).test_account === true
+  );
+}
+
 async function getSignedInClaims() {
   // Session checks compare the token expiry with the current time: they must run
   // at request time, never during a prerender (even one that can read cookies).
@@ -38,4 +48,20 @@ export async function requireAdmin() {
   }
 
   return claims;
+}
+
+export async function requireTestAccount() {
+  const session = await getSignedInClaims();
+  if (!isTestAccount(session.claims.app_metadata)) {
+    notFound();
+  }
+
+  return session;
+}
+
+// For display only (no redirect): null when nobody is signed in.
+export async function getOptionalClaims() {
+  await connection();
+  const { data } = await (await createClient()).auth.getClaims();
+  return data?.claims ?? null;
 }

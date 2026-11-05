@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Suspense } from "react";
 import { Logo } from "@/components/landing/Logo";
 import { LegalLinks } from "@/components/legal/LegalLinks";
 import { signOut } from "@/lib/auth/actions";
+import { getOptionalClaims, isTestAccount } from "@/lib/auth/session";
 
 export const metadata: Metadata = {
   title: "Mon espace · Batrelio",
@@ -37,10 +39,32 @@ export default function ArtisanSpaceLayout({ children }: LayoutProps<"/espace">)
           </nav>
         </div>
       </header>
+      <Suspense fallback={null}>
+        <TestAccountBanner />
+      </Suspense>
       <main className="mx-auto w-full max-w-2xl flex-1 px-4 pb-16 pt-8 sm:px-6">{children}</main>
       <footer className="border-t border-stone-200">
         <LegalLinks className="mx-auto max-w-2xl px-4 py-6 sm:px-6" />
       </footer>
     </>
+  );
+}
+
+// Display only: pages and Server Functions check the account themselves.
+async function TestAccountBanner() {
+  const claims = await getOptionalClaims();
+  if (!isTestAccount(claims?.app_metadata)) return null;
+
+  return (
+    <div className="bg-sky-700 text-white">
+      <div className="mx-auto flex max-w-2xl flex-wrap items-center justify-between gap-x-4 gap-y-1 px-4 py-2 text-[15px] sm:px-6">
+        <p>
+          <strong>Compte de test</strong> · numéro fictif, aucun SMS envoyé
+        </p>
+        <Link href="/espace/simulation" className="font-semibold underline">
+          Simuler un appel
+        </Link>
+      </div>
+    </div>
   );
 }
