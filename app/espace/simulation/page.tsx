@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
+import { PLACES } from "@/components/espace/places";
+import { IconTile } from "@/components/espace/tones";
 import { BackLink } from "@/components/espace/BackLink";
 import { requireTestAccount } from "@/lib/auth/session";
 import { formatPhone } from "@/lib/format";
@@ -35,7 +37,12 @@ async function Simulator() {
   return (
     <div className="mt-4 space-y-6">
       <header>
-        <h1 className="text-3xl font-extrabold tracking-tight text-stone-900">Simulateur</h1>
+        <div className="flex items-center gap-3">
+          <IconTile tone={PLACES.simulator.tone}>
+            <PLACES.simulator.Icon />
+          </IconTile>
+          <h1 className="text-3xl font-extrabold tracking-tight text-stone-900">Simulateur</h1>
+        </div>
         <p className="mt-2 text-lg text-stone-600">
           Compte de test : votre numéro Batrelio est fictif et aucun SMS n&apos;est envoyé. Tout le reste fonctionne
           pour de vrai : la demande arrive dans votre espace et vous pouvez faire le devis.

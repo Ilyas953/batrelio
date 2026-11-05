@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { PageTitle } from "@/components/espace/places";
 import { ReturnBackLink } from "@/components/espace/BackLink";
 import { isTestAccount, requireUser } from "@/lib/auth/session";
 import { formatPhone } from "@/lib/format";
@@ -17,10 +18,7 @@ export default function MessagesPage({ searchParams }: PageProps<"/espace/messag
   return (
     <>
       <ReturnBackLink searchParams={searchParams} fallback="/espace/reglages" />
-      <h1 className="mb-2 mt-4 text-3xl font-extrabold tracking-tight text-stone-900">Vos messages</h1>
-      <p className="mb-8 text-lg text-stone-600">
-        Tout fonctionne déjà avec nos messages. Personnalisez-les seulement si vous le souhaitez.
-      </p>
+      <PageTitle place="messages" intro="Tout fonctionne déjà avec nos messages. Personnalisez-les seulement si vous le souhaitez." />
       <Suspense fallback={<p className="text-lg text-stone-500">Chargement…</p>}>
         <MessageSettings />
       </Suspense>

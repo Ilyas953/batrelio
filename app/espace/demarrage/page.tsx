@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
+import { PLACES } from "@/components/espace/places";
+import { IconTile } from "@/components/espace/tones";
 import { ReturnBackLink } from "@/components/espace/BackLink";
 import { CheckIcon } from "@/components/landing/icons";
 import { returnLink, withReturnTo, type ReturnLink } from "@/lib/espace/return-to";
@@ -52,7 +54,12 @@ async function SetupGuide({ later }: { later: ReturnLink }) {
   return (
     <div className="mt-4 space-y-6">
       <header>
-        <h1 className="text-3xl font-extrabold tracking-tight text-stone-900">Mettez Batrelio en place</h1>
+        <div className="flex items-center gap-3">
+          <IconTile tone={PLACES.setup.tone}>
+            <PLACES.setup.Icon />
+          </IconTile>
+          <h1 className="text-3xl font-extrabold tracking-tight text-stone-900">Mettez Batrelio en place</h1>
+        </div>
         <p className="mt-2 text-lg text-stone-600">5 étapes, une dizaine de minutes. Vous pouvez vous arrêter et reprendre quand vous voulez.</p>
         <div className="mt-5">
           <div className="flex justify-between text-sm font-semibold text-stone-600">

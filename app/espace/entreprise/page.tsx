@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { PageTitle } from "@/components/espace/places";
 import { ReturnBackLink } from "@/components/espace/BackLink";
 import { requireUser } from "@/lib/auth/session";
 import { toProfileValues } from "@/lib/company/profile-form";
@@ -15,8 +16,7 @@ export default function CompanyProfilePage({ searchParams }: PageProps<"/espace/
   return (
     <>
       <ReturnBackLink searchParams={searchParams} fallback="/espace/reglages" />
-      <h1 className="mb-2 mt-4 text-3xl font-extrabold tracking-tight text-stone-900">Mon entreprise</h1>
-      <p className="mb-8 text-lg text-stone-600">Ces informations apparaissent sur vos devis.</p>
+      <PageTitle place="company" intro="Ces informations apparaissent sur vos devis." />
       <Suspense fallback={<p className="text-lg text-stone-500">Chargement…</p>}>
         {searchParams.then((params) => (
           <CompanyProfile returnTo={safeReturnTo(params.retour, "/espace/reglages")} />

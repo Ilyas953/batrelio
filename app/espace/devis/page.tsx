@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { CheckIcon, DocumentIcon } from "@/components/landing/icons";
+import { CheckIcon, ClockIcon, DocumentIcon, SignatureIcon } from "@/components/landing/icons";
+import { PageTitle } from "@/components/espace/places";
 import { QuoteRow, Section } from "@/components/espace/lists";
 import { formatCents, formatTimeAgo } from "@/lib/format";
 import { getQuotesOverview, type ListedQuote } from "@/lib/espace/quotes";
@@ -13,8 +14,7 @@ export const metadata: Metadata = {
 export default function QuotesPage() {
   return (
     <>
-      <h1 className="mb-2 text-3xl font-extrabold tracking-tight text-stone-900">Devis</h1>
-      <p className="mb-8 text-lg text-stone-600">Pour faire un devis, ouvrez une demande et touchez « Faire le devis ».</p>
+      <PageTitle place="quotes" intro="Pour faire un devis, ouvrez une demande et touchez « Faire le devis »." />
       <Suspense fallback={<QuotesSkeleton />}>
         <QuoteLists />
       </Suspense>
@@ -29,9 +29,17 @@ async function QuoteLists() {
   return (
     <div className="space-y-8">
       {drafts.length > 0 && (
-        <Section id="brouillons" title="À terminer" count={drafts.length} highlight empty={NO_EMPTY_STATE}>
+        <Section
+          id="brouillons"
+          title="À terminer"
+          count={drafts.length}
+          icon={<SignatureIcon />}
+          tone="amber"
+          highlight
+          empty={NO_EMPTY_STATE}
+        >
           {drafts.map((quote) => (
-            <QuoteRow key={quote.id} quote={quote} detail={`Brouillon · modifié ${formatTimeAgo(quote.updated_at, now)}`} />
+            <QuoteRow key={quote.id} quote={quote} status="draft" detail={`Brouillon · modifié ${formatTimeAgo(quote.updated_at, now)}`} />
           ))}
         </Section>
       )}
@@ -40,6 +48,8 @@ async function QuoteLists() {
         id="en-attente"
         title="En attente de signature"
         count={sent.length}
+        icon={<ClockIcon />}
+        tone="sky"
         empty={{
           icon: <DocumentIcon className="size-7" />,
           title: "Aucun devis en attente",
@@ -47,7 +57,7 @@ async function QuoteLists() {
         }}
       >
         {sent.map((quote) => (
-          <QuoteRow key={quote.id} quote={quote} detail={quote.sent_at ? `Envoyé ${formatTimeAgo(quote.sent_at, now)}` : "Envoyé"} />
+          <QuoteRow key={quote.id} quote={quote} status="sent" detail={quote.sent_at ? `Envoyé ${formatTimeAgo(quote.sent_at, now)}` : "Envoyé"} />
         ))}
       </Section>
 
@@ -55,6 +65,8 @@ async function QuoteLists() {
         id="signes"
         title="Signés"
         count={signed.length}
+        icon={<CheckIcon />}
+        tone="emerald"
         empty={{
           icon: <CheckIcon className="size-7" />,
           title: "Aucun devis signé pour l'instant",
@@ -62,7 +74,7 @@ async function QuoteLists() {
         }}
       >
         {signed.map((quote) => (
-          <QuoteRow key={quote.id} quote={quote} detail={formatDeposit(quote)} signed />
+          <QuoteRow key={quote.id} quote={quote} status="signed" detail={formatDeposit(quote)} />
         ))}
       </Section>
     </div>

@@ -3,23 +3,19 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Suspense } from "react";
-import { DocumentIcon, InboxIcon, SettingsIcon } from "@/components/landing/icons";
+import { PLACES } from "@/components/espace/places";
+import { TONE_PILL, TONE_TEXT, TONE_TILE } from "@/components/espace/tones";
 
-type Tab = { href: string; label: string; icon: typeof InboxIcon; isActive: (path: string) => boolean };
+type Tab = (typeof PLACES)[keyof typeof PLACES] & { href: string; isActive: (path: string) => boolean };
 
 // Three tabs, always in reach of the thumb: the artisan's day is requests, quotes, and rarely settings.
+// Each tab has its own colour, found again on its pages.
 const TABS: Tab[] = [
+  { ...PLACES.requests, href: "/espace", isActive: (path) => path === "/espace" || path.startsWith("/espace/demandes") },
+  { ...PLACES.quotes, href: "/espace/devis", isActive: (path) => path.startsWith("/espace/devis") },
   {
-    href: "/espace",
-    label: "Demandes",
-    icon: InboxIcon,
-    isActive: (path) => path === "/espace" || path.startsWith("/espace/demandes"),
-  },
-  { href: "/espace/devis", label: "Devis", icon: DocumentIcon, isActive: (path) => path.startsWith("/espace/devis") },
-  {
+    ...PLACES.settings,
     href: "/espace/reglages",
-    label: "Réglages",
-    icon: SettingsIcon,
     isActive: (path) => !TABS[0].isActive(path) && !TABS[1].isActive(path),
   },
 ];
@@ -59,11 +55,13 @@ function BottomTabBarView({ active }: { active: string | null }) {
               <Link
                 href={tab.href}
                 aria-current={isActive ? "page" : undefined}
-                className={`flex min-h-16 flex-col items-center justify-center gap-1 text-sm font-semibold ${
-                  isActive ? "text-orange-700" : "text-stone-500"
+                className={`flex min-h-16 flex-col items-center justify-center gap-0.5 text-sm font-semibold ${
+                  isActive ? TONE_TEXT[tab.tone] : "text-stone-500"
                 }`}
               >
-                <tab.icon className="size-6" />
+                <span className={`grid h-8 w-14 place-items-center rounded-full transition-colors ${isActive ? TONE_TILE[tab.tone] : ""}`}>
+                  <tab.Icon className="size-6" />
+                </span>
                 {tab.label}
               </Link>
             </li>
@@ -86,10 +84,10 @@ function HeaderTabsView({ active }: { active: string | null }) {
             href={tab.href}
             aria-current={isActive ? "page" : undefined}
             className={`inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-[15px] font-semibold ${
-              isActive ? "bg-orange-50 text-orange-700" : "text-stone-600 hover:bg-stone-100 hover:text-stone-900"
+              isActive ? `ring-1 ring-inset ${TONE_PILL[tab.tone]}` : "text-stone-600 hover:bg-stone-100 hover:text-stone-900"
             }`}
           >
-            <tab.icon className="size-5" />
+            <tab.Icon className="size-5" />
             {tab.label}
           </Link>
         );

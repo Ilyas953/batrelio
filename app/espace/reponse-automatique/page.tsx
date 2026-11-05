@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
+import { PageTitle } from "@/components/espace/places";
 import { ReturnBackLink } from "@/components/espace/BackLink";
 import { withReturnTo } from "@/lib/espace/return-to";
 import { requireUser } from "@/lib/auth/session";
@@ -24,11 +25,10 @@ export default function AutoReplyPage({ searchParams }: PageProps<"/espace/repon
   return (
     <>
       <ReturnBackLink searchParams={searchParams} fallback="/espace/reglages" />
-      <h1 className="mb-2 mt-4 text-3xl font-extrabold tracking-tight text-stone-900">Réponse automatique</h1>
-      <p className="mb-8 text-lg text-stone-600">
-        Quand vous ne décrochez pas, votre client entend un message à votre nom et reçoit un SMS pour vous décrire
-        son besoin.
-      </p>
+      <PageTitle
+        place="autoReply"
+        intro="Quand vous ne décrochez pas, votre client entend un message à votre nom et reçoit un SMS pour vous décrire son besoin."
+      />
       <Suspense fallback={<p className="text-lg text-stone-500">Chargement…</p>}>
         <AutoReplySettings />
       </Suspense>

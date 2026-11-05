@@ -2,8 +2,11 @@ import Link from "next/link";
 import { Suspense } from "react";
 import {
   ArrowRightIcon,
+  BellIcon,
   CheckIcon,
+  ClockIcon,
   DocumentIcon,
+  FlagIcon,
   InboxIcon,
   LinkIcon,
   MapPinIcon,
@@ -11,6 +14,7 @@ import {
   PhoneMissedIcon,
 } from "@/components/landing/icons";
 import { Section } from "@/components/espace/lists";
+import { IconTile, StatusPill, type Tone } from "@/components/espace/tones";
 import { withReturnTo } from "@/lib/espace/return-to";
 import { getDashboard, type HandledRequest, type NewRequest } from "@/lib/espace/dashboard";
 import { formatPhone, formatTimeAgo } from "@/lib/format";
@@ -56,6 +60,8 @@ async function Dashboard() {
         id="a-traiter"
         title="À traiter"
         count={newRequests.length}
+        icon={<BellIcon />}
+        tone="orange"
         highlight
         empty={{
           icon: <InboxIcon className="size-7" />,
@@ -79,6 +85,8 @@ async function Dashboard() {
           id="traitees"
           title="Traitées récemment"
           count={handledRequests.length}
+          icon={<CheckIcon />}
+          tone="emerald"
           empty={{ icon: <CheckIcon className="size-7" />, title: "", detail: "" }}
         >
           {handledRequests.map((request) => (
@@ -90,14 +98,15 @@ async function Dashboard() {
   );
 }
 
-const HANDLED_STATUS_LABELS: Record<Exclude<HandledRequest["status"], "new">, string> = {
-  quoted: "Devis envoyé",
-  visit_proposed: "Visite proposée",
-  closed: "Clôturée",
+const HANDLED_STATUS: Record<HandledRequest["status"], { label: string; tone: Tone; Icon: typeof CheckIcon }> = {
+  new: { label: "À traiter", tone: "orange", Icon: BellIcon },
+  quoted: { label: "Devis envoyé", tone: "sky", Icon: DocumentIcon },
+  visit_proposed: { label: "Visite proposée", tone: "violet", Icon: MapPinIcon },
+  closed: { label: "Clôturée", tone: "stone", Icon: CheckIcon },
 };
 
 function HandledRequestRow({ request, now }: { request: HandledRequest; now: Date }) {
-  const status = request.status === "new" ? "" : HANDLED_STATUS_LABELS[request.status];
+  const status = HANDLED_STATUS[request.status];
 
   return (
     <li>
@@ -105,12 +114,16 @@ function HandledRequestRow({ request, now }: { request: HandledRequest; now: Dat
         href={`/espace/demandes/${request.id}`}
         className="flex items-center gap-4 rounded-3xl bg-white p-4 shadow-sm ring-1 ring-stone-200 transition hover:ring-stone-300 sm:p-5"
       >
+        <IconTile tone={status.tone}>
+          <status.Icon />
+        </IconTile>
         <div className="min-w-0 flex-1">
           <p className="truncate text-lg font-bold text-stone-900">
             {request.customer_name ?? formatPhone(request.customer_phone)}
           </p>
-          <p className="truncate text-sm text-stone-500">
-            {status} · {formatTimeAgo(request.created_at, now)}
+          <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-sm text-stone-500">
+            <StatusPill tone={status.tone}>{status.label}</StatusPill>
+            {formatTimeAgo(request.created_at, now)}
           </p>
         </div>
         <ArrowRightIcon className="size-5 shrink-0 text-stone-400" />
@@ -128,9 +141,9 @@ function summarize(toHandle: number): string {
 
 function Welcome({ companyName, today, counts }: { companyName: string | null; today: string; counts: Counts }) {
   const stats = [
-    { href: "#a-traiter", label: "À traiter", value: counts.toHandle, accent: counts.toHandle > 0 },
-    { href: "/espace/devis#en-attente", label: "En attente", value: counts.pending, accent: false },
-    { href: "/espace/devis#signes", label: "Signés", value: counts.signed, accent: false },
+    { href: "#a-traiter", label: "À traiter", value: counts.toHandle, accent: counts.toHandle > 0, Icon: BellIcon, iconColor: "text-orange-300" },
+    { href: "/espace/devis#en-attente", label: "En attente", value: counts.pending, accent: false, Icon: ClockIcon, iconColor: "text-sky-300" },
+    { href: "/espace/devis#signes", label: "Signés", value: counts.signed, accent: false, Icon: CheckIcon, iconColor: "text-emerald-300" },
   ];
 
   return (
@@ -149,7 +162,10 @@ function Welcome({ companyName, today, counts }: { companyName: string | null; t
             href={stat.href}
             className={`rounded-2xl px-3 py-3 transition-colors ${stat.accent ? "bg-orange-600 hover:bg-orange-500" : "bg-white/10 hover:bg-white/15"}`}
           >
-            <span className="block text-2xl font-extrabold tabular-nums">{stat.value}</span>
+            <span className="flex items-center justify-between gap-1">
+              <span className="text-2xl font-extrabold tabular-nums">{stat.value}</span>
+              <stat.Icon className={`size-5 ${stat.accent ? "text-white" : stat.iconColor}`} />
+            </span>
             <span className={`block text-sm ${stat.accent ? "text-orange-50" : "text-stone-300"}`}>{stat.label}</span>
           </Link>
         ))}
@@ -173,7 +189,12 @@ function SetupCard({ doneCount, total }: { doneCount: number; total: number }) {
       className="block rounded-3xl bg-white p-5 shadow-sm ring-2 ring-orange-500 transition hover:ring-orange-600 sm:p-6"
     >
       <span className="flex items-center justify-between gap-4">
-        <span className="text-lg font-bold text-stone-900">Terminez la mise en place</span>
+        <span className="flex items-center gap-3 text-lg font-bold text-stone-900">
+          <IconTile tone="amber" size="sm">
+            <FlagIcon />
+          </IconTile>
+          Terminez la mise en place
+        </span>
         <span className="text-sm font-semibold text-stone-600">
           {doneCount} sur {total}
         </span>

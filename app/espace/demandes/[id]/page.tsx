@@ -2,14 +2,15 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { BackLink } from "@/components/espace/BackLink";
+import { CameraIcon, LinkIcon, MapPinIcon, MessageIcon, PhoneIcon, PhoneMissedIcon } from "@/components/landing/icons";
+import { QuoteStatusPill, QuoteStatusTile } from "@/components/espace/places";
+import { IconTile, type Tone } from "@/components/espace/tones";
 import { getRequestDetail } from "@/lib/espace/request-detail";
 import { formatPhone, formatPrice, formatTimeAgo } from "@/lib/format";
 import { MakeQuoteButton } from "./MakeQuoteButton";
 
 // Preparing a quote with the AI can take several dozen seconds.
 export const maxDuration = 120;
-
-const QUOTE_STATUS_LABELS = { draft: "Brouillon", sent: "Envoyé", signed: "Signé", declined: "Refusé" } as const;
 
 export default function RequestDetailPage({ params }: PageProps<"/espace/demandes/[id]">) {
   return (
@@ -36,7 +37,8 @@ async function RequestDetail({ requestId }: { requestId: string }) {
     <article className="mt-4 space-y-6">
       <header>
         <h1 className="text-3xl font-extrabold tracking-tight text-stone-900">{request.customer_name ?? "Client"}</h1>
-        <p className="mt-1 text-base text-stone-500">
+        <p className="mt-1 flex items-center gap-1.5 text-base text-stone-500">
+          {request.source === "link" ? <LinkIcon className="size-4" /> : <PhoneMissedIcon className="size-4" />}
           {request.source === "link" ? "Demande envoyée par lien" : "Après un appel manqué"} ·{" "}
           {formatTimeAgo(request.created_at, new Date())}
         </p>
@@ -44,8 +46,9 @@ async function RequestDetail({ requestId }: { requestId: string }) {
 
       <a
         href={`tel:${request.customer_phone}`}
-        className="flex min-h-14 items-center justify-center rounded-2xl bg-orange-600 px-5 text-lg font-semibold text-white hover:bg-orange-700"
+        className="flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-orange-600 px-5 text-lg font-semibold text-white hover:bg-orange-700"
       >
+        <PhoneIcon className="size-5" />
         Appeler le {formatPhone(request.customer_phone)}
       </a>
 
@@ -53,14 +56,14 @@ async function RequestDetail({ requestId }: { requestId: string }) {
 
       {request.description && (
         <section className="rounded-3xl bg-white p-5 sm:p-6">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">Son besoin</h2>
+          <SectionLabel icon={<MessageIcon />} tone="violet">Son besoin</SectionLabel>
           <p className="mt-2 whitespace-pre-line text-lg leading-relaxed text-stone-900">{request.description}</p>
         </section>
       )}
 
       {request.address && (
         <section className="rounded-3xl bg-white p-5 sm:p-6">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">Adresse du chantier</h2>
+          <SectionLabel icon={<MapPinIcon />} tone="emerald">Adresse du chantier</SectionLabel>
           <p className="mt-2 text-lg text-stone-900">{request.address}</p>
           <a
             href={toMapsUrl(request.address)}
@@ -75,9 +78,9 @@ async function RequestDetail({ requestId }: { requestId: string }) {
 
       {request.photoUrls.length > 0 && (
         <section>
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-stone-500">
-            Photos ({request.photoUrls.length})
-          </h2>
+          <div className="mb-3">
+            <SectionLabel icon={<CameraIcon />} tone="sky">Photos ({request.photoUrls.length})</SectionLabel>
+          </div>
           <ul className="grid grid-cols-2 gap-3">
             {request.photoUrls.map((url, index) => (
               <li key={url}>
@@ -111,11 +114,14 @@ function QuotesSection({ request }: { request: RequestWithQuotes }) {
                 href={`/espace/devis/${quote.id}`}
                 className="flex items-center justify-between gap-3 rounded-2xl bg-white p-4 ring-1 ring-stone-200 hover:ring-stone-300"
               >
-                <span>
-                  <span className="block font-semibold text-stone-900">
-                    Devis {quote.number ? `n° ${quote.number}` : ""}
+                <span className="flex min-w-0 items-center gap-3">
+                  <QuoteStatusTile status={quote.status} size="sm" />
+                  <span>
+                    <span className="block font-semibold text-stone-900">
+                      Devis {quote.number ? `n° ${quote.number}` : ""}
+                    </span>
+                    <QuoteStatusPill status={quote.status} />
                   </span>
-                  <span className="text-sm text-stone-500">{QUOTE_STATUS_LABELS[quote.status]}</span>
                 </span>
                 <span className="font-bold tabular-nums text-stone-900">{formatPrice(quote.total_cents)}</span>
               </Link>
@@ -134,5 +140,16 @@ function QuotesSection({ request }: { request: RequestWithQuotes }) {
         <MakeQuoteButton requestId={request.id} label={quotes.length ? "Faire un autre devis" : "Faire le devis"} />
       )}
     </section>
+  );
+}
+
+function SectionLabel({ icon, tone, children }: { icon: React.ReactNode; tone: Tone; children: React.ReactNode }) {
+  return (
+    <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-stone-500">
+      <IconTile tone={tone} size="sm">
+        {icon}
+      </IconTile>
+      {children}
+    </h2>
   );
 }

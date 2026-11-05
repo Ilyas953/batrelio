@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { BackLink } from "@/components/espace/BackLink";
+import { QuoteStatusPill } from "@/components/espace/places";
 import { ShareLinkButtons } from "@/components/ui/ShareLinkButtons";
 import { formatPrice } from "@/lib/format";
 import { withReturnTo } from "@/lib/espace/return-to";
@@ -9,8 +10,6 @@ import { getQuoteForEditor, type EditorQuote } from "@/lib/quotes/queries";
 import { quoteShareText } from "@/lib/quotes/share-message";
 import { getSiteOrigin } from "@/lib/requests/site-origin";
 import { QuoteEditor } from "./QuoteEditor";
-
-const STATUS_LABELS = { draft: "Brouillon", sent: "Envoyé", signed: "Signé", declined: "Refusé" } as const;
 
 export default function QuotePage({ params }: PageProps<"/espace/devis/[id]">) {
   return (
@@ -33,9 +32,9 @@ async function QuoteScreen({ quoteId }: { quoteId: string }) {
   return (
     <div className="mt-4 space-y-6">
       <header>
-        <p className="text-sm font-semibold text-orange-700">
-          {STATUS_LABELS[quote.status]}
-          {quote.number ? ` · Devis n° ${quote.number}` : ""}
+        <p className="flex items-center gap-2 text-sm font-semibold text-stone-500">
+          <QuoteStatusPill status={quote.status} />
+          {quote.number ? `Devis n° ${quote.number}` : ""}
         </p>
         <h1 className="mt-1 text-3xl font-extrabold tracking-tight text-stone-900">
           {quote.title || "Nouveau devis"}
