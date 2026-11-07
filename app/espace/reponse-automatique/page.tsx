@@ -5,6 +5,7 @@ import { ReturnBackLink } from "@/components/espace/BackLink";
 import { withReturnTo } from "@/lib/espace/return-to";
 import { requireUser } from "@/lib/auth/session";
 import { formatPhone, formatTimeAgo } from "@/lib/format";
+import { decideArtisanSms } from "@/lib/requests/artisan-sms";
 import type { Tables } from "@/lib/supabase/database.types";
 import { getFallbackSmsSender } from "@/lib/telephony/config";
 import { isIdentifiedCaller } from "@/lib/telephony/phone-rules";
@@ -40,7 +41,7 @@ async function AutoReplySettings() {
   const { supabase } = await requireUser();
   const { data: company } = await supabase
     .from("companies")
-    .select("id, name, sms_sender_name, sms_sender_approved, phone_number, auto_reply_enabled")
+    .select("id, name, sms_sender_name, sms_sender_approved, phone_number, auto_reply_enabled, contact_phone")
     .maybeSingle();
   if (!company) return <p className="text-lg text-stone-600">Aucune entreprise n&apos;est liée à ce compte.</p>;
 
@@ -57,6 +58,7 @@ async function AutoReplySettings() {
   return (
     <div className="space-y-6">
       <SenderCard company={company} />
+      <ArtisanSmsCard contactPhone={company.contact_phone} />
       <Card title="Votre message d'accueil">
         <p className="text-base text-stone-700">
           Voix et texte de votre message vocal, et message d&apos;envoi de vos devis.{" "}
@@ -120,6 +122,37 @@ function SenderCard({ company }: { company: Company }) {
             : "En attendant, certains opérateurs peuvent filtrer vos SMS."}
         </p>
       )}
+    </Card>
+  );
+}
+
+// The SMS the artisan receives for each new request.
+function ArtisanSmsCard({ contactPhone }: { contactPhone: string | null }) {
+  const reachable = decideArtisanSms(contactPhone, false) === "send";
+
+  return (
+    <Card title="Vous êtes prévenu par SMS">
+      {reachable && contactPhone ? (
+        <p className="text-base text-stone-700">
+          À chaque nouvelle demande, un SMS part au <strong>{formatPhone(contactPhone)}</strong> avec le nom et le
+          numéro du client.{" "}
+          <Link href={withReturnTo("/espace/entreprise", PAGE)} className="font-semibold text-orange-700 underline">
+            changer de numéro
+          </Link>
+        </p>
+      ) : (
+        <p className="rounded-2xl bg-amber-50 px-4 py-3 text-base text-amber-900">
+          Pour recevoir un SMS à chaque nouvelle demande, indiquez votre portable (06 ou 07) dans{" "}
+          <Link href={withReturnTo("/espace/entreprise", PAGE)} className="font-semibold underline">
+            Mon entreprise
+          </Link>
+          .
+        </p>
+      )}
+      <p className="text-sm text-stone-500">
+        Seuls les clients qui décrivent leur besoin deviennent des demandes. Les autres appels restent dans
+        l&apos;historique des appels.
+      </p>
     </Card>
   );
 }

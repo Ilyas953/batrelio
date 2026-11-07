@@ -1,5 +1,6 @@
 "use server";
 
+import { after } from "next/server";
 import { toE164Phone } from "@/lib/company/legal";
 import { TOO_MANY_ATTEMPTS, isAllowedFromThisVisitor } from "@/lib/security/rate-limit";
 import {
@@ -9,7 +10,10 @@ import {
   PHOTO_BUCKET,
 } from "@/lib/requests/limits";
 import { readPhotos, type CheckedPhoto } from "@/lib/requests/photo-files";
+import { notifyArtisanOfNewRequest } from "@/lib/requests/notify-artisan";
 import { isWellFormedToken } from "@/lib/requests/public-link";
+import { getSiteOrigin } from "@/lib/requests/site-origin";
+import { getPublicSiteUrl } from "@/lib/telephony/config";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export type SubmitRequestResult = { error: string } | { ok: true; savedPhotos: number; failedPhotos: number };
@@ -88,6 +92,8 @@ export async function submitCustomerRequest(token: string, formData: FormData): 
     customer_phone: request.phone,
     description: request.description,
     address: request.address || null,
+    // From now on the request shows in the artisan space.
+    submitted_at: now,
   };
   // A link sent after a missed call completes the request created when the customer called.
   const { data: saved, error: saveError } = link.request_id
@@ -110,6 +116,10 @@ export async function submitCustomerRequest(token: string, formData: FormData): 
 
   await supabase.from("request_links").update({ request_id: saved.id }).eq("id", link.id);
   const savedPhotos = await storePhotos(supabase, link.company_id, saved.id, photos);
+
+  // After the answer: the customer does not wait for the artisan's SMS.
+  const siteUrl = getPublicSiteUrl() ?? (await getSiteOrigin());
+  after(() => notifyArtisanOfNewRequest(saved.id, siteUrl));
 
   return { ok: true, savedPhotos, failedPhotos: photos.length - savedPhotos };
 }

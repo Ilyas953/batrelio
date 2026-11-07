@@ -236,6 +236,7 @@ export function CompanyProfileForm({ initialValues, returnTo }: { initialValues:
             autoComplete="tel"
             defaultValue={values.contactPhone}
             placeholder="06 12 34 56 78"
+            hint="Votre portable : vous y recevez aussi un SMS à chaque nouvelle demande."
           />
           <TextField
             label="E-mail"

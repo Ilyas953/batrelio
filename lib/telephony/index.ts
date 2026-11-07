@@ -66,6 +66,11 @@ export function chooseSmsSender(company: { sms_sender_name: string; sms_sender_a
   return getFallbackSmsSender() ?? company.sms_sender_name;
 }
 
+// Messages from Batrelio to the artisan: Batrelio's registered sender when there is one.
+export function notificationSmsSender(company: { sms_sender_name: string; sms_sender_approved: boolean }): string {
+  return getFallbackSmsSender() ?? chooseSmsSender(company);
+}
+
 export type SentSms = { status: "sent"; sid: string } | { status: "failed"; reason: string };
 
 export async function sendSms(to: string, from: string, body: string, siteUrl: string): Promise<SentSms> {

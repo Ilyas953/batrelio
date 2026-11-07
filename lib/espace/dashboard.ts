@@ -1,6 +1,7 @@
 import "server-only";
-import { requireUser } from "@/lib/auth/session";
 import { listMissingQuoteDetails } from "@/lib/company/legal";
+import { decideArtisanSms } from "@/lib/requests/artisan-sms";
+import { isTestAccount, requireUser } from "@/lib/auth/session";
 import { computeSetupSteps } from "./setup";
 import { PHOTO_BUCKET } from "@/lib/requests/limits";
 
@@ -13,22 +14,30 @@ function countSetupSteps(...args: Parameters<typeof computeSetupSteps>) {
   return { doneCount: steps.filter((step) => step.done).length, total: steps.length };
 }
 
+function smsBlocker(contactPhone: string | null, isTest: boolean) {
+  const decision = decideArtisanSms(contactPhone, isTest);
+  return decision === "skipped_no_phone" || decision === "skipped_not_mobile" ? decision : null;
+}
+
 // Everything the artisan needs at a glance. RLS restricts every query to their own company.
 export async function getDashboard() {
-  const { supabase } = await requireUser();
+  const { supabase, claims } = await requireUser();
 
   const [company, newRequests, handledRequests, pendingQuotes, signedQuotes, calls] = await Promise.all([
     supabase.from("companies").select("*").maybeSingle(),
     supabase
       .from("requests")
-      .select("id, source, customer_name, customer_phone, description, address, created_at, photos:request_photos(storage_path, created_at), calls:missed_calls(sms_status, created_at)")
+      .select("id, source, customer_name, customer_phone, description, address, submitted_at, photos:request_photos(storage_path, created_at)")
       .eq("status", "new")
-      .order("created_at", { ascending: false }),
+      // Only what customers described: a missed call alone stays in the call history.
+      .not("submitted_at", "is", null)
+      .order("submitted_at", { ascending: false }),
     supabase
       .from("requests")
       .select("id, status, customer_name, customer_phone, description, visit_at, created_at")
       .neq("status", "new")
-      .order("created_at", { ascending: false })
+      .not("submitted_at", "is", null)
+      .order("submitted_at", { ascending: false })
       .limit(RECENT_HANDLED_REQUESTS),
     // The quotes themselves are listed in the Devis tab: only their counts are shown here.
     supabase.from("quotes").select("id", { count: "exact", head: true }).eq("status", "sent"),
@@ -67,6 +76,8 @@ export async function getDashboard() {
       photoPreviews: previewPaths[index].flatMap((path) => urlByPath.get(path) ?? []),
     })),
     handledRequests: handledRequests.data ?? [],
+    // Why the artisan would not get an SMS for a new request, if they would not.
+    newRequestSmsBlocker: company.data ? smsBlocker(company.data.contact_phone, isTestAccount(claims.app_metadata)) : null,
     quoteCounts: { pending: pendingQuotes.count ?? 0, signed: signedQuotes.count ?? 0 },
   };
 }

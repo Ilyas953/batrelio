@@ -467,6 +467,7 @@ export type Database = {
       requests: {
         Row: {
           address: string | null
+          artisan_sms_status: string | null
           company_id: string
           created_at: string
           customer_name: string | null
@@ -475,10 +476,12 @@ export type Database = {
           id: string
           source: Database["public"]["Enums"]["request_source"]
           status: Database["public"]["Enums"]["request_status"]
+          submitted_at: string | null
           visit_at: string | null
         }
         Insert: {
           address?: string | null
+          artisan_sms_status?: string | null
           company_id: string
           created_at?: string
           customer_name?: string | null
@@ -487,10 +490,12 @@ export type Database = {
           id?: string
           source?: Database["public"]["Enums"]["request_source"]
           status?: Database["public"]["Enums"]["request_status"]
+          submitted_at?: string | null
           visit_at?: string | null
         }
         Update: {
           address?: string | null
+          artisan_sms_status?: string | null
           company_id?: string
           created_at?: string
           customer_name?: string | null
@@ -499,6 +504,7 @@ export type Database = {
           id?: string
           source?: Database["public"]["Enums"]["request_source"]
           status?: Database["public"]["Enums"]["request_status"]
+          submitted_at?: string | null
           visit_at?: string | null
         }
         Relationships: [

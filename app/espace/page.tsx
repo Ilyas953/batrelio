@@ -41,7 +41,8 @@ const todayFormatter = new Intl.DateTimeFormat("fr-FR", {
 });
 
 async function Dashboard() {
-  const { companyName, missingQuoteDetails, setup, autoReply, newRequests, handledRequests, quoteCounts } = await getDashboard();
+  const { companyName, missingQuoteDetails, setup, autoReply, newRequests, handledRequests, quoteCounts, newRequestSmsBlocker } =
+    await getDashboard();
   const setupPending = setup !== null && setup.doneCount < setup.total;
   const now = new Date();
 
@@ -58,6 +59,7 @@ async function Dashboard() {
       ) : (
         missingQuoteDetails.length > 0 && <MissingDetailsBanner missing={missingQuoteDetails} />
       )}
+      {!setupPending && newRequestSmsBlocker && <SmsBlockerBanner blocker={newRequestSmsBlocker} />}
 
       <Section
         id="a-traiter"
@@ -69,7 +71,7 @@ async function Dashboard() {
         empty={{
           icon: <InboxIcon className="size-7" />,
           title: "Rien à traiter pour l'instant",
-          detail: "Les appels manqués et les demandes envoyées par lien arrivent ici.",
+          detail: "Quand un client décrit son besoin, après un appel manqué ou par lien, sa demande arrive ici.",
         }}
       >
         {newRequests.map((request) => (
@@ -234,6 +236,29 @@ function MissingDetailsBanner({ missing }: { missing: string[] }) {
   );
 }
 
+// Without a mobile number in Mon entreprise, the artisan is not told about new requests.
+function SmsBlockerBanner({ blocker }: { blocker: "skipped_no_phone" | "skipped_not_mobile" }) {
+  return (
+    <Link
+      href={withReturnTo("/espace/entreprise", HOME)}
+      className="flex items-center gap-4 rounded-3xl border-2 border-amber-200 bg-amber-50 p-5 transition-colors hover:border-amber-300"
+    >
+      <IconTile tone="amber">
+        <BellIcon />
+      </IconTile>
+      <span className="min-w-0 flex-1">
+        <span className="block text-lg font-bold text-amber-950">Soyez prévenu par SMS</span>
+        <span className="block text-base text-amber-900">
+          {blocker === "skipped_no_phone"
+            ? "Ajoutez votre numéro de portable : vous recevrez un SMS à chaque nouvelle demande."
+            : "Votre numéro n'est pas un portable : indiquez un 06 ou un 07 pour recevoir un SMS à chaque nouvelle demande."}
+        </span>
+      </span>
+      <ArrowRightIcon className="size-5 shrink-0 text-amber-800" />
+    </Link>
+  );
+}
+
 function AutoReplyTile({ phoneNumber, enabled }: { phoneNumber: string | null; enabled: boolean }) {
   const activeNumber = enabled ? phoneNumber : null;
   const status = activeNumber ? "Activée" : phoneNumber ? "En pause" : "Pas encore activée";
@@ -261,24 +286,6 @@ function AutoReplyTile({ phoneNumber, enabled }: { phoneNumber: string | null; e
       </span>
     </Link>
   );
-}
-
-// What happened to a caller who has not described their need yet.
-function describeWaitingCall(request: NewRequest): string {
-  const latestCall = request.calls.toSorted((a, b) => b.created_at.localeCompare(a.created_at))[0];
-  switch (latestCall?.sms_status) {
-    case "sent":
-    case "delivered":
-      return "Il a reçu un SMS pour décrire son besoin.";
-    case "failed":
-      return "Le SMS n'a pas pu lui être envoyé : rappelez-le.";
-    case "skipped_not_mobile":
-      return "Appel depuis une ligne fixe : rappelez-le.";
-    case "skipped_disabled":
-      return "Appel pendant la pause : rappelez-le.";
-    default:
-      return "Rappelez-le pour connaître son besoin.";
-  }
 }
 
 // "Mme Le Goff" -> "LG", "Paul Roux" -> "PR". Null when there is no name to show.
@@ -317,7 +324,7 @@ function RequestCard({ request, now }: { request: NewRequest; now: Date }) {
               <p className="truncate text-lg font-bold text-stone-900">
                 {request.customer_name ?? formatPhone(request.customer_phone)}
               </p>
-              <p className="shrink-0 text-sm text-stone-500">{formatTimeAgo(request.created_at, now)}</p>
+              <p className="shrink-0 text-sm text-stone-500">{formatTimeAgo(request.submitted_at ?? "", now)}</p>
             </div>
             <div className="mt-1">
               <SourceBadge source={request.source} />
@@ -325,11 +332,7 @@ function RequestCard({ request, now }: { request: NewRequest; now: Date }) {
           </div>
         </div>
 
-        {request.description ? (
-          <p className="mt-3 line-clamp-3 text-base leading-relaxed text-stone-700">{request.description}</p>
-        ) : (
-          <p className="mt-3 rounded-2xl bg-stone-50 px-4 py-3 text-base text-stone-600">{describeWaitingCall(request)}</p>
-        )}
+        {request.description && <p className="mt-3 line-clamp-3 text-base leading-relaxed text-stone-700">{request.description}</p>}
 
         {request.photoPreviews.length > 0 && (
           <div className="mt-3 flex gap-2">

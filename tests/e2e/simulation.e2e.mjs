@@ -3,7 +3,17 @@ import { admin, IDENTITY } from "./helpers.mjs";
 
 const SMS_PREVIEW = "Nous n'avons pas pu décrocher";
 
-export async function simulationSuite({ check, makeUser, get, action, trackSignedInUser }) {
+// The SMS to the artisan leaves after the customer's answer: wait for it to be recorded.
+async function waitFor(read, attempts = 20) {
+  for (let attempt = 0; attempt < attempts; attempt++) {
+    const value = await read();
+    if (value) return value;
+    await new Promise((resolve) => setTimeout(resolve, 250));
+  }
+  return null;
+}
+
+export async function simulationSuite({ check, makeUser, get, action, fakeIp, trackSignedInUser }) {
   const tester = await makeUser({ test: true, companyName: "Couvreur E2E" });
   const { jar, company } = tester;
 
@@ -55,8 +65,32 @@ export async function simulationSuite({ check, makeUser, get, action, trackSigne
     JSON.stringify(statuses),
   );
   check("identifiants simulés, jamais de vrai SMS", calls.every((call) => call.call_sid.startsWith("SIM-") && (!call.sms_sid || call.sms_sid.startsWith("SIM-"))));
-  const { count: requests } = await admin.from("requests").select("id", { count: "exact", head: true }).eq("company_id", company.id);
-  check("les demandes arrivent dans « À traiter » (mobile et fixe)", requests === 2, String(requests));
+  // A missed call alone is not a request: it only shows once the customer described their need.
+  page = await get("/espace", jar);
+  check("appels sans formulaire : rien dans « À traiter »", page.text.includes("Rien à traiter") && !page.text.includes("06 39 98 12 34"));
+  page = await get("/espace/reponse-automatique", jar);
+  check("appels sans formulaire : visibles dans l'historique", page.text.includes("06 39 98 12 34") && page.text.includes("01 99 00 55 55"));
+
+  if (link) {
+    const token = link.split("/").at(-1);
+    result = await action("submitCustomerRequest", `/demande/${token}`, {
+      args: [token],
+      ip: fakeIp(),
+      formData: { name: "Mme Formulaire", phone: "06 39 98 12 34", description: "Tuiles envolées", address: "" },
+    });
+    check("le client envoie le formulaire", result.text.includes('"ok":true'), result.text.slice(-200));
+    page = await get("/espace", jar);
+    check("demande remplie : elle arrive dans « À traiter »", page.text.includes("Mme Formulaire") && page.text.includes("Tuiles envolées"));
+    const announced = await waitFor(async () => {
+      const { data } = await admin.from("requests").select("artisan_sms_status, submitted_at, source").eq("company_id", company.id).eq("customer_name", "Mme Formulaire").single();
+      return data?.artisan_sms_status ? data : null;
+    });
+    check(
+      "compte de test : SMS à l'artisan prévu mais jamais envoyé",
+      announced?.artisan_sms_status === "skipped_test_account" && announced.submitted_at !== null && announced.source === "missed_call",
+      JSON.stringify(announced),
+    );
+  }
 
   page = await get("/espace/demarrage", jar);
   // Company, number, then forwarding and test, both proven by the first call (insurance left empty).
@@ -74,6 +108,24 @@ export async function simulationSuite({ check, makeUser, get, action, trackSigne
   result = await action("restartTestAccount", "/espace/simulation", { jar: real.jar });
   const { data: stillThere } = await admin.auth.admin.getUserById(real.id);
   check("compte réel : remise à zéro refusée", Boolean(stillThere.user) && !result.redirect);
+
+  // A real account: the SMS is only sent to a mobile number (not tested here: it would really send one).
+  for (const [contactPhone, expected] of [[null, "skipped_no_phone"], ["+33199005566", "skipped_not_mobile"]]) {
+    await admin.from("companies").update({ contact_phone: contactPhone }).eq("id", real.company.id);
+    const { data: realLink } = await admin.from("request_links").insert({ company_id: real.company.id, customer_phone: "+33639985531" }).select("token").single();
+    await action("submitCustomerRequest", `/demande/${realLink.token}`, {
+      args: [realLink.token],
+      ip: fakeIp(),
+      formData: { name: `Client ${expected}`, phone: "06 39 98 55 31", description: "Élagage", address: "" },
+    });
+    const status = await waitFor(async () => {
+      const { data } = await admin.from("requests").select("artisan_sms_status").eq("company_id", real.company.id).eq("customer_name", `Client ${expected}`).maybeSingle();
+      return data?.artisan_sms_status ?? null;
+    });
+    check(`compte réel : pas de SMS sans portable (${expected})`, status === expected, String(status));
+  }
+  page = await get("/espace/reponse-automatique", real.jar);
+  check("compte réel sans portable : invité à l'ajouter", page.text.includes("indiquez votre portable (06 ou 07)"));
 
   // Restart: a brand new blank test account replaces this one.
   result = await action("restartTestAccount", "/espace/simulation", { jar });
