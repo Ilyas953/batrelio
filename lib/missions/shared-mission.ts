@@ -4,6 +4,11 @@ import type { Enums } from "@/lib/supabase/database.types";
 
 export type MissionStatus = Enums<"mission_status">;
 
+// What the artisan who shares a mission earns when another artisan does the job.
+export const SHARE_REWARD_PERCENT = 10;
+export const SHARE_REWARD_LABEL = `+${SHARE_REWARD_PERCENT} %`;
+export const SHARE_REWARD_PROMISE = `Si un autre artisan réalise le chantier, vous touchez ${SHARE_REWARD_PERCENT} % de son montant.`;
+
 export const MISSION_STATUSES: MissionStatus[] = ["to_place", "in_progress", "placed", "abandoned"];
 
 // What Batrelio sees in the admin space.
@@ -18,7 +23,7 @@ export const MISSION_STATUS_LABELS: Record<MissionStatus, string> = {
 export const MISSION_STATUS_FOR_ARTISAN: Record<MissionStatus, string> = {
   to_place: "Batrelio cherche un artisan pour cette mission.",
   in_progress: "Batrelio cherche un artisan pour cette mission.",
-  placed: "Mission confiée à un autre artisan. Merci !",
+  placed: `Mission confiée à un autre artisan. Vous toucherez ${SHARE_REWARD_PERCENT} % du chantier une fois réalisé.`,
   abandoned: "Batrelio n'a pas trouvé d'artisan pour cette mission.",
 };
 

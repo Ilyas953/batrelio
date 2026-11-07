@@ -7,7 +7,7 @@ import { QuoteStatusPill, QuoteStatusTile } from "@/components/espace/places";
 import { IconTile, type Tone } from "@/components/espace/tones";
 import { getRequestDetail } from "@/lib/espace/request-detail";
 import { formatPhone, formatPrice, formatTimeAgo } from "@/lib/format";
-import { MISSION_STATUS_FOR_ARTISAN } from "@/lib/missions/shared-mission";
+import { MISSION_STATUS_FOR_ARTISAN, SHARE_REWARD_PROMISE } from "@/lib/missions/shared-mission";
 import { formatVisit, toVisitInputs, visitMessage } from "@/lib/requests/visit";
 import { MakeQuoteButton } from "./MakeQuoteButton";
 import { ShareMissionPanel, VisitPanel, type ExistingVisit } from "./RequestActions";
@@ -15,13 +15,13 @@ import { ShareMissionPanel, VisitPanel, type ExistingVisit } from "./RequestActi
 // Preparing a quote with the AI can take several dozen seconds.
 export const maxDuration = 120;
 
-export default function RequestDetailPage({ params }: PageProps<"/espace/demandes/[id]">) {
+export default function RequestDetailPage({ params, searchParams }: PageProps<"/espace/demandes/[id]">) {
   return (
     <>
       <BackLink href="/espace" label="Demandes" />
       <Suspense fallback={<p className="mt-8 text-lg text-stone-500">Chargement…</p>}>
-        {params.then(({ id }) => (
-          <RequestDetail requestId={id} />
+        {Promise.all([params, searchParams]).then(([{ id }, query]) => (
+          <RequestDetail requestId={id} openSharing={query.partager === "1"} />
         ))}
       </Suspense>
     </>
@@ -32,7 +32,7 @@ function toMapsUrl(address: string): string {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
 }
 
-async function RequestDetail({ requestId }: { requestId: string }) {
+async function RequestDetail({ requestId, openSharing }: { requestId: string; openSharing: boolean }) {
   const request = await getRequestDetail(requestId);
   if (!request) notFound();
 
@@ -55,7 +55,7 @@ async function RequestDetail({ requestId }: { requestId: string }) {
         Appeler le {formatPhone(request.customer_phone)}
       </a>
 
-      <RequestActions request={request} />
+      <RequestActions request={request} openSharing={openSharing} />
 
       {request.description && (
         <section className="rounded-3xl bg-white p-5 sm:p-6">
@@ -116,7 +116,7 @@ function toExistingVisit(request: RequestWithQuotes): ExistingVisit | null {
 }
 
 // Three answers to a request: a quote, a visit, or sharing the mission with Batrelio.
-function RequestActions({ request }: { request: RequestWithQuotes }) {
+function RequestActions({ request, openSharing }: { request: RequestWithQuotes; openSharing: boolean }) {
   const quotes = request.quotes.toSorted((a, b) => b.created_at.localeCompare(a.created_at));
   const draft = quotes.find((quote) => quote.status === "draft");
   const mission = request.sharedMission;
@@ -161,7 +161,7 @@ function RequestActions({ request }: { request: RequestWithQuotes }) {
             <MakeQuoteButton requestId={request.id} label={quotes.length ? "Faire un autre devis" : "Faire le devis"} />
           )}
           <VisitPanel requestId={request.id} existing={toExistingVisit(request)} minDate={toVisitInputs(new Date()).date} />
-          <ShareMissionPanel requestId={request.id} />
+          <ShareMissionPanel requestId={request.id} initiallyOpen={openSharing} />
         </>
       )}
     </section>
@@ -177,6 +177,9 @@ function SharedMissionCard({ status }: { status: keyof typeof MISSION_STATUS_FOR
       <div>
         <p className="text-lg font-bold text-violet-950">Mission partagée</p>
         <p className="mt-1 text-base text-violet-900">{MISSION_STATUS_FOR_ARTISAN[status]}</p>
+        {(status === "to_place" || status === "in_progress") && (
+          <p className="mt-2 text-sm font-semibold text-emerald-800">{SHARE_REWARD_PROMISE}</p>
+        )}
       </div>
     </section>
   );

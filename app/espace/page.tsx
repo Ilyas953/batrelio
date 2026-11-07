@@ -16,6 +16,7 @@ import {
   PhoneMissedIcon,
 } from "@/components/landing/icons";
 import { Section } from "@/components/espace/lists";
+import { RewardBadge } from "@/components/espace/RewardBadge";
 import { IconTile, StatusPill, type Tone } from "@/components/espace/tones";
 import { withReturnTo } from "@/lib/espace/return-to";
 import { getDashboard, type HandledRequest, type NewRequest } from "@/lib/espace/dashboard";
@@ -359,7 +360,7 @@ function RequestCard({ request, now }: { request: NewRequest; now: Date }) {
         )}
       </Link>
 
-      <div className="grid grid-cols-[1fr_auto] gap-2 border-t border-stone-100 p-3">
+      <div className="grid grid-cols-2 gap-2 border-t border-stone-100 p-3">
         <a
           href={`tel:${request.customer_phone}`}
           className="flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-orange-600 px-4 text-base font-semibold text-white hover:bg-orange-700"
@@ -367,11 +368,14 @@ function RequestCard({ request, now }: { request: NewRequest; now: Date }) {
           <PhoneIcon className="size-5" />
           Appeler
         </a>
+        {/* Opens the request with the sharing form ready: one more tap to confirm. */}
         <Link
-          href={`/espace/demandes/${request.id}`}
-          className="flex min-h-12 items-center justify-center rounded-2xl px-5 text-base font-semibold text-stone-700 ring-1 ring-stone-200 hover:bg-stone-50"
+          href={`/espace/demandes/${request.id}?partager=1#partager`}
+          className="flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-violet-50 px-3 text-base font-semibold text-violet-800 ring-2 ring-violet-200 hover:bg-violet-100"
         >
-          Voir
+          <ForwardIcon className="size-5 shrink-0" />
+          Partager
+          <RewardBadge />
         </Link>
       </div>
     </li>

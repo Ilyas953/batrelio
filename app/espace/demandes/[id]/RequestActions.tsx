@@ -1,11 +1,12 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition, type FormEvent } from "react";
+import { useEffect, useRef, useState, useTransition, type FormEvent } from "react";
 import { CalendarIcon, ForwardIcon } from "@/components/landing/icons";
 import { FormError, TextField } from "@/components/ui/form";
 import { ShareMessageButtons, type ShareableMessage } from "@/components/ui/ShareLinkButtons";
-import { MAX_ARTISAN_NOTE_LENGTH } from "@/lib/missions/shared-mission";
+import { RewardBadge } from "@/components/espace/RewardBadge";
+import { MAX_ARTISAN_NOTE_LENGTH, SHARE_REWARD_PROMISE } from "@/lib/missions/shared-mission";
 import { proposeVisit, shareMission } from "./actions";
 
 const SECONDARY_BUTTON =
@@ -95,10 +96,16 @@ export function VisitPanel({ requestId, existing, minDate }: VisitPanelProps) {
 }
 
 // For a job the artisan cannot take: Batrelio receives it and looks for another artisan.
-export function ShareMissionPanel({ requestId }: { requestId: string }) {
-  const [isOpen, setIsOpen] = useState(false);
+export function ShareMissionPanel({ requestId, initiallyOpen = false }: { requestId: string; initiallyOpen?: boolean }) {
+  const [isOpen, setIsOpen] = useState(initiallyOpen);
   const [error, setError] = useState<string>();
   const [isSharing, startSharing] = useTransition();
+  const formRef = useRef<HTMLFormElement>(null);
+
+  // Coming from "Partager" in the list: the form is below the request, bring it into view.
+  useEffect(() => {
+    if (initiallyOpen) formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [initiallyOpen]);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -111,22 +118,35 @@ export function ShareMissionPanel({ requestId }: { requestId: string }) {
   if (!isOpen) {
     return (
       <button
+        id="partager"
         type="button"
         onClick={() => setIsOpen(true)}
-        className="flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl px-5 text-base font-semibold text-stone-600 hover:bg-stone-100"
+        className="flex w-full scroll-mt-24 items-center gap-4 rounded-3xl bg-violet-50 p-4 text-left ring-2 ring-violet-200 hover:bg-violet-100 sm:p-5"
       >
-        <ForwardIcon className="size-5 text-violet-700" />
-        Vous ne pouvez pas la prendre ? Partager la mission
+        <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-violet-600 text-white">
+          <ForwardIcon />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="flex flex-wrap items-center gap-2 text-lg font-bold text-violet-950">
+            Partager la mission
+            <RewardBadge />
+          </span>
+          <span className="mt-0.5 block text-sm text-violet-900">Vous ne pouvez pas la prendre ? Gagnez de l&apos;argent quand même.</span>
+        </span>
       </button>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} className={CARD}>
+    <form ref={formRef} id="partager" onSubmit={handleSubmit} className={`${CARD} scroll-mt-24 ring-2 ring-violet-200`}>
       <PanelTitle>Partager la mission</PanelTitle>
       <p className="text-base text-stone-600">
         Pas le temps, ou pas votre métier ? Batrelio reçoit cette demande et cherche un autre artisan pour votre client.
         Vous n&apos;avez rien d&apos;autre à faire.
+      </p>
+      <p className="flex items-center gap-3 rounded-2xl bg-emerald-50 px-4 py-3 text-base font-semibold text-emerald-900">
+        <RewardBadge size="md" />
+        {SHARE_REWARD_PROMISE}
       </p>
       <div>
         <label htmlFor="note" className="mb-2 block text-base font-semibold text-stone-800">

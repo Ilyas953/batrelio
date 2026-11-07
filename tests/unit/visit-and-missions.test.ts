@@ -7,7 +7,7 @@ import {
   toVisitInputs,
   visitMessage,
 } from "@/lib/requests/visit";
-import { isMissionStatus, readNote } from "@/lib/missions/shared-mission";
+import { MISSION_STATUS_FOR_ARTISAN, SHARE_REWARD_LABEL, SHARE_REWARD_PROMISE, isMissionStatus, readNote } from "@/lib/missions/shared-mission";
 
 const NOW = new Date("2026-11-05T10:00:00Z");
 
@@ -65,6 +65,12 @@ describe("shared missions", () => {
     expect(isMissionStatus("placed")).toBe(true);
     expect(isMissionStatus("shared")).toBe(false);
     expect(isMissionStatus(undefined)).toBe(false);
+  });
+
+  it("promises the same 10 % everywhere", () => {
+    expect(SHARE_REWARD_LABEL).toBe("+10 %");
+    expect(SHARE_REWARD_PROMISE).toContain("10 %");
+    expect(MISSION_STATUS_FOR_ARTISAN.placed).toContain("10 %");
   });
 
   it("reads an optional note", () => {

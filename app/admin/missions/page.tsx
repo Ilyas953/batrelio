@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import { listSharedMissions, type SharedMission } from "@/lib/admin/missions";
 import { REGION_LABELS, TRADE_LABELS } from "@/lib/company/details";
 import { formatPhone, formatTimeAgo } from "@/lib/format";
-import { MAX_ADMIN_NOTE_LENGTH, MISSION_STATUSES, MISSION_STATUS_LABELS, type MissionStatus } from "@/lib/missions/shared-mission";
+import { MAX_ADMIN_NOTE_LENGTH, SHARE_REWARD_PERCENT, MISSION_STATUSES, MISSION_STATUS_LABELS, type MissionStatus } from "@/lib/missions/shared-mission";
 import { formatVisit } from "@/lib/requests/visit";
 import { updateMission } from "./actions";
 
@@ -160,6 +160,11 @@ function MissionCard({ mission }: { mission: SharedMission }) {
             </p>
           ) : (
             <p className="text-base text-stone-500">Entreprise supprimée</p>
+          )}
+          {company && (
+            <p className="rounded-2xl bg-emerald-50 px-4 py-3 text-base font-semibold text-emerald-900">
+              Promis : {SHARE_REWARD_PERCENT} % du chantier à {company.name} s&apos;il est réalisé.
+            </p>
           )}
           {mission.artisan_note && (
             <blockquote className="rounded-2xl bg-violet-50 px-4 py-3 text-base text-violet-950">« {mission.artisan_note} »</blockquote>
