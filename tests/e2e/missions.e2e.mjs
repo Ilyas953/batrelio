@@ -33,7 +33,7 @@ export async function missionsSuite({ check, makeUser, get, action }) {
   html = (await get("/espace", artisan.jar)).text;
   check("À traiter : « Partager » à côté d'« Appeler »", html.includes(`${page}?partager=1#partager`) && html.includes("Appeler"));
   html = (await get(`${page}?partager=1`, artisan.jar)).text;
-  check("depuis « Partager » : le formulaire est ouvert et promet 10 %", html.includes("Un mot pour Batrelio") && html.includes("vous touchez 10 % de son montant"));
+  check("depuis « Partager » : le formulaire est ouvert et promet 10 %", html.includes("Un mot pour Batrelio") && html.includes("vous touchez 10 % de ce que le client paie (TTC)") && html.includes("Comment ça marche ?"));
 
   // Visit
   let result = await action("proposeVisit", page, { jar: artisan.jar, args: [request.id], formData: { date: dateInDays(-1), time: "10:00" } });
@@ -91,7 +91,7 @@ export async function missionsSuite({ check, makeUser, get, action }) {
   const boss = await makeUser({ isAdmin: true, companyName: "Admin E2E" });
   html = (await get("/admin/missions", boss.jar)).text;
   check("admin : la mission arrive avec le client et le mot de l'artisan", html.includes("Mme Visite") && html.includes("Haie de 30 m") && html.includes("Pas mon métier") && html.includes("Visites E2E"));
-  check("admin : la commission promise est rappelée", html.replaceAll("<!-- -->", "").includes("Promis : 10 % du chantier à Visites E2E"));
+  check("admin : la commission promise est rappelée", html.replaceAll("<!-- -->", "").includes("Promis à Visites E2E : 10 % du TTC payé par le client"));
 
   await action("updateMission", "/admin/missions", { jar: artisan.jar, args: [mission.id], formData: { status: "placed", adminNote: "piratage" } });
   check("admin : un artisan ne peut pas modifier le suivi", (await readMission()).status === "to_place");
@@ -104,5 +104,5 @@ export async function missionsSuite({ check, makeUser, get, action }) {
 
   html = (await get(page, artisan.jar)).text;
   check("artisan : voit que la mission est confiée, pas les notes internes", html.includes("Mission confiée") && !html.includes("Jardins Dupont"));
-  check("artisan : ses 10 % lui sont rappelés", html.includes("Vous toucherez 10 % du chantier"));
+  check("artisan : ses 10 % lui sont rappelés", html.includes("Vous toucherez 10 % de ce que paiera le client"));
 }

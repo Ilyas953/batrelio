@@ -7,7 +7,15 @@ import {
   toVisitInputs,
   visitMessage,
 } from "@/lib/requests/visit";
-import { MISSION_STATUS_FOR_ARTISAN, SHARE_REWARD_LABEL, SHARE_REWARD_PROMISE, isMissionStatus, readNote } from "@/lib/missions/shared-mission";
+import {
+  MISSION_STATUS_FOR_ARTISAN,
+  SHARE_REWARD_EXAMPLE,
+  SHARE_REWARD_LABEL,
+  SHARE_REWARD_PROMISE,
+  isMissionStatus,
+  readNote,
+  shareRewardCents,
+} from "@/lib/missions/shared-mission";
 
 const NOW = new Date("2026-11-05T10:00:00Z");
 
@@ -71,6 +79,14 @@ describe("shared missions", () => {
     expect(SHARE_REWARD_LABEL).toBe("+10 %");
     expect(SHARE_REWARD_PROMISE).toContain("10 %");
     expect(MISSION_STATUS_FOR_ARTISAN.placed).toContain("10 %");
+    expect(SHARE_REWARD_PROMISE).toContain("TTC");
+  });
+
+  it("computes 10 % of what the customer paid, VAT included", () => {
+    expect(shareRewardCents(200_000)).toBe(20_000);
+    expect(shareRewardCents(123_45)).toBe(1_235);
+    expect(shareRewardCents(0)).toBe(0);
+    expect(SHARE_REWARD_EXAMPLE.replaceAll("\u202f", " ").replaceAll("\u00a0", " ")).toBe("Exemple : le client paie 2 000 € TTC, vous recevez 200 €.");
   });
 
   it("reads an optional note", () => {

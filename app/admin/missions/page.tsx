@@ -163,7 +163,8 @@ function MissionCard({ mission }: { mission: SharedMission }) {
           )}
           {company && (
             <p className="rounded-2xl bg-emerald-50 px-4 py-3 text-base font-semibold text-emerald-900">
-              Promis : {SHARE_REWARD_PERCENT} % du chantier à {company.name} s&apos;il est réalisé.
+              Promis à {company.name} : {SHARE_REWARD_PERCENT} % du TTC payé par le client, à verser au paiement du
+              chantier.
             </p>
           )}
           {mission.artisan_note && (

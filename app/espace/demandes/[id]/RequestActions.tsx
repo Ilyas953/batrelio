@@ -6,7 +6,12 @@ import { CalendarIcon, ForwardIcon } from "@/components/landing/icons";
 import { FormError, TextField } from "@/components/ui/form";
 import { ShareMessageButtons, type ShareableMessage } from "@/components/ui/ShareLinkButtons";
 import { RewardBadge } from "@/components/espace/RewardBadge";
-import { MAX_ARTISAN_NOTE_LENGTH, SHARE_REWARD_PROMISE } from "@/lib/missions/shared-mission";
+import {
+  MAX_ARTISAN_NOTE_LENGTH,
+  SHARE_REWARD_EXAMPLE,
+  SHARE_REWARD_PROMISE,
+  SHARE_REWARD_STEPS,
+} from "@/lib/missions/shared-mission";
 import { proposeVisit, shareMission } from "./actions";
 
 const SECONDARY_BUTTON =
@@ -144,10 +149,21 @@ export function ShareMissionPanel({ requestId, initiallyOpen = false }: { reques
         Pas le temps, ou pas votre métier ? Batrelio reçoit cette demande et cherche un autre artisan pour votre client.
         Vous n&apos;avez rien d&apos;autre à faire.
       </p>
-      <p className="flex items-center gap-3 rounded-2xl bg-emerald-50 px-4 py-3 text-base font-semibold text-emerald-900">
-        <RewardBadge size="md" />
-        {SHARE_REWARD_PROMISE}
-      </p>
+      <div className="rounded-2xl bg-emerald-50 px-4 py-3 text-emerald-900">
+        <p className="flex items-center gap-3 text-base font-semibold">
+          <RewardBadge size="md" />
+          {SHARE_REWARD_PROMISE}
+        </p>
+        <details className="mt-2">
+          <summary className="cursor-pointer text-base font-semibold underline">Comment ça marche ?</summary>
+          <ol className="mt-2 list-decimal space-y-1 pl-5 text-base">
+            {SHARE_REWARD_STEPS.map((step) => (
+              <li key={step}>{step}</li>
+            ))}
+          </ol>
+          <p className="mt-2 text-sm font-semibold">{SHARE_REWARD_EXAMPLE}</p>
+        </details>
+      </div>
       <div>
         <label htmlFor="note" className="mb-2 block text-base font-semibold text-stone-800">
           Un mot pour Batrelio <span className="font-normal text-stone-500">(facultatif)</span>

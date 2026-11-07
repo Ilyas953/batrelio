@@ -1,13 +1,30 @@
+import { formatCents } from "@/lib/format";
 import type { Enums } from "@/lib/supabase/database.types";
 
 // A mission the artisan cannot take: Batrelio looks for another artisan by hand.
 
 export type MissionStatus = Enums<"mission_status">;
 
-// What the artisan who shares a mission earns when another artisan does the job.
+// What the artisan who shares a mission earns when another artisan does the job:
+// a share of what the customer actually pays, VAT included, paid by Batrelio once the job is paid.
 export const SHARE_REWARD_PERCENT = 10;
 export const SHARE_REWARD_LABEL = `+${SHARE_REWARD_PERCENT} %`;
-export const SHARE_REWARD_PROMISE = `Si un autre artisan réalise le chantier, vous touchez ${SHARE_REWARD_PERCENT} % de son montant.`;
+export const SHARE_REWARD_PROMISE = `Si un autre artisan réalise le chantier, vous touchez ${SHARE_REWARD_PERCENT} % de ce que le client paie (TTC).`;
+
+export function shareRewardCents(paidCents: number): number {
+  return Math.round((paidCents * SHARE_REWARD_PERCENT) / 100);
+}
+
+const EXAMPLE_PAID_CENTS = 200_000;
+
+export const SHARE_REWARD_STEPS = [
+  "Vous partagez la mission : Batrelio trouve un autre artisan et prévient votre client.",
+  "Le chantier est réalisé, puis payé par le client.",
+  `Batrelio vous verse ${SHARE_REWARD_PERCENT} % du montant TTC payé, dès le paiement du chantier.`,
+];
+
+// "Exemple : le client paie 2 000 € TTC, vous recevez 200 €."
+export const SHARE_REWARD_EXAMPLE = `Exemple : le client paie ${formatCents(EXAMPLE_PAID_CENTS)} TTC, vous recevez ${formatCents(shareRewardCents(EXAMPLE_PAID_CENTS))}.`;
 
 export const MISSION_STATUSES: MissionStatus[] = ["to_place", "in_progress", "placed", "abandoned"];
 
@@ -23,7 +40,7 @@ export const MISSION_STATUS_LABELS: Record<MissionStatus, string> = {
 export const MISSION_STATUS_FOR_ARTISAN: Record<MissionStatus, string> = {
   to_place: "Batrelio cherche un artisan pour cette mission.",
   in_progress: "Batrelio cherche un artisan pour cette mission.",
-  placed: `Mission confiée à un autre artisan. Vous toucherez ${SHARE_REWARD_PERCENT} % du chantier une fois réalisé.`,
+  placed: `Mission confiée à un autre artisan. Vous toucherez ${SHARE_REWARD_PERCENT} % de ce que paiera le client, dès le paiement du chantier.`,
   abandoned: "Batrelio n'a pas trouvé d'artisan pour cette mission.",
 };
 
