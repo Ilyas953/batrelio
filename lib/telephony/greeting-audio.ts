@@ -50,6 +50,10 @@ export async function prepareGreetingAudio(company: GreetingCompany): Promise<vo
 
   const stale = [...existingPaths].filter((path) => !Object.values(wanted).includes(path));
   if (stale.length > 0) await storage.remove(stale);
+
+  // Recording runs after the answer: the account may have been deleted meanwhile. Leave nothing behind.
+  const { data: stillThere } = await createAdminClient().from("companies").select("id").eq("id", company.id).maybeSingle();
+  if (!stillThere) await removeGreetingAudio(company.id);
 }
 
 // Every recording of a company, e.g. when its account is deleted.
