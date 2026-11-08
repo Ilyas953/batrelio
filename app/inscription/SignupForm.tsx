@@ -42,6 +42,16 @@ export function SignupForm() {
         defaultValue={state.values?.trade}
       />
       <TextField
+        label="Votre portable"
+        name="mobile"
+        required
+        inputMode="tel"
+        autoComplete="tel"
+        defaultValue={state.values?.mobile}
+        placeholder="06 12 34 56 78"
+        hint="On vous prévient par SMS à chaque nouveau client."
+      />
+      <TextField
         label="Adresse e-mail"
         name="email"
         type="email"

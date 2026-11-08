@@ -13,6 +13,8 @@ const contentSecurityPolicy = [
   "style-src 'self' 'unsafe-inline'",
   `img-src 'self' blob: data: ${supabaseOrigin}`.trim(),
   "font-src 'self'",
+  // Greetings synthesised in the page are played from a blob: URL.
+  "media-src 'self' blob:",
   "connect-src 'self'",
   "object-src 'none'",
   "base-uri 'self'",

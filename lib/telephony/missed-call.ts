@@ -10,12 +10,12 @@ const RECENT_CALL_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 export type AnsweringCompany = Pick<
   Tables<"companies">,
-  "id" | "name" | "sms_sender_name" | "sms_sender_approved" | "auto_reply_enabled" | "contact_phone" | "greeting_intro"
+  "id" | "name" | "sms_sender_name" | "sms_sender_approved" | "auto_reply_enabled" | "contact_phone" | "greeting_intro" | "phone_number"
 >;
 
 // Columns to read for a call: the voice is only needed to answer it.
 export const ANSWERING_COMPANY_COLUMNS =
-  "id, name, sms_sender_name, sms_sender_approved, auto_reply_enabled, contact_phone, greeting_intro, greeting_voice";
+  "id, name, sms_sender_name, sms_sender_approved, auto_reply_enabled, contact_phone, greeting_intro, greeting_voice, phone_number";
 
 type SmsDecision = "send" | Exclude<SmsStatus, "pending" | "sent" | "delivered" | "failed" | "skipped_recent">;
 
@@ -35,7 +35,8 @@ export async function isExcludedCaller(companyId: string, callerPhone: string | 
 // Called while the greeting plays: decides whether this caller gets an SMS.
 export function decideSms(company: AnsweringCompany, callerPhone: string | undefined, isExcluded: boolean): SmsDecision {
   if (!isIdentifiedCaller(callerPhone)) return "skipped_anonymous";
-  if (callerPhone === company.contact_phone) return "skipped_own_number";
+  // The artisan's own phone, or the setup test call placed from their Batrelio number.
+  if (callerPhone === company.contact_phone || callerPhone === company.phone_number) return "skipped_own_number";
   if (isExcluded) return "skipped_excluded";
   if (!company.auto_reply_enabled) return "skipped_disabled";
   if (!isFrenchMobile(callerPhone)) return "skipped_not_mobile";

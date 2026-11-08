@@ -12,6 +12,7 @@ const company: AnsweringCompany = {
   auto_reply_enabled: true,
   contact_phone: "+33611111111",
   greeting_intro: null,
+  phone_number: "+33199000001",
 };
 const CUSTOMER_MOBILE = "+33639981234";
 
@@ -29,6 +30,8 @@ describe("who gets an SMS after a missed call", () => {
 
   it("never texts the artisan's own number or an excluded one", () => {
     expect(decideSms(company, company.contact_phone!, false)).toBe("skipped_own_number");
+    // The setup test call comes from the artisan's Batrelio number: never a customer request.
+    expect(decideSms(company, company.phone_number!, false)).toBe("skipped_own_number");
     expect(decideSms(company, CUSTOMER_MOBILE, true)).toBe("skipped_excluded");
   });
 
@@ -85,15 +88,20 @@ describe("personalised greeting", () => {
 describe("greeting voice", () => {
   it("reads the greeting with the chosen voice, in French", () => {
     const twiml = toVoiceResponse("Bonjour", "remi-ai");
-    expect(twiml).toContain('voice="Polly.Rémi-Generative"');
+    expect(twiml).toContain('voice="Google.fr-FR-Chirp3-HD-Puck"');
     expect(twiml).toContain('language="fr-FR"');
     expect(twiml).toContain("<Hangup/>");
   });
 
-  it("keeps the proven voice when nothing or an unknown voice is stored", () => {
+  it("keeps the default voice, outside the provider's beta, when nothing or an unknown voice is stored", () => {
     expect(findGreetingVoice(null).id).toBe(DEFAULT_GREETING_VOICE);
     expect(findGreetingVoice("removed-voice").id).toBe(DEFAULT_GREETING_VOICE);
-    expect(toVoiceResponse("Bonjour")).toContain('voice="Polly.Lea"');
+    expect(findGreetingVoice(DEFAULT_GREETING_VOICE).kind).toBe("standard");
+    expect(toVoiceResponse("Bonjour")).toContain('voice="Google.fr-FR-Neural2-F"');
+  });
+
+  it("plays in the page exactly the voice customers hear on the phone", () => {
+    for (const voice of GREETING_VOICES) expect(voice.providerVoice).toBe(`Google.${voice.synthesisVoice}`);
   });
 
   it("cannot be used to inject TwiML through the artisan's text", () => {

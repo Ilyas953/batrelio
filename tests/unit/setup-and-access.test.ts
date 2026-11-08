@@ -15,15 +15,21 @@ describe("setup guide", () => {
     const identified = blankCompany(IDENTIFIED);
     expect(doneIds(computeSetupSteps(identified, false))).toEqual(["company"]);
 
-    const insured = blankCompany({ ...IDENTIFIED, ...INSURED });
-    expect(doneIds(computeSetupSteps(insured, false))).toEqual(["company", "insurance"]);
-
-    const withNumber = blankCompany({ ...IDENTIFIED, ...INSURED, phone_number: "+33939000003", auto_reply_enabled: true });
-    expect(doneIds(computeSetupSteps(withNumber, false))).toEqual(["company", "insurance", "number"]);
+    const withNumber = blankCompany({ ...IDENTIFIED, phone_number: "+33939000003", auto_reply_enabled: true });
+    expect(doneIds(computeSetupSteps(withNumber, false))).toEqual(["company", "number"]);
 
     const forwarded = { ...withNumber, call_forwarding_confirmed_at: "2026-11-05T10:00:00Z" };
-    expect(doneIds(computeSetupSteps(forwarded, false))).toEqual(["company", "insurance", "number", "forwarding"]);
-    expect(doneIds(computeSetupSteps(forwarded, true))).toHaveLength(5);
+    expect(doneIds(computeSetupSteps(forwarded, false))).toEqual(["company", "number", "forwarding"]);
+    expect(doneIds(computeSetupSteps(forwarded, true))).toHaveLength(4);
+  });
+
+  it("asks for insurance at the first quote, not during setup", () => {
+    expect(computeSetupSteps(blankCompany(IDENTIFIED), false).map((step) => step.id)).toEqual(["company", "number", "forwarding", "test"]);
+    // Insurance does not count in setup…
+    expect(doneIds(computeSetupSteps(blankCompany({ ...IDENTIFIED, ...INSURED }), false))).toEqual(["company"]);
+    // …and uninsured, the artisan still finishes setup and receives clients.
+    const ready = blankCompany({ ...IDENTIFIED, phone_number: "+33939000003", auto_reply_enabled: true });
+    expect(doneIds(computeSetupSteps(ready, true))).toHaveLength(4);
   });
 
   it("does not count a paused number as set up", () => {

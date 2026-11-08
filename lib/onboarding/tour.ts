@@ -59,10 +59,16 @@ export const TOUR_STEPS: TourStep[] = [
     text: "Votre entreprise, votre numéro Batrelio, votre message d'accueil. C'est aussi là que vous pourrez revoir ce tuto.",
   },
   {
+    id: "install",
+    target: "install",
+    title: "Comme une appli",
+    text: "Ajoutez Batrelio à votre écran d'accueil : vos demandes s'ouvrent en un tap, sans chercher le site.",
+  },
+  {
     id: "setup",
     target: "setup",
     title: "Par où commencer",
-    text: "Terminez la mise en place : 5 étapes, une dizaine de minutes. Ensuite, un appel manqué ne vous fait plus perdre de client.",
+    text: "Terminez la mise en place : 4 étapes, environ 5 minutes. Ensuite, un appel manqué ne vous fait plus perdre de client.",
   },
   {
     id: "done",

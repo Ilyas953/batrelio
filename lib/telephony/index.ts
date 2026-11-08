@@ -87,6 +87,16 @@ export async function sendSms(to: string, from: string, body: string, siteUrl: s
   }
 }
 
+// Rings the artisan's phone from their Batrelio number: if they do not answer, the operator forwards
+// the call back to Batrelio, which proves the forwarding works.
+export async function placeTestCall(to: string, from: string): Promise<SentSms> {
+  const twiml =
+    '<?xml version="1.0" encoding="UTF-8"?><Response>' +
+    '<Say language="fr-FR" voice="Google.fr-FR-Neural2-F">Ceci est l\'essai Batrelio. Ne décrochez pas : raccrochez, puis relancez l\'essai.</Say>' +
+    "<Hangup/></Response>";
+  return playGreetingByPhone(to, from, twiml);
+}
+
 // Calls the artisan from their own Batrelio number and reads the greeting, exactly as callers hear it.
 export async function playGreetingByPhone(to: string, from: string, twiml: string): Promise<SentSms> {
   try {

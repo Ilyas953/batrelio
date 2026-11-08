@@ -18,7 +18,7 @@ export const RATE_RULES = {
   customerRequestPerIp: { limit: 15, windowSeconds: HOUR },
 } satisfies Record<string, RateRule>;
 
-export type RateScope = keyof typeof RATE_RULES | "numberPurchase" | "greetingPreview";
+export type RateScope = keyof typeof RATE_RULES | "numberPurchase" | "greetingPreview" | "greetingAudio" | "testCall";
 
 // The hosting platform sets these headers itself; a visitor cannot choose their value there.
 export async function getClientIp(): Promise<string> {

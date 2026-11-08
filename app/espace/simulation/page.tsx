@@ -62,7 +62,7 @@ async function Simulator() {
         ) : (
           <div className="mt-4 space-y-4">
             <p className="text-base text-stone-600">
-              Activez d&apos;abord votre numéro Batrelio dans le guide (étape 3) : aucun numéro n&apos;est acheté, un
+              Activez d&apos;abord votre numéro Batrelio dans le guide (étape 2) : aucun numéro n&apos;est acheté, un
               numéro fictif vous est attribué.
             </p>
             <Link

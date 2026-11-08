@@ -197,8 +197,9 @@ export function QuoteEditor({ editor }: { editor: EditorQuote }) {
           href={withReturnTo("/espace/entreprise", `/espace/devis/${quote.id}`)}
           className="block rounded-3xl border-2 border-amber-200 bg-amber-50 p-5 text-base text-amber-900"
         >
-          Pour envoyer ce devis, complétez d&apos;abord votre entreprise : il manque{" "}
-          {editor.missingCompanyDetails.join(", ")}. <span className="font-semibold underline">Compléter</span>
+          <span className="block font-bold text-amber-950">Une dernière chose avant d&apos;envoyer votre devis</span>
+          La loi demande qu&apos;y figurent {editor.missingCompanyDetails.join(", ")}. C&apos;est à faire une seule fois,
+          puis vous revenez ici. <span className="font-semibold underline">Compléter (2 minutes)</span>
         </Link>
       )}
 

@@ -6,7 +6,9 @@ import type { Tables } from "@/lib/supabase/database.types";
 // what is already saved, never ticked by hand, except call forwarding, which only the
 // operator knows about: there the first forwarded call is the real proof.
 
-export type SetupStepId = "company" | "insurance" | "number" | "forwarding" | "test";
+// Only what makes missed calls come back as clients. Insurance and mediator are asked for when
+// the artisan sends their first quote, where they are needed.
+export type SetupStepId = "company" | "number" | "forwarding" | "test";
 
 export type SetupStep = { id: SetupStepId; done: boolean };
 
@@ -25,16 +27,9 @@ export function hasCompanyIdentity(company: Company): boolean {
   );
 }
 
-function hasInsuranceAndMediator(company: Company): boolean {
-  return Boolean(
-    company.insurer_name && company.insurance_policy_number && company.insurance_coverage_area && company.mediator_name,
-  );
-}
-
 export function computeSetupSteps(company: Company, hasReceivedCall: boolean): SetupStep[] {
   return [
     { id: "company", done: hasCompanyIdentity(company) },
-    { id: "insurance", done: hasInsuranceAndMediator(company) },
     { id: "number", done: Boolean(company.phone_number && company.auto_reply_enabled) },
     { id: "forwarding", done: Boolean(company.call_forwarding_confirmed_at) || hasReceivedCall },
     { id: "test", done: hasReceivedCall },

@@ -215,7 +215,7 @@ export function CompanyProfileForm({ initialValues, returnTo }: { initialValues:
 
         <Fieldset
           title="Médiateur de la consommation"
-          description="Obligatoire si vous travaillez pour des particuliers. Votre fédération professionnelle peut vous en indiquer un."
+          description="Obligatoire si vous travaillez pour des particuliers : celui auquel vous avez adhéré (il figure sur votre contrat d'adhésion). Pas encore de médiateur ? Votre fédération (CAPEB, FFB) ou votre chambre des métiers vous en propose un."
         >
           <TextField label="Nom du médiateur" name="mediatorName" defaultValue={values.mediatorName} />
           <TextField

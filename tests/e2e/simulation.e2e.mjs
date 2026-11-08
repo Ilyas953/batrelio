@@ -19,8 +19,8 @@ export async function simulationSuite({ check, makeUser, get, action, fakeIp, tr
 
   let page = await get("/espace/demarrage", jar);
   check("le guide affiche le bandeau « Compte de test »", page.text.includes("Compte de test"));
-  check("le guide démarre à 0 étape sur 5", page.text.includes("0<!-- --> étape"));
-  check("l'étape 3 attend l'entreprise", page.text.includes("entreprise identifiée"));
+  check("le guide démarre à 0 étape sur 4, sans assurance à remplir", page.text.includes("0<!-- --> étape") && page.text.includes("4 étapes") && !page.text.includes("Ajouter mon assurance"));
+  check("l'étape 2 (numéro) attend l'entreprise", page.text.includes("entreprise identifiée"));
 
   let result = await action("simulateCall", "/espace/simulation", { jar, args: [{}], formData: { caller: "06 39 98 11 11" } });
   check("pas de simulation sans numéro", result.text.includes("Activez d'abord votre numéro"));
@@ -93,8 +93,8 @@ export async function simulationSuite({ check, makeUser, get, action, fakeIp, tr
   }
 
   page = await get("/espace/demarrage", jar);
-  // Company, number, then forwarding and test, both proven by the first call (insurance left empty).
-  check("le premier appel valide le renvoi et l'essai (4 sur 5)", page.text.includes("4<!-- --> étape"));
+  // Company, number, then forwarding and test, both proven by the first call. No insurance needed.
+  check("le premier appel termine la mise en place (4 sur 4)", page.text.includes("4<!-- --> étape") && page.text.includes("Tout est prêt"));
 
   // A real account never reaches the simulator.
   const real = await makeUser({ companyName: "Vrai compte E2E" });
@@ -136,5 +136,5 @@ export async function simulationSuite({ check, makeUser, get, action, fakeIp, tr
   check("l'ancien compte et ses données sont supprimés", !old.user && oldCompany === 0);
   check("le nouveau compte est un compte de test vierge", fresh?.app_metadata?.test_account === true && fresh.id !== tester.id);
   page = await get("/espace/demarrage", jar);
-  check("le nouveau compte repart de 0 sur 5", page.text.includes("Compte de test") && page.text.includes("0<!-- --> étape"));
+  check("le nouveau compte repart de 0 sur 4", page.text.includes("Compte de test") && page.text.includes("0<!-- --> étape"));
 }

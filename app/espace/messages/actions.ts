@@ -6,11 +6,14 @@ import { MAX_QUOTE_MESSAGE_LENGTH, defaultQuoteMessage } from "@/lib/quotes/shar
 import { consumeRateLimit } from "@/lib/security/rate-limit";
 import { playGreetingByPhone } from "@/lib/telephony";
 import { MAX_GREETING_INTRO_LENGTH, defaultGreetingIntro, greetingWithSms, toVoiceResponse } from "@/lib/telephony/messages";
-import { isGreetingVoiceId, type GreetingVoiceId } from "@/lib/telephony/voices";
+import { synthesizeSpeech } from "@/lib/speech";
+import { findGreetingVoice, isGreetingVoiceId, type GreetingVoiceId } from "@/lib/telephony/voices";
 
 export type MessageFormState = { error?: string; saved?: boolean; called?: boolean };
 
 const GREETING_PREVIEWS_PER_DAY = 5;
+// Listening in the page costs a fraction of a cent: generous, only against abuse.
+const GREETING_LISTENS_PER_DAY = 100;
 const DAY_SECONDS = 24 * 60 * 60;
 
 type GreetingInput = { voice: GreetingVoiceId; intro: string };
@@ -98,4 +101,27 @@ export async function previewGreeting(_previous: MessageFormState, formData: For
     return { error: "L'appel n'a pas pu partir. Réessayez dans un instant." };
   }
   return { called: true };
+}
+
+export type GreetingAudio = { mp3Base64: string } | { error: string };
+
+// The greeting being edited (saved or not), read by the chosen voice, to play in the page.
+export async function listenToGreeting(voiceId: string, intro: string): Promise<GreetingAudio> {
+  const { supabase } = await requireUser();
+  const formData = new FormData();
+  formData.set("voice", voiceId);
+  formData.set("intro", intro);
+  const input = readGreeting(formData);
+  if ("error" in input) return input;
+
+  const { data: company } = await supabase.from("companies").select("id, name").maybeSingle();
+  if (!company) return { error: "Aucune entreprise n'est liée à ce compte." };
+
+  const allowed = await consumeRateLimit("greetingAudio", company.id, { limit: GREETING_LISTENS_PER_DAY, windowSeconds: DAY_SECONDS });
+  if (!allowed) return { error: "Vous avez beaucoup écouté aujourd'hui. Réessayez demain." };
+
+  const speech = await synthesizeSpeech(greetingWithSms(company.name, input.intro), findGreetingVoice(input.voice).synthesisVoice);
+  if (speech.status === "ok") return { mp3Base64: speech.mp3Base64 };
+  if (speech.status === "failed") console.error(`Écoute du message impossible : ${speech.reason}`);
+  return { error: "L'écoute n'est pas disponible pour le moment. Utilisez « M'appeler pour écouter »." };
 }

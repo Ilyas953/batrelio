@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { RATE_RULES, TOO_MANY_ATTEMPTS, consumeRateLimit, isAllowedFromThisVisitor } from "@/lib/security/rate-limit";
 import { createClient } from "@/lib/supabase/server";
+import { NEXT_PATH_PARAM, safeNextPath } from "./next-path";
 import { hasAdminRole } from "./session";
 
 export type SignInState = { error?: string; email?: string };
@@ -23,7 +24,7 @@ export async function signIn(_previous: SignInState, formData: FormData): Promis
     return { error: "E-mail ou mot de passe incorrect.", email };
   }
 
-  redirect(hasAdminRole(data.user.app_metadata) ? "/admin" : "/espace");
+  redirect(safeNextPath(formData.get(NEXT_PATH_PARAM), hasAdminRole(data.user.app_metadata)));
 }
 
 export async function signOut() {

@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "./database.types";
 import { AUTH_COOKIE_OPTIONS } from "./cookie-options";
 import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from "./env";
+import { loginUrlFor } from "@/lib/auth/next-path";
 
 // Refreshes the auth session before the page renders and writes the new cookies.
 export async function refreshSession(request: NextRequest) {
@@ -25,7 +26,13 @@ export async function refreshSession(request: NextRequest) {
     },
   });
 
-  await supabase.auth.getClaims();
+  const { data } = await supabase.auth.getClaims();
+
+  // Signed out on a private page (e.g. the link of a new-request SMS): sign in, then come back here.
+  const { pathname, search } = request.nextUrl;
+  if (!data?.claims && /^\/(espace|admin)(\/|$)/.test(pathname)) {
+    return NextResponse.redirect(new URL(loginUrlFor(pathname + search), request.url));
+  }
 
   return response;
 }

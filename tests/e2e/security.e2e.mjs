@@ -48,7 +48,7 @@ export async function securitySuite({ check, makeUser, get, action, fakeIp, buck
   result = await action("signUp", "/inscription", {
     ip: signupIp,
     args: [{}],
-    formData: { companyName: "Abus E2E", trade: "couvreur", email: signupEmail, password: "un-long-mot-de-passe-123", acceptTerms: "on" },
+    formData: { companyName: "Abus E2E", trade: "couvreur", mobile: "06 39 98 77 01", email: signupEmail, password: "un-long-mot-de-passe-123", acceptTerms: "on" },
   });
   const { data: users } = await admin.auth.admin.listUsers({ perPage: 1000 });
   check("inscription : 6e depuis la même adresse bloquée, aucun compte créé", result.text.includes(TOO_MANY) && !users.users.some((user) => user.email === signupEmail));

@@ -16,6 +16,7 @@ import {
   PhoneMissedIcon,
 } from "@/components/landing/icons";
 import { Section } from "@/components/espace/lists";
+import { InstallAppCard } from "@/components/espace/InstallAppCard";
 import { RewardBadge } from "@/components/espace/RewardBadge";
 import { IconTile, StatusPill, type Tone } from "@/components/espace/tones";
 import { withReturnTo } from "@/lib/espace/return-to";
@@ -58,7 +59,8 @@ async function Dashboard() {
       {setupPending ? (
         <SetupCard doneCount={setup.doneCount} total={setup.total} />
       ) : (
-        missingQuoteDetails.length > 0 && <MissingDetailsBanner missing={missingQuoteDetails} />
+        // Only once there is a quote to make: no paperwork before the first client.
+        missingQuoteDetails.length > 0 && newRequests.length > 0 && <MissingDetailsBanner missing={missingQuoteDetails} />
       )}
       {!setupPending && newRequestSmsBlocker && <SmsBlockerBanner blocker={newRequestSmsBlocker} />}
 
@@ -86,6 +88,7 @@ async function Dashboard() {
         {autoReply && <AutoReplyTile phoneNumber={autoReply.phoneNumber} enabled={autoReply.enabled} />}
         <RequestLinkPanel />
       </div>
+      <InstallAppCard dismissible />
 
       {handledRequests.length > 0 && (
         <Section
@@ -231,8 +234,8 @@ function MissingDetailsBanner({ missing }: { missing: string[] }) {
         <DocumentIcon />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-lg font-bold text-amber-950">Complétez votre entreprise</span>
-        <span className="block text-base text-amber-900">Pour faire vos devis, il manque {joinWithEt(missing)}.</span>
+        <span className="block text-lg font-bold text-amber-950">Avant votre premier devis</span>
+        <span className="block text-base text-amber-900">Il manque {joinWithEt(missing)} : ils doivent figurer sur vos devis.</span>
       </span>
       <ArrowRightIcon className="size-5 shrink-0 text-amber-800" />
     </Link>

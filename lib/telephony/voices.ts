@@ -1,25 +1,33 @@
-// Voices offered for the phone greeting, read by the telephony provider (TwiML <Say>).
-// Names come from https://www.twilio.com/docs/voice/twiml/say/text-speech (French voices).
-// "Voix IA" are generative voices: the most natural, billed a little more per character.
+// Voices offered for the phone greeting. All are Google voices: the provider reads them in calls
+// (TwiML <Say>), and the same voice is synthesised in the artisan space to listen before saving,
+// so what the artisan hears is what customers hear.
+// Names come from https://www.twilio.com/docs/voice/twiml/say/text-speech (fr-FR).
+// "Voix IA" (Chirp3-HD) are the most natural, but still a Public Beta at the provider.
 
 export type GreetingVoice = {
   id: string;
   label: string;
   description: string;
+  kind: "standard" | "ai";
+  // Voice name for the telephony provider (<Say voice="…">).
   providerVoice: string;
+  // The same voice for speech synthesis in the artisan space.
+  synthesisVoice: string;
 };
 
+// Ids are stored in companies.greeting_voice: keep them stable, change labels freely.
 export const GREETING_VOICES = [
-  { id: "classic", label: "Léa", description: "Voix de femme classique", providerVoice: "Polly.Lea" },
-  { id: "lea-ai", label: "Léa", description: "Voix de femme IA, très naturelle", providerVoice: "Polly.Lea-Generative" },
-  { id: "remi-ai", label: "Rémi", description: "Voix d'homme IA, très naturelle", providerVoice: "Polly.Rémi-Generative" },
-  { id: "claire-ai", label: "Claire", description: "Voix de femme IA, chaleureuse", providerVoice: "Google.fr-FR-Chirp3-HD-Aoede" },
-  { id: "hugo-ai", label: "Hugo", description: "Voix d'homme IA, posée", providerVoice: "Google.fr-FR-Chirp3-HD-Charon" },
+  { id: "classic", label: "Léa", description: "Voix de femme, claire", kind: "standard", providerVoice: "Google.fr-FR-Neural2-F", synthesisVoice: "fr-FR-Neural2-F" },
+  { id: "mathieu", label: "Mathieu", description: "Voix d'homme, claire", kind: "standard", providerVoice: "Google.fr-FR-Neural2-G", synthesisVoice: "fr-FR-Neural2-G" },
+  { id: "claire-ai", label: "Claire", description: "Voix de femme IA, chaleureuse", kind: "ai", providerVoice: "Google.fr-FR-Chirp3-HD-Aoede", synthesisVoice: "fr-FR-Chirp3-HD-Aoede" },
+  { id: "lea-ai", label: "Inès", description: "Voix de femme IA, dynamique", kind: "ai", providerVoice: "Google.fr-FR-Chirp3-HD-Kore", synthesisVoice: "fr-FR-Chirp3-HD-Kore" },
+  { id: "hugo-ai", label: "Hugo", description: "Voix d'homme IA, posée", kind: "ai", providerVoice: "Google.fr-FR-Chirp3-HD-Charon", synthesisVoice: "fr-FR-Chirp3-HD-Charon" },
+  { id: "remi-ai", label: "Rémi", description: "Voix d'homme IA, dynamique", kind: "ai", providerVoice: "Google.fr-FR-Chirp3-HD-Puck", synthesisVoice: "fr-FR-Chirp3-HD-Puck" },
 ] as const satisfies readonly GreetingVoice[];
 
 export type GreetingVoiceId = (typeof GREETING_VOICES)[number]["id"];
 
-// The voice every call has used so far: proven on the line. Switch once an AI voice is validated.
+// Outside the provider's beta: the safe default for every call.
 export const DEFAULT_GREETING_VOICE: GreetingVoiceId = "classic";
 
 export function isGreetingVoiceId(value: string): value is GreetingVoiceId {

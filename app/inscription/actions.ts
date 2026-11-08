@@ -4,6 +4,8 @@ import type { AuthError } from "@supabase/supabase-js";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { toSmsSenderNameOrFallback } from "@/lib/company/sms-sender";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { toFrenchMobile } from "@/lib/telephony/french-mobile";
 import { isTrade, type Trade } from "@/lib/company/details";
 import { LEGAL_VERSION } from "@/lib/legal/publisher";
 import { TOO_MANY_ATTEMPTS, isAllowedFromThisVisitor } from "@/lib/security/rate-limit";
@@ -12,7 +14,7 @@ import { createClient } from "@/lib/supabase/server";
 const MIN_PASSWORD_LENGTH = 8;
 const MAX_COMPANY_NAME_LENGTH = 120;
 
-type SignUpValues = { companyName: string; trade: Trade | ""; email: string };
+type SignUpValues = { companyName: string; trade: Trade | ""; email: string; mobile: string };
 
 export type SignUpState = { error?: string; values?: SignUpValues; checkEmail?: boolean };
 
@@ -23,6 +25,7 @@ function readSignUpValues(formData: FormData): SignUpValues {
     companyName: String(formData.get("companyName") ?? "").trim(),
     trade: isTrade(trade) ? trade : "",
     email: String(formData.get("email") ?? "").trim().toLowerCase(),
+    mobile: String(formData.get("mobile") ?? "").trim(),
   };
 }
 
@@ -35,6 +38,7 @@ function findSignUpValidationError(
   if (values.companyName.length > MAX_COMPANY_NAME_LENGTH) {
     return "Le nom de l'entreprise est trop long.";
   }
+  if (!toFrenchMobile(values.mobile)) return "Indiquez votre numéro de portable (06 ou 07) : c'est là que vous serez prévenu de vos nouveaux clients.";
   if (!values.email.includes("@")) return "L'adresse e-mail n'est pas valide.";
   if (password.length < MIN_PASSWORD_LENGTH) {
     return `Choisissez un mot de passe d'au moins ${MIN_PASSWORD_LENGTH} caractères.`;
@@ -93,6 +97,12 @@ export async function signUp(_previous: SignUpState, formData: FormData): Promis
     // The artisan gets a plain message; the real cause goes to the server logs.
     console.error(`Inscription refusée par Supabase : ${error.code ?? error.status} ${error.message}`);
     return { error: toSignUpErrorMessage(error), values };
+  }
+
+  // The company is created by the sign-up trigger: its contact phone is the artisan's mobile
+  // (new-request SMS, and the number shown on quotes).
+  if (data.user) {
+    await createAdminClient().from("companies").update({ contact_phone: toFrenchMobile(values.mobile) }).eq("owner_id", data.user.id);
   }
 
   // No session: email confirmation is enabled, the account opens from the link.

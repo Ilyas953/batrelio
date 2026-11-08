@@ -6,7 +6,9 @@ import { quoteShareText } from "@/lib/quotes/share-message";
 import { GREETING_NEXT_STEPS, MAX_GREETING_INTRO_LENGTH, defaultGreetingIntro } from "@/lib/telephony/messages";
 import { GREETING_VOICES, type GreetingVoiceId } from "@/lib/telephony/voices";
 import { MAX_QUOTE_MESSAGE_LENGTH } from "@/lib/quotes/share-message";
+import { PlayIcon } from "@/components/landing/icons";
 import { previewGreeting, saveGreeting, saveQuoteMessage, type MessageFormState } from "./actions";
+import { useGreetingPlayer } from "./useGreetingPlayer";
 
 const PRIMARY_BUTTON =
   "flex min-h-14 w-full items-center justify-center rounded-2xl bg-orange-600 px-6 text-lg font-semibold text-white hover:bg-orange-700 disabled:opacity-60";
@@ -19,6 +21,11 @@ const RESET_LINK = "text-base font-semibold text-stone-500 underline hover:text-
 function Saved({ show }: { show?: boolean }) {
   return show ? <p className="text-base font-semibold text-emerald-700">Enregistré ✓</p> : null;
 }
+
+const VOICE_GROUPS = [
+  { kind: "standard", title: "Voix classiques, les plus fiables" },
+  { kind: "ai", title: "Voix IA, plus naturelles (encore en test chez notre opérateur)" },
+] as const;
 
 type GreetingFormProps = {
   companyName: string;
@@ -34,34 +41,54 @@ export function GreetingForm({ companyName, initialVoice, initialIntro, defaultP
   const [voice, setVoice] = useState<GreetingVoiceId>(initialVoice);
   const [intro, setIntro] = useState(initialIntro);
   const opening = intro.trim() || defaultGreetingIntro(companyName);
+  const player = useGreetingPlayer();
+  const listenLabel = (voiceId: string, idle: string) =>
+    ({ loading: "Chargement…", playing: "Arrêter", idle })[player.stateOf(voiceId, intro)];
 
   return (
     <form action={saveAction} className="space-y-5">
       <fieldset>
-        <legend className="mb-2 text-base font-semibold text-stone-800">La voix</legend>
-        <div className="grid gap-2 sm:grid-cols-2">
-          {GREETING_VOICES.map((option) => (
-            <label
-              key={option.id}
-              className={`flex min-h-16 cursor-pointer items-center gap-3 rounded-2xl border-2 px-4 py-3 ${
-                voice === option.id ? "border-orange-500 bg-orange-50" : "border-stone-200 bg-white hover:border-stone-400"
-              }`}
-            >
-              <input
-                type="radio"
-                name="voice"
-                value={option.id}
-                checked={voice === option.id}
-                onChange={() => setVoice(option.id)}
-                className="size-5 accent-orange-600"
-              />
-              <span>
-                <span className="block text-base font-bold text-stone-900">{option.label}</span>
-                <span className="block text-sm text-stone-600">{option.description}</span>
-              </span>
-            </label>
-          ))}
-        </div>
+        <legend className="mb-1 text-base font-semibold text-stone-800">La voix</legend>
+        <p className="mb-3 text-sm text-stone-600">Touchez « Écouter » : vous entendez votre message, exactement comme vos clients.</p>
+        {VOICE_GROUPS.map((group) => (
+          <div key={group.kind} className="mb-4">
+            <p className="mb-2 text-sm font-semibold text-stone-500">{group.title}</p>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {GREETING_VOICES.filter((option) => option.kind === group.kind).map((option) => (
+                <div
+                  key={option.id}
+                  className={`flex items-center gap-2 rounded-2xl border-2 py-2 pl-4 pr-2 ${
+                    voice === option.id ? "border-orange-500 bg-orange-50" : "border-stone-200 bg-white"
+                  }`}
+                >
+                  <label className="flex min-h-12 flex-1 cursor-pointer items-center gap-3">
+                    <input
+                      type="radio"
+                      name="voice"
+                      value={option.id}
+                      checked={voice === option.id}
+                      onChange={() => setVoice(option.id)}
+                      className="size-5 accent-orange-600"
+                    />
+                    <span>
+                      <span className="block text-base font-bold text-stone-900">{option.label}</span>
+                      <span className="block text-sm text-stone-600">{option.description}</span>
+                    </span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => player.play(option.id, intro)}
+                    aria-label={`Écouter la voix ${option.label}`}
+                    className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-xl bg-white px-3 text-sm font-semibold text-stone-800 ring-1 ring-stone-300 hover:ring-stone-900"
+                  >
+                    <PlayIcon className="size-4" />
+                    {listenLabel(option.id, "Écouter")}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
       </fieldset>
 
       <div>
@@ -90,7 +117,16 @@ export function GreetingForm({ companyName, initialVoice, initialIntro, defaultP
         <p className="mt-2 text-sm text-stone-500">
           La fin, en gris, est ajoutée par Batrelio : elle change si le client appelle d&apos;un fixe ou en numéro masqué.
         </p>
+        <button
+          type="button"
+          onClick={() => player.play(voice, intro)}
+          className="mt-3 flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-stone-900 px-5 text-base font-semibold text-white hover:bg-stone-700"
+        >
+          <PlayIcon className="size-5" />
+          {listenLabel(voice, "Écouter mon message")}
+        </button>
       </div>
+      <FormError message={player.error} />
 
       <FormError message={saveState.error} />
       <Saved show={saveState.saved && !isSaving} />
@@ -99,7 +135,7 @@ export function GreetingForm({ companyName, initialVoice, initialIntro, defaultP
       </button>
 
       <div className="space-y-3 border-t border-stone-200 pt-5">
-        <p className="text-base font-semibold text-stone-800">Écouter avant d&apos;enregistrer</p>
+        <p className="text-base font-semibold text-stone-800">Écouter au téléphone</p>
         {canPreview ? (
           <>
             <p className="text-sm text-stone-600">

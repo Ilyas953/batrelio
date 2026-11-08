@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useActionState } from "react";
+import { NEXT_PATH_PARAM } from "@/lib/auth/next-path";
 import { FormError, SubmitButton, TextField } from "@/components/ui/form";
 import { signIn, type SignInState } from "@/lib/auth/actions";
 
@@ -12,6 +14,9 @@ export function LoginForm() {
 
   return (
     <form action={formAction} className="space-y-5">
+      <Suspense fallback={null}>
+        <NextPathInput />
+      </Suspense>
       <TextField
         label="Adresse e-mail"
         name="email"
@@ -37,4 +42,10 @@ export function LoginForm() {
       </p>
     </form>
   );
+}
+
+// The page to come back to after signing in, carried from the link that led here.
+function NextPathInput() {
+  const nextPath = useSearchParams().get(NEXT_PATH_PARAM);
+  return nextPath ? <input type="hidden" name={NEXT_PATH_PARAM} value={nextPath} /> : null;
 }

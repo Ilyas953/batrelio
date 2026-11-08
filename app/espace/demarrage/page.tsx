@@ -10,6 +10,7 @@ import { getSetup, hasCompanyIdentity, type SetupStep, type SetupStepId } from "
 import { formatPhone } from "@/lib/format";
 import type { Tables } from "@/lib/supabase/database.types";
 import { ActivateButton, ConfirmForwardingButton, ForwardingCode } from "../reponse-automatique/AutoReplyControls";
+import { TestCallPanel } from "./TestCallPanel";
 
 export const metadata: Metadata = {
   title: "Mettre Batrelio en place · Batrelio",
@@ -21,7 +22,6 @@ const COMPANY_PAGE = withReturnTo("/espace/entreprise", GUIDE);
 
 const STEP_TITLES: Record<SetupStepId, string> = {
   company: "Votre entreprise",
-  insurance: "Votre assurance et votre médiateur",
   number: "Votre numéro Batrelio",
   forwarding: "Renvoyer vos appels manqués",
   test: "Faites un essai",
@@ -60,7 +60,7 @@ async function SetupGuide({ later }: { later: ReturnLink }) {
           </IconTile>
           <h1 className="text-3xl font-extrabold tracking-tight text-stone-900">Mettez Batrelio en place</h1>
         </div>
-        <p className="mt-2 text-lg text-stone-600">5 étapes, une dizaine de minutes. Vous pouvez vous arrêter et reprendre quand vous voulez.</p>
+        <p className="mt-2 text-lg text-stone-600">4 étapes, environ 5 minutes. Vous pouvez vous arrêter et reprendre quand vous voulez.</p>
         <div className="mt-5">
           <div className="flex justify-between text-sm font-semibold text-stone-600">
             <span>
@@ -160,26 +160,6 @@ function StepContent({ step, company, isTest }: StepContentProps) {
         </>
       );
 
-    case "insurance":
-      return step.done ? (
-        <p>
-          {company.insurer_name} · {company.mediator_name} ·{" "}
-          <Link href={`${COMPANY_PAGE}#assurance`} className={SECONDARY_LINK}>
-            modifier
-          </Link>
-        </p>
-      ) : (
-        <>
-          <p>
-            Ils doivent figurer sur vos devis. Tout est écrit sur votre attestation d&apos;assurance décennale ; pour le
-            médiateur, votre fédération professionnelle (CAPEB, FFB…) peut vous en indiquer un.
-          </p>
-          <Link href={`${COMPANY_PAGE}#assurance`} className={PRIMARY_LINK}>
-            Ajouter mon assurance
-          </Link>
-        </>
-      );
-
     case "number":
       if (step.done) {
         return (
@@ -214,7 +194,7 @@ function StepContent({ step, company, isTest }: StepContentProps) {
       );
 
     case "forwarding":
-      if (!company.phone_number) return <p>Activez d&apos;abord votre numéro Batrelio (étape 3).</p>;
+      if (!company.phone_number) return <p>Activez d&apos;abord votre numéro Batrelio (étape 2).</p>;
       if (step.done) return <p>Le renvoi est activé sur votre téléphone. Pour l&apos;arrêter un jour : composez ##004#.</p>;
       return (
         <>
@@ -259,13 +239,15 @@ function StepContent({ step, company, isTest }: StepContentProps) {
       }
       return (
         <>
-          <p>
-            Demandez à un proche de vous appeler et ne décrochez pas. Il doit entendre votre message d&apos;accueil, puis
-            recevoir le SMS.
+          <p>Batrelio appelle votre téléphone. Ne décrochez pas : l&apos;appel revient chez Batrelio, et l&apos;étape se coche toute seule.</p>
+          <TestCallPanel defaultPhone={company.contact_phone ? formatPhone(company.contact_phone) : ""} />
+          <p className="text-sm">
+            Vous préférez ? Demandez à un proche de vous appeler sans décrocher, puis{" "}
+            <a href={GUIDE} className={SECONDARY_LINK}>
+              vérifiez ici
+            </a>
+            .
           </p>
-          <a href={GUIDE} className="flex min-h-14 items-center justify-center rounded-2xl px-5 text-lg font-semibold text-stone-800 ring-1 ring-stone-300 hover:bg-stone-50">
-            J&apos;ai fait l&apos;essai : vérifier
-          </a>
         </>
       );
   }
