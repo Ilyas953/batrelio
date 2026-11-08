@@ -7,7 +7,7 @@ const hrefOf = (html, text) => html.match(new RegExp(`href="([^"]*)"[^>]*>${text
 
 const activeTab = (html, label) => new RegExp(`aria-current="page"[^>]*>(?:<svg[\\s\\S]*?</svg>)?${label}<`).test(html);
 
-export async function navigationSuite({ check, makeUser, get }) {
+export async function navigationSuite({ check, makeUser, get, action }) {
   const tester = await makeUser({ test: true, companyName: "Onglets E2E" });
   const { jar, company } = tester;
 
@@ -85,6 +85,24 @@ export async function navigationSuite({ check, makeUser, get }) {
   check("simulateur : retour vers Réglages", backLink(page.text, "Réglages"));
   page = await get(`/espace/demandes/${handled.id}`, jar);
   check("demande : retour vers Demandes", backLink(page.text, "Demandes"));
+
+  // First-visit tour: starts by itself until finished or skipped, can be replayed from Réglages.
+  // Props of client components travel inside a script string: quotes are escaped there.
+  const autoStart = (html) => html.match(/autoStart\\?":(true|false)/)?.[1];
+  const newcomer = await makeUser({ companyName: "Tuto E2E" });
+  page = await get("/espace", newcomer.jar);
+  check("tuto : se lance à la première visite", autoStart(page.text) === "true");
+  check(
+    "tuto : les bulles trouvent les onglets et la mise en place",
+    ["tab-demandes", "tab-devis", "tab-reglages", "requests", "setup"].every((target) => page.text.includes(`data-tour="${target}"`)),
+  );
+  page = await get("/espace/reglages", newcomer.jar);
+  check("tuto : « Revoir le tuto » dans les réglages", page.text.includes("Revoir le tuto"));
+  await action("markTourDone", "/espace", { jar: newcomer.jar });
+  const { data: tourUser } = await admin.auth.admin.getUserById(newcomer.id);
+  check("tuto : terminé, c'est retenu dans le compte", typeof tourUser.user?.user_metadata?.tour_done_at === "string");
+  page = await get("/espace", newcomer.jar);
+  check("tuto : ne revient plus ensuite", autoStart(page.text) === "false");
 
   const real = await makeUser({ companyName: "Vrai E2E" });
   page = await get("/espace/reglages", real.jar);

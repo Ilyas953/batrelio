@@ -16,14 +16,16 @@ type SectionProps = {
   tone: Tone;
   empty: EmptyState;
   highlight?: boolean;
+  // Element pointed at by the first-visit tour.
+  tourId?: string;
   children: React.ReactNode;
 };
 
-export function Section({ id, title, count, icon, tone, empty, highlight = false, children }: SectionProps) {
+export function Section({ id, title, count, icon, tone, empty, highlight = false, tourId, children }: SectionProps) {
   const badgeClasses = highlight && count > 0 ? TONE_SOLID[tone] : "bg-stone-200 text-stone-700";
 
   return (
-    <section id={id} className="scroll-mt-20">
+    <section id={id} data-tour={tourId} className="scroll-mt-20">
       <h2 className="mb-3 flex items-center gap-3 text-xl font-bold text-stone-900">
         <IconTile tone={tone} size="sm">
           {icon}

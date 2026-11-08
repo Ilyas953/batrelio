@@ -6,16 +6,17 @@ import { Suspense } from "react";
 import { PLACES } from "@/components/espace/places";
 import { TONE_PILL, TONE_TEXT, TONE_TILE } from "@/components/espace/tones";
 
-type Tab = (typeof PLACES)[keyof typeof PLACES] & { href: string; isActive: (path: string) => boolean };
+type Tab = (typeof PLACES)[keyof typeof PLACES] & { href: string; tourId: string; isActive: (path: string) => boolean };
 
 // Three tabs, always in reach of the thumb: the artisan's day is requests, quotes, and rarely settings.
 // Each tab has its own colour, found again on its pages.
 const TABS: Tab[] = [
-  { ...PLACES.requests, href: "/espace", isActive: (path) => path === "/espace" || path.startsWith("/espace/demandes") },
-  { ...PLACES.quotes, href: "/espace/devis", isActive: (path) => path.startsWith("/espace/devis") },
+  { ...PLACES.requests, href: "/espace", tourId: "tab-demandes", isActive: (path) => path === "/espace" || path.startsWith("/espace/demandes") },
+  { ...PLACES.quotes, href: "/espace/devis", tourId: "tab-devis", isActive: (path) => path.startsWith("/espace/devis") },
   {
     ...PLACES.settings,
     href: "/espace/reglages",
+    tourId: "tab-reglages",
     isActive: (path) => !TABS[0].isActive(path) && !TABS[1].isActive(path),
   },
 ];
@@ -55,6 +56,7 @@ function BottomTabBarView({ active }: { active: string | null }) {
               <Link
                 href={tab.href}
                 aria-current={isActive ? "page" : undefined}
+                data-tour={tab.tourId}
                 className={`flex min-h-16 flex-col items-center justify-center gap-0.5 text-sm font-semibold ${
                   isActive ? TONE_TEXT[tab.tone] : "text-stone-500"
                 }`}
@@ -83,6 +85,7 @@ function HeaderTabsView({ active }: { active: string | null }) {
             key={tab.href}
             href={tab.href}
             aria-current={isActive ? "page" : undefined}
+                data-tour={tab.tourId}
             className={`inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-[15px] font-semibold ${
               isActive ? `ring-1 ring-inset ${TONE_PILL[tab.tone]}` : "text-stone-600 hover:bg-stone-100 hover:text-stone-900"
             }`}

@@ -4,6 +4,8 @@ import { Suspense } from "react";
 import { Logo } from "@/components/landing/Logo";
 import { LegalLinks } from "@/components/legal/LegalLinks";
 import { getOptionalClaims, isTestAccount } from "@/lib/auth/session";
+import { OnboardingTour } from "@/components/espace/OnboardingTour";
+import { hasFinishedTour } from "@/lib/onboarding/tour";
 import { BottomTabBar, HeaderTabs } from "./TabBar";
 
 export const metadata: Metadata = {
@@ -33,8 +35,18 @@ export default function ArtisanSpaceLayout({ children }: LayoutProps<"/espace">)
         <LegalLinks className="mx-auto max-w-2xl px-4 py-6 sm:px-6" />
       </footer>
       <BottomTabBar />
+      <Suspense fallback={null}>
+        <TourLauncher />
+      </Suspense>
     </>
   );
+}
+
+// First visit: the tour starts by itself until it is finished or skipped.
+async function TourLauncher() {
+  const claims = await getOptionalClaims();
+  if (!claims) return null;
+  return <OnboardingTour autoStart={!hasFinishedTour(claims.user_metadata)} />;
 }
 
 // Display only: pages and Server Functions check the account themselves.

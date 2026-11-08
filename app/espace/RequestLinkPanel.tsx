@@ -32,6 +32,7 @@ export function RequestLinkPanel() {
     return (
       <button
         type="button"
+        data-tour="request-link"
         onClick={() => setIsOpen(true)}
         className="flex items-start gap-4 rounded-3xl bg-white p-5 text-left shadow-sm ring-1 ring-stone-200 transition hover:ring-stone-300"
       >

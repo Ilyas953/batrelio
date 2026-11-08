@@ -64,6 +64,7 @@ async function Dashboard() {
 
       <Section
         id="a-traiter"
+        tourId="requests"
         title="À traiter"
         count={newRequests.length}
         icon={<BellIcon />}
@@ -75,8 +76,8 @@ async function Dashboard() {
           detail: "Quand un client décrit son besoin, après un appel manqué ou par lien, sa demande arrive ici.",
         }}
       >
-        {newRequests.map((request) => (
-          <RequestCard key={request.id} request={request} now={now} />
+        {newRequests.map((request, index) => (
+          <RequestCard key={request.id} request={request} now={now} isFirst={index === 0} />
         ))}
       </Section>
 
@@ -195,6 +196,7 @@ function SetupCard({ doneCount, total }: { doneCount: number; total: number }) {
   return (
     <Link
       href="/espace/demarrage"
+      data-tour="setup"
       className="block rounded-3xl bg-white p-5 shadow-sm ring-2 ring-orange-500 transition hover:ring-orange-600 sm:p-6"
     >
       <span className="flex items-center justify-between gap-4">
@@ -309,7 +311,7 @@ function SourceBadge({ source }: { source: NewRequest["source"] }) {
   );
 }
 
-function RequestCard({ request, now }: { request: NewRequest; now: Date }) {
+function RequestCard({ request, now, isFirst }: { request: NewRequest; now: Date; isFirst: boolean }) {
   const initials = initialsOf(request.customer_name);
   const hiddenPhotos = request.photoCount - request.photoPreviews.length;
 
@@ -371,6 +373,7 @@ function RequestCard({ request, now }: { request: NewRequest; now: Date }) {
         {/* Opens the request with the sharing form ready: one more tap to confirm. */}
         <Link
           href={`/espace/demandes/${request.id}?partager=1#partager`}
+          data-tour={isFirst ? "share" : undefined}
           className="flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-violet-50 px-3 text-base font-semibold text-violet-800 ring-2 ring-violet-200 hover:bg-violet-100"
         >
           <ForwardIcon className="size-5 shrink-0" />

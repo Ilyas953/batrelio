@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
-import { ArrowRightIcon, CheckIcon, LogOutIcon } from "@/components/landing/icons";
+import { ArrowRightIcon, CheckIcon, LogOutIcon, PlayIcon } from "@/components/landing/icons";
+import { RestartTourButton } from "@/components/espace/OnboardingTour";
 import { PLACES, PageTitle, type Place } from "@/components/espace/places";
 import { IconTile } from "@/components/espace/tones";
 import { signOut } from "@/lib/auth/actions";
@@ -22,6 +23,15 @@ export default function SettingsPage() {
       <Suspense fallback={<p className="text-lg text-stone-500">Chargement…</p>}>
         <SettingsList />
       </Suspense>
+      <RestartTourButton className="mt-3 flex min-h-20 w-full items-center gap-4 rounded-3xl bg-white p-4 text-left shadow-sm ring-1 ring-stone-200 transition hover:ring-stone-300 sm:p-5">
+        <IconTile tone="orange">
+          <PlayIcon />
+        </IconTile>
+        <span className="min-w-0 flex-1">
+          <span className="block text-lg font-bold text-stone-900">Revoir le tuto</span>
+          <span className="block text-sm text-stone-600">Les bulles qui montrent où tout se trouve</span>
+        </span>
+      </RestartTourButton>
       <form action={signOut} className="mt-8">
         <button
           type="submit"

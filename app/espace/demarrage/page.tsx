@@ -53,7 +53,7 @@ async function SetupGuide({ later }: { later: ReturnLink }) {
 
   return (
     <div className="mt-4 space-y-6">
-      <header>
+      <header data-tour="setup">
         <div className="flex items-center gap-3">
           <IconTile tone={PLACES.setup.tone}>
             <PLACES.setup.Icon />
