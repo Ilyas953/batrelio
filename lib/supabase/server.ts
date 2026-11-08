@@ -2,7 +2,7 @@ import "server-only";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import type { Database } from "./database.types";
-import { AUTH_COOKIE_OPTIONS } from "./cookie-options";
+import { AUTH_COOKIE_OPTIONS, withAuthCookieLifetime } from "./cookie-options";
 import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from "./env";
 
 // Supabase client for Server Components, Server Functions and Route Handlers.
@@ -19,7 +19,7 @@ export async function createClient() {
       setAll(cookiesToSet) {
         try {
           cookiesToSet.forEach(({ name, value, options }) =>
-            cookieStore.set(name, value, options),
+            cookieStore.set(name, value, withAuthCookieLifetime(options)),
           );
         } catch {
           // Server Components cannot write cookies: the proxy refreshes the session instead.

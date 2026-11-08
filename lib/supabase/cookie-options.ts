@@ -11,3 +11,11 @@ export const AUTH_COOKIE_OPTIONS: CookieOptionsWithName = {
   sameSite: "lax",
   secure: process.env.NODE_ENV === "production",
 };
+
+const AUTH_COOKIE_MAX_AGE = AUTH_COOKIE_LIFETIME_DAYS * 24 * 60 * 60;
+
+// The Supabase library writes its own lifetime (400 days) on every session cookie: keep ours,
+// as announced in the privacy policy. A removal (max-age 0) stays a removal.
+export function withAuthCookieLifetime<T extends { maxAge?: number }>(options: T): T {
+  return options.maxAge && options.maxAge > AUTH_COOKIE_MAX_AGE ? { ...options, maxAge: AUTH_COOKIE_MAX_AGE } : options;
+}

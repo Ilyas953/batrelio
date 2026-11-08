@@ -87,7 +87,12 @@ export function createContext(base, actionIds) {
 
     const response = await fetch(base + path, { method: "POST", headers, body, redirect: "manual" });
     absorbCookies(jar, response);
-    return { status: response.status, redirect: response.headers.get("x-action-redirect"), text: await response.text() };
+    return {
+      status: response.status,
+      redirect: response.headers.get("x-action-redirect"),
+      setCookies: response.headers.getSetCookie(),
+      text: await response.text(),
+    };
   }
 
   // A documentation address (TEST-NET-3), so counters never collide with real visitors.

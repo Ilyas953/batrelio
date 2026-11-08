@@ -81,6 +81,7 @@ export function InstallAppCard({ dismissible = false }: { dismissible?: boolean 
           <li>
             Choisissez <strong className="text-white">« Sur l&apos;écran d&apos;accueil »</strong>, puis « Ajouter ».
           </li>
+          <li>Ouvrez l&apos;icône et connectez-vous une fois : ensuite, vous restez connecté.</li>
         </ol>
       )}
       {dismissible && (

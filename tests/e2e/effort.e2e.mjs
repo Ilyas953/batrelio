@@ -20,6 +20,13 @@ export async function effortSuite({ check, makeUser, get, action, fakeIp }) {
   const signIn = (suite) =>
     action("signIn", "/connexion", { ip: fakeIp(), args: [{}], formData: { email: artisan.email, password: artisan.password, suite } });
   let result = await signIn(requestPage);
+  // Persistent cookie (not a session one): closing the browser keeps the artisan signed in, 13 months.
+  const sessionCookie = result.setCookies.find((cookie) => cookie.includes("-auth-token"));
+  check(
+    "connexion : reste connecté en fermant le navigateur (13 mois, posé par le serveur)",
+    /Max-Age=34128000/.test(sessionCookie ?? "") && /Secure/.test(sessionCookie ?? "") && /SameSite=lax/i.test(sessionCookie ?? ""),
+    (sessionCookie ?? "aucun cookie").replace(/=[^;]+;/, "=…;"),
+  );
   check("après connexion : retour sur la demande", result.redirect?.split(";")[0] === requestPage, result.redirect ?? "aucune redirection");
   result = await signIn("https://evil.example/espace");
   // The header reads "/espace;push": the path, then how the browser should navigate.

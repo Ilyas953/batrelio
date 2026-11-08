@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "./database.types";
-import { AUTH_COOKIE_OPTIONS } from "./cookie-options";
+import { AUTH_COOKIE_OPTIONS, withAuthCookieLifetime } from "./cookie-options";
 import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from "./env";
 import { loginUrlFor } from "@/lib/auth/next-path";
 
@@ -19,7 +19,7 @@ export async function refreshSession(request: NextRequest) {
         cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
         response = NextResponse.next({ request });
         cookiesToSet.forEach(({ name, value, options }) =>
-          response.cookies.set(name, value, options),
+          response.cookies.set(name, value, withAuthCookieLifetime(options)),
         );
         Object.entries(headers).forEach(([key, value]) => response.headers.set(key, value));
       },
