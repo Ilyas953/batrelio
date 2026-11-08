@@ -51,3 +51,10 @@ export async function prepareGreetingAudio(company: GreetingCompany): Promise<vo
   const stale = [...existingPaths].filter((path) => !Object.values(wanted).includes(path));
   if (stale.length > 0) await storage.remove(stale);
 }
+
+// Every recording of a company, e.g. when its account is deleted.
+export async function removeGreetingAudio(companyId: string): Promise<void> {
+  const storage = createAdminClient().storage.from(GREETING_AUDIO_BUCKET);
+  const { data: files } = await storage.list(companyId, { limit: 100 });
+  if (files?.length) await storage.remove(files.map((file) => `${companyId}/${file.name}`));
+}

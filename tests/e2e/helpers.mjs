@@ -117,7 +117,16 @@ export function createContext(base, actionIds) {
   }
 
   // Only removes what this run created.
+  // Recorded greetings are files: deleting the account does not remove them.
+  async function removeGreetingAudio(userId) {
+    const { data: company } = await admin.from("companies").select("id").eq("owner_id", userId).maybeSingle();
+    if (!company) return;
+    const { data: files } = await admin.storage.from("greeting-audio").list(company.id, { limit: 100 });
+    if (files?.length) await admin.storage.from("greeting-audio").remove(files.map((file) => `${company.id}/${file.name}`));
+  }
+
   async function cleanup() {
+    for (const id of userIds) await removeGreetingAudio(id).catch(() => {});
     for (const id of userIds) await admin.auth.admin.deleteUser(id).catch(() => {});
     if (bucketKeys.length > 0) await admin.from("rate_limit_buckets").delete().in("key", bucketKeys);
   }
