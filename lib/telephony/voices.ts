@@ -27,8 +27,17 @@ export const GREETING_VOICES = [
 
 export type GreetingVoiceId = (typeof GREETING_VOICES)[number]["id"];
 
-// Outside the provider's beta: the safe default for every call.
-export const DEFAULT_GREETING_VOICE: GreetingVoiceId = "classic";
+// The greeting is recorded once with this voice and played on calls: the most natural by default.
+export const DEFAULT_GREETING_VOICE: GreetingVoiceId = "claire-ai";
+
+// When the recording is not ready, the provider reads the text live: an AI voice is then replaced
+// by the standard one, which is outside the provider's beta, so a call never goes silent.
+export const LIVE_FALLBACK_VOICE: GreetingVoiceId = "classic";
+
+export function liveReadingVoice(id: string | null | undefined): GreetingVoiceId {
+  const voice = findGreetingVoice(id);
+  return voice.kind === "ai" ? LIVE_FALLBACK_VOICE : (voice.id as GreetingVoiceId);
+}
 
 export function isGreetingVoiceId(value: string): value is GreetingVoiceId {
   return GREETING_VOICES.some((voice) => voice.id === value);

@@ -55,6 +55,11 @@ function escapeXml(text: string): string {
 }
 
 // TwiML: read the greeting in French with the chosen voice, then hang up.
+// Plays the greeting recorded beforehand: no live reading, so no provider beta and no per-call cost.
+export function toPlayResponse(audioUrl: string): string {
+  return '<?xml version="1.0" encoding="UTF-8"?>' + `<Response><Play>${escapeXml(audioUrl)}</Play><Hangup/></Response>`;
+}
+
 export function toVoiceResponse(text: string, voiceId?: string | null): string {
   const voice = escapeXml(findGreetingVoice(voiceId).providerVoice);
   return (

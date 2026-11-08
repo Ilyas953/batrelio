@@ -10,6 +10,7 @@ import { assignFictionNumber } from "@/lib/simulation/test-accounts";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { connectPhoneNumber, provisionPhoneNumber, type ProvisionResult } from "@/lib/telephony";
 import { getPublicSiteUrl, isReachableFromInternet } from "@/lib/telephony/config";
+import { refreshGreetingAudioLater } from "@/lib/telephony/refresh-greeting";
 
 const PAGE = "/espace/reponse-automatique";
 
@@ -96,6 +97,8 @@ export async function activateAutoReply(returnTo?: string): Promise<{ error: str
   const { error } = await supabase.from("companies").update({ auto_reply_enabled: true }).eq("id", company.id);
   if (error) return { error: "La réponse automatique n'a pas pu être activée. Réessayez." };
 
+  // Recorded before the first missed call comes in.
+  refreshGreetingAudioLater(company.id);
   redirect(safeReturnTo(returnTo, PAGE));
 }
 

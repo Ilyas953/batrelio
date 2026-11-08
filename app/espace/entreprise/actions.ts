@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth/session";
 import { safeReturnTo } from "@/lib/espace/return-to";
+import { refreshGreetingAudioLater } from "@/lib/telephony/refresh-greeting";
 import { isValidSiret, normalizeSiret } from "@/lib/company/details";
 import {
   findProfileValidationError,
@@ -85,6 +86,8 @@ export async function saveCompanyProfile(formData: FormData): Promise<{ error: s
     .select("id");
   if (error) return { error: "Les modifications n'ont pas pu être enregistrées. Réessayez." };
   if (data.length === 0) return { error: "Aucune entreprise n'est liée à ce compte." };
+  // The default greeting says the company name.
+  refreshGreetingAudioLater(data[0].id);
 
   redirect(safeReturnTo(formData.get("returnTo"), "/espace/reglages"));
 }

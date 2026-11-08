@@ -7,6 +7,7 @@ import { consumeRateLimit } from "@/lib/security/rate-limit";
 import { playGreetingByPhone } from "@/lib/telephony";
 import { MAX_GREETING_INTRO_LENGTH, defaultGreetingIntro, greetingWithSms, toVoiceResponse } from "@/lib/telephony/messages";
 import { synthesizeSpeech } from "@/lib/speech";
+import { refreshGreetingAudioLater } from "@/lib/telephony/refresh-greeting";
 import { findGreetingVoice, isGreetingVoiceId, type GreetingVoiceId } from "@/lib/telephony/voices";
 
 export type MessageFormState = { error?: string; saved?: boolean; called?: boolean };
@@ -47,6 +48,7 @@ export async function saveGreeting(_previous: MessageFormState, formData: FormDa
     .update({ greeting_voice: input.voice, greeting_intro: toStoredText(input.intro, defaultGreetingIntro(company.name)) })
     .eq("id", company.id);
   if (error) return { error: "Le message n'a pas pu être enregistré. Réessayez." };
+  refreshGreetingAudioLater(company.id);
   return { saved: true };
 }
 

@@ -1,19 +1,26 @@
 import { after } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { WEBHOOK_PATHS, readVerifiedWebhook } from "@/lib/telephony";
-import { toVoiceResponse } from "@/lib/telephony/messages";
+import { findGreetingAudioUrl, prepareGreetingAudio } from "@/lib/telephony/greeting-audio";
+import { toPlayResponse, toVoiceResponse } from "@/lib/telephony/messages";
 import {
   ANSWERING_COMPANY_COLUMNS,
-  chooseGreeting,
+  chooseGreetingVariant,
   decideSms,
+  greetingText,
   handleMissedCall,
   isExcludedCaller,
 } from "@/lib/telephony/missed-call";
+import { liveReadingVoice } from "@/lib/telephony/voices";
 
 const UNASSIGNED_NUMBER_MESSAGE = "Ce numéro n'est pas attribué. Merci de votre appel.";
 
+function twimlResponse(twiml: string): Response {
+  return new Response(twiml, { headers: { "Content-Type": "text/xml; charset=utf-8" } });
+}
+
 function voiceResponse(text: string, voiceId?: string | null): Response {
-  return new Response(toVoiceResponse(text, voiceId), { headers: { "Content-Type": "text/xml; charset=utf-8" } });
+  return twimlResponse(toVoiceResponse(text, voiceId));
 }
 
 // A forwarded missed call reaches the artisan's Batrelio number: greet the caller right away,
@@ -37,5 +44,11 @@ export async function POST(request: Request) {
     ),
   );
 
-  return voiceResponse(chooseGreeting(decideSms(company, params.From, isExcluded), company), company.greeting_voice);
+  // The greeting recorded beforehand when it is ready; otherwise read live, and recorded for next time.
+  const variant = chooseGreetingVariant(decideSms(company, params.From, isExcluded));
+  const audioUrl = await findGreetingAudioUrl(company, variant).catch(() => null);
+  if (audioUrl) return twimlResponse(toPlayResponse(audioUrl));
+
+  after(() => prepareGreetingAudio(company).catch((error) => console.error("Message d'accueil non préparé :", error)));
+  return voiceResponse(greetingText(variant, company), liveReadingVoice(company.greeting_voice));
 }

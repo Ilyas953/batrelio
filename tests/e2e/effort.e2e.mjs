@@ -1,3 +1,6 @@
+import { createServerClient } from "@supabase/ssr";
+import { admin, PUBLISHABLE_KEY, SUPABASE_URL } from "./helpers.mjs";
+
 // Less effort for the artisan: back to the right page after signing in, mobile asked at sign-up,
 // listening to the greeting in the page, one-tap test call, home-screen icon.
 
@@ -66,4 +69,16 @@ export async function effortSuite({ check, makeUser, get, action, fakeIp }) {
   );
   const home = await get("/espace", artisan.jar);
   check("écran d'accueil : la page déclare l'icône iPhone et le manifeste", home.text.includes('rel="manifest"') && home.text.includes("apple-touch-icon"));
+
+  // Recorded greetings: private, only the server reads them (the provider gets a signed URL).
+  const path = `${artisan.company.id}/e2e-test.mp3`;
+  await admin.storage.from("greeting-audio").upload(path, new Blob([new Uint8Array([0xff, 0xfb, 0x90, 0x00])], { type: "audio/mpeg" }), { upsert: true });
+  const asArtisan = createServerClient(SUPABASE_URL, PUBLISHABLE_KEY, {
+    cookies: { getAll: () => [...artisan.jar].map(([name, value]) => ({ name, value })), setAll: () => {} },
+  });
+  const download = await asArtisan.storage.from("greeting-audio").download(path);
+  const signed = await admin.storage.from("greeting-audio").createSignedUrl(path, 60);
+  check("audio des messages : jamais lisible directement, même par l'artisan", download.error !== null);
+  check("audio des messages : le serveur obtient un lien temporaire pour l'appel", Boolean(signed.data?.signedUrl));
+  await admin.storage.from("greeting-audio").remove([path]);
 }

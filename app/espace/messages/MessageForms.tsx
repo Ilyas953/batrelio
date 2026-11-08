@@ -23,8 +23,8 @@ function Saved({ show }: { show?: boolean }) {
 }
 
 const VOICE_GROUPS = [
-  { kind: "standard", title: "Voix classiques, les plus fiables" },
-  { kind: "ai", title: "Voix IA, plus naturelles (encore en test chez notre opérateur)" },
+  { kind: "ai", title: "Voix IA, les plus naturelles" },
+  { kind: "standard", title: "Voix classiques" },
 ] as const;
 
 type GreetingFormProps = {

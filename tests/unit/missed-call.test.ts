@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { GREETING_NEXT_STEPS, defaultGreetingIntro, greetingWithSms, missedCallSms, toVoiceResponse } from "@/lib/telephony/messages";
-import { DEFAULT_GREETING_VOICE, GREETING_VOICES, findGreetingVoice } from "@/lib/telephony/voices";
-import { chooseGreeting, decideSms, type AnsweringCompany } from "@/lib/telephony/missed-call";
+import { GREETING_NEXT_STEPS, defaultGreetingIntro, greetingWithSms, missedCallSms, toPlayResponse, toVoiceResponse } from "@/lib/telephony/messages";
+import { DEFAULT_GREETING_VOICE, GREETING_VOICES, LIVE_FALLBACK_VOICE, findGreetingVoice, liveReadingVoice } from "@/lib/telephony/voices";
+import { greetingAudioPath } from "@/lib/telephony/greeting-audio-path";
+import { chooseGreeting, chooseGreetingVariant, decideSms, greetingText, type AnsweringCompany } from "@/lib/telephony/missed-call";
 import { isFrenchMobile, isIdentifiedCaller } from "@/lib/telephony/phone-rules";
 
 const company: AnsweringCompany = {
@@ -93,11 +94,17 @@ describe("greeting voice", () => {
     expect(twiml).toContain("<Hangup/>");
   });
 
-  it("keeps the default voice, outside the provider's beta, when nothing or an unknown voice is stored", () => {
+  it("uses the default voice when nothing or an unknown voice is stored", () => {
     expect(findGreetingVoice(null).id).toBe(DEFAULT_GREETING_VOICE);
     expect(findGreetingVoice("removed-voice").id).toBe(DEFAULT_GREETING_VOICE);
-    expect(findGreetingVoice(DEFAULT_GREETING_VOICE).kind).toBe("standard");
-    expect(toVoiceResponse("Bonjour")).toContain('voice="Google.fr-FR-Neural2-F"');
+  });
+
+  it("reads live with a voice outside the provider's beta when the recording is not ready", () => {
+    expect(liveReadingVoice("claire-ai")).toBe(LIVE_FALLBACK_VOICE);
+    expect(liveReadingVoice(null)).toBe(LIVE_FALLBACK_VOICE);
+    expect(findGreetingVoice(LIVE_FALLBACK_VOICE).kind).toBe("standard");
+    expect(liveReadingVoice("mathieu")).toBe("mathieu");
+    expect(toVoiceResponse("Bonjour", liveReadingVoice("hugo-ai"))).toContain('voice="Google.fr-FR-Neural2-F"');
   });
 
   it("plays in the page exactly the voice customers hear on the phone", () => {
@@ -155,5 +162,29 @@ describe("phone rules", () => {
     expect(isIdentifiedCaller("anonymous")).toBe(false);
     expect(isIdentifiedCaller(null)).toBe(false);
     expect(isIdentifiedCaller(CUSTOMER_MOBILE)).toBe(true);
+  });
+});
+
+describe("greeting recorded beforehand", () => {
+  it("is one file per voice and exact text: any change gives a new recording", () => {
+    const base = greetingAudioPath("c1", "claire-ai", "Bonjour");
+    expect(base).toMatch(/^c1\/[0-9a-f]{32}\.mp3$/);
+    expect(greetingAudioPath("c1", "claire-ai", "Bonjour")).toBe(base);
+    expect(greetingAudioPath("c1", "hugo-ai", "Bonjour")).not.toBe(base);
+    expect(greetingAudioPath("c1", "claire-ai", "Bonjour !")).not.toBe(base);
+    expect(greetingAudioPath("c2", "claire-ai", "Bonjour").startsWith("c2/")).toBe(true);
+  });
+
+  it("records the three endings a caller may hear", () => {
+    expect(chooseGreetingVariant("send")).toBe("withSms");
+    expect(chooseGreetingVariant("skipped_anonymous")).toBe("hiddenCaller");
+    expect(chooseGreetingVariant("skipped_not_mobile")).toBe("withoutSms");
+    expect(greetingText("withSms", company)).toBe(chooseGreeting("send", company));
+  });
+
+  it("plays the file, and its address cannot inject TwiML", () => {
+    const twiml = toPlayResponse("https://x.supabase.co/storage/v1/object/sign/greeting-audio/c1/a.mp3?token=a&b=<Dial>");
+    expect(twiml).toContain("<Play>https://x.supabase.co/storage/v1/object/sign/greeting-audio/c1/a.mp3?token=a&amp;b=&lt;Dial&gt;</Play>");
+    expect(twiml).not.toContain("<Dial>");
   });
 });

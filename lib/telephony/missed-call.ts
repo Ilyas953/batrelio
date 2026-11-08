@@ -43,11 +43,29 @@ export function decideSms(company: AnsweringCompany, callerPhone: string | undef
   return "send";
 }
 
+export type GreetingVariant = "withSms" | "withoutSms" | "hiddenCaller";
+
+export function chooseGreetingVariant(decision: SmsDecision): GreetingVariant {
+  if (decision === "send") return "withSms";
+  if (decision === "skipped_anonymous") return "hiddenCaller";
+  return "withoutSms";
+}
+
+type GreetingCompany = Pick<AnsweringCompany, "name" | "greeting_intro">;
+
+const GREETING_BUILDERS: Record<GreetingVariant, (companyName: string, intro?: string | null) => string> = {
+  withSms: greetingWithSms,
+  withoutSms: greetingWithoutSms,
+  hiddenCaller: greetingForHiddenCaller,
+};
+
+export function greetingText(variant: GreetingVariant, company: GreetingCompany): string {
+  return GREETING_BUILDERS[variant](company.name, company.greeting_intro);
+}
+
 // What the caller hears, decided before the request is created.
-export function chooseGreeting(decision: SmsDecision, company: Pick<AnsweringCompany, "name" | "greeting_intro">): string {
-  if (decision === "send") return greetingWithSms(company.name, company.greeting_intro);
-  if (decision === "skipped_anonymous") return greetingForHiddenCaller(company.name, company.greeting_intro);
-  return greetingWithoutSms(company.name, company.greeting_intro);
+export function chooseGreeting(decision: SmsDecision, company: GreetingCompany): string {
+  return greetingText(chooseGreetingVariant(decision), company);
 }
 
 async function findRecentRequestId(supabase: Admin, companyId: string, callerPhone: string): Promise<string | null> {
