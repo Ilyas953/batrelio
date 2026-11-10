@@ -211,6 +211,59 @@ export type Database = {
           },
         ]
       }
+      price_items: {
+        Row: {
+          category: Database["public"]["Enums"]["quote_line_category"]
+          company_id: string
+          created_at: string
+          designation: string
+          designation_key: string | null
+          id: string
+          last_used_at: string | null
+          unit: string
+          unit_price_cents: number
+          updated_at: string
+          use_count: number
+          vat_rate_bp: number
+        }
+        Insert: {
+          category?: Database["public"]["Enums"]["quote_line_category"]
+          company_id: string
+          created_at?: string
+          designation: string
+          designation_key?: string | null
+          id?: string
+          last_used_at?: string | null
+          unit: string
+          unit_price_cents: number
+          updated_at?: string
+          use_count?: number
+          vat_rate_bp?: number
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["quote_line_category"]
+          company_id?: string
+          created_at?: string
+          designation?: string
+          designation_key?: string | null
+          id?: string
+          last_used_at?: string | null
+          unit?: string
+          unit_price_cents?: number
+          updated_at?: string
+          use_count?: number
+          vat_rate_bp?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "price_items_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quote_lines: {
         Row: {
           category: Database["public"]["Enums"]["quote_line_category"]
@@ -567,6 +620,10 @@ export type Database = {
         Args: { p_key: string; p_limit: number; p_window_seconds: number }
         Returns: boolean
       }
+      remember_quote_prices: {
+        Args: { p_quote_id: string }
+        Returns: undefined
+      }
       replace_quote_lines: {
         Args: { p_lines: Json; p_quote_id: string }
         Returns: undefined
@@ -583,7 +640,13 @@ export type Database = {
         | "snc"
         | "autre"
       mission_status: "to_place" | "in_progress" | "placed" | "abandoned"
-      quote_line_category: "labor" | "material" | "travel" | "waste" | "other"
+      quote_line_category:
+        | "labor"
+        | "material"
+        | "travel"
+        | "waste"
+        | "other"
+        | "equipment"
       quote_status: "draft" | "sent" | "signed" | "declined"
       region:
         | "auvergne-rhone-alpes"
@@ -747,7 +810,14 @@ export const Constants = {
     Enums: {
       legal_form: ["ei", "eurl", "sarl", "sasu", "sas", "sa", "snc", "autre"],
       mission_status: ["to_place", "in_progress", "placed", "abandoned"],
-      quote_line_category: ["labor", "material", "travel", "waste", "other"],
+      quote_line_category: [
+        "labor",
+        "material",
+        "travel",
+        "waste",
+        "other",
+        "equipment",
+      ],
       quote_status: ["draft", "sent", "signed", "declined"],
       region: [
         "auvergne-rhone-alpes",

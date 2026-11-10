@@ -17,7 +17,7 @@ export async function getQuoteForEditor(quoteId: string) {
   if (!UUID_PATTERN.test(quoteId)) return null;
   const { supabase } = await requireUser();
 
-  const [quote, lines, company] = await Promise.all([
+  const [quote, lines, company, priceItems] = await Promise.all([
     supabase
       .from("quotes")
       .select(`${QUOTE_COLUMNS}, request:requests(customer_phone)`)
@@ -25,6 +25,12 @@ export async function getQuoteForEditor(quoteId: string) {
       .maybeSingle(),
     supabase.from("quote_lines").select(LINE_COLUMNS).eq("quote_id", quoteId).order("position"),
     supabase.from("companies").select("*").maybeSingle(),
+    // "Mes prix", offered while typing a line, most used first.
+    supabase
+      .from("price_items")
+      .select("id, category, designation, unit, unit_price_cents, vat_rate_bp")
+      .order("use_count", { ascending: false })
+      .limit(300),
   ]);
   if (quote.error) throw quote.error;
   if (!quote.data || !company.data) return null;
@@ -36,6 +42,7 @@ export async function getQuoteForEditor(quoteId: string) {
     quoteMessage: company.data.quote_message,
     chargesVat: company.data.vat_regime === "subject",
     missingCompanyDetails: listMissingQuoteDetails(company.data),
+    priceItems: priceItems.data ?? [],
   };
 }
 

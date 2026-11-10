@@ -2,11 +2,12 @@ import type { Enums } from "@/lib/supabase/database.types";
 
 export type QuoteLineCategory = Enums<"quote_line_category">;
 
-export const QUOTE_LINE_CATEGORIES = ["labor", "material", "travel", "waste", "other"] as const satisfies readonly QuoteLineCategory[];
+export const QUOTE_LINE_CATEGORIES = ["labor", "material", "equipment", "travel", "waste", "other"] as const satisfies readonly QuoteLineCategory[];
 
 export const CATEGORY_LABELS: Record<QuoteLineCategory, string> = {
   labor: "Main-d'œuvre",
   material: "Fourniture",
+  equipment: "Matériel et outils",
   travel: "Déplacement",
   waste: "Déchets",
   other: "Autre",

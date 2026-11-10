@@ -7,6 +7,7 @@ import { listMissingQuoteDetails } from "@/lib/company/legal";
 import { TRADE_LABELS } from "@/lib/company/details";
 import { DEFAULT_DEPOSIT_PERCENT } from "@/lib/quotes/catalog";
 import { suggestQuoteDraft, type QuoteDraft } from "@/lib/quotes/ai-draft";
+import { applyPriceList, priceListForPrompt, type PriceItem } from "@/lib/quotes/price-list";
 import { quoteShareText } from "@/lib/quotes/share-message";
 import { chargesVat, toCompanySnapshot } from "@/lib/quotes/company-snapshot";
 import { QuoteEditorInputSchema, listMissingBeforeSending, type QuoteEditorInput } from "@/lib/quotes/editor-input";
@@ -26,11 +27,24 @@ function joinWithEt(items: string[]): string {
   return items.length < 2 ? items.join("") : `${items.slice(0, -1).join(", ")} et ${items.at(-1)}`;
 }
 
-function defaultLinesFor(draft: QuoteDraft | null, vatRateBp: number) {
+function defaultLinesFor(draft: QuoteDraft | null, vatRateBp: number, byRef: Map<string, PriceItem>) {
   const lines = draft?.lines.length
     ? draft.lines
-    : [{ category: "labor" as const, designation: "Main-d'œuvre", quantity: 1, unit: "forfait" as const }];
-  return lines.map((line, position) => ({ ...line, position, unit_price_cents: null, vat_rate_bp: vatRateBp }));
+    : [{ category: "labor" as const, designation: "Main-d'œuvre", quantity: 1, unit: "forfait" as const, priceListRef: null }];
+  return applyPriceList(lines, byRef, vatRateBp).map((line, position) => ({ ...line, position }));
+}
+
+const PRICE_ITEMS_FOR_AI = 120;
+
+// The artisan's usual lines, most used first (RLS: their own only).
+async function loadPriceItems(supabase: Supabase): Promise<PriceItem[]> {
+  const { data } = await supabase
+    .from("price_items")
+    .select("id, category, designation, unit, unit_price_cents, vat_rate_bp")
+    .order("use_count", { ascending: false })
+    .order("last_used_at", { ascending: false, nullsFirst: false })
+    .limit(PRICE_ITEMS_FOR_AI);
+  return data ?? [];
 }
 
 const NO_SUGGESTION_NOTES = {
@@ -38,9 +52,12 @@ const NO_SUGGESTION_NOTES = {
   quota: "Vous avez atteint la limite de propositions automatiques pour aujourd'hui : complétez les lignes vous-même. Elle revient demain.",
 };
 
-function toAiNotes(draft: QuoteDraft | null, withinQuota: boolean): string {
+function toAiNotes(draft: QuoteDraft | null, withinQuota: boolean, reusedLines = 0): string {
   if (!draft) return NO_SUGGESTION_NOTES[withinQuota ? "unavailable" : "quota"];
   const points = [...draft.pointsToCheck];
+  if (reusedLines > 0) {
+    points.unshift(`${reusedLines === 1 ? "1 ligne reprend" : `${reusedLines} lignes reprennent`} vos prix habituels : vérifiez les quantités.`);
+  }
   if (draft.visitRecommended) points.unshift("Une visite semble nécessaire pour chiffrer précisément.");
   return points.join("\n").slice(0, 2000);
 }
@@ -73,8 +90,10 @@ async function suggestDraftFor(
   supabase: Supabase,
   company: Tables<"companies">,
   request: { description: string | null; address: string | null; photos: { storage_path: string }[] },
+  priceList: string,
 ): Promise<QuoteDraft | null> {
   const suggestion = await suggestQuoteDraft({
+    priceList,
     companyName: company.name,
     trade: company.trade ? TRADE_LABELS[company.trade] : null,
     description: request.description,
@@ -105,8 +124,10 @@ export async function createQuoteFromRequest(requestId: string): Promise<{ error
   const existingDraft = request.quotes.find((quote) => quote.status === "draft");
   if (existingDraft) redirect(`/espace/devis/${existingDraft.id}`);
 
-  const withinQuota = await isWithinDailyAiQuota(supabase);
-  const draft = withinQuota ? await suggestDraftFor(supabase, company, request) : null;
+  const [withinQuota, priceItems] = await Promise.all([isWithinDailyAiQuota(supabase), loadPriceItems(supabase)]);
+  const { text: priceList, byRef } = priceListForPrompt(priceItems);
+  const draft = withinQuota ? await suggestDraftFor(supabase, company, request, priceList) : null;
+  const lines = defaultLinesFor(draft, chargesVat(company) ? 2000 : 0, byRef);
 
   const { data: quote, error } = await supabase
     .from("quotes")
@@ -119,7 +140,7 @@ export async function createQuoteFromRequest(requestId: string): Promise<{ error
       deposit_percent: DEFAULT_DEPOSIT_PERCENT,
       work_duration: draft?.estimatedDuration ?? null,
       waste_management: draft?.wasteManagement ?? null,
-      ai_notes: toAiNotes(draft, withinQuota),
+      ai_notes: toAiNotes(draft, withinQuota, lines.filter((line) => line.unit_price_cents !== null).length),
     })
     .select("id")
     .single();
@@ -127,7 +148,7 @@ export async function createQuoteFromRequest(requestId: string): Promise<{ error
 
   const { error: linesError } = await supabase.rpc("replace_quote_lines", {
     p_quote_id: quote.id,
-    p_lines: defaultLinesFor(draft, chargesVat(company) ? 2000 : 0),
+    p_lines: lines,
   });
   if (linesError) console.error("Lignes du devis non enregistrées :", linesError.message);
 
@@ -247,6 +268,9 @@ export async function sendQuote(quoteId: string, raw: unknown): Promise<{ error:
   if (!sentQuote) return { error: "Le devis n'a pas pu être numéroté. Réessayez." };
 
   await admin.from("requests").update({ status: "quoted" }).eq("id", sentQuote.request_id).eq("company_id", company.id);
+  // Its priced lines join "Mes prix", for the next quotes. RLS: the artisan's own quote and prices.
+  const { error: rememberError } = await supabase.rpc("remember_quote_prices", { p_quote_id: quoteId });
+  if (rememberError) console.error("Prix du devis non retenus :", rememberError.message);
 
   const url = `${await getSiteOrigin()}/devis/${sentQuote.public_token}`;
   return {

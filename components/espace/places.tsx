@@ -12,6 +12,7 @@ import {
   PhoneMissedIcon,
   SettingsIcon,
   SignatureIcon,
+  TagIcon,
 } from "@/components/landing/icons";
 import { IconTile, StatusPill, type Tone } from "./tones";
 
@@ -29,6 +30,7 @@ export const PLACES = {
   messages: { label: "Vos messages", tone: "violet", Icon: MessageIcon },
   simulator: { label: "Simulateur", tone: "stone", Icon: FlaskIcon },
   password: { label: "Mot de passe", tone: "stone", Icon: LockIcon },
+  prices: { label: "Mes prix", tone: "emerald", Icon: TagIcon },
 } satisfies Record<string, Look>;
 
 export type Place = keyof typeof PLACES;

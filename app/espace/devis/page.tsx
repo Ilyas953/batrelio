@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Suspense } from "react";
 import { CheckIcon, ClockIcon, DocumentIcon, SignatureIcon } from "@/components/landing/icons";
 import { PageTitle } from "@/components/espace/places";
@@ -15,6 +16,9 @@ export default function QuotesPage() {
   return (
     <>
       <PageTitle place="quotes" intro="Pour faire un devis, ouvrez une demande et touchez « Faire le devis »." />
+      <Link href="/espace/prix" className="-mt-5 mb-8 inline-flex min-h-11 items-center gap-2 text-base font-semibold text-emerald-800 underline">
+        Mes prix habituels →
+      </Link>
       <Suspense fallback={<QuotesSkeleton />}>
         <QuoteLists />
       </Suspense>

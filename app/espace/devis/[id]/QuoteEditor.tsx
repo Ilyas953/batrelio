@@ -29,6 +29,7 @@ import {
 import { formatPrice } from "@/lib/format";
 import { deleteQuote, saveQuote, sendQuote } from "../actions";
 import { withReturnTo } from "@/lib/espace/return-to";
+import { isQuoteUnit, suggestPriceItems, type PriceItem } from "@/lib/quotes/price-list";
 
 type EditableLine = {
   key: string;
@@ -69,8 +70,13 @@ function toEditableLines(lines: EditorQuote["lines"], chargesVat: boolean): Edit
     quantity: String(line.quantity).replace(".", ","),
     unit: isUnit(line.unit) ? line.unit : "u",
     unitPrice: centsToInput(line.unit_price_cents),
-    vatRateBp: chargesVat ? ((VAT_RATES_BP as readonly number[]).includes(line.vat_rate_bp) ? (line.vat_rate_bp as EditableLine["vatRateBp"]) : 2000) : 0,
+    vatRateBp: chargesVat ? toVatRate(line.vat_rate_bp) : 0,
   }));
+}
+
+// A stored rate the picker offers, else the usual 20 %.
+function toVatRate(rateBp: number): EditableLine["vatRateBp"] {
+  return (VAT_RATES_BP as readonly number[]).includes(rateBp) ? (rateBp as EditableLine["vatRateBp"]) : 2000;
 }
 
 function newLine(chargesVat: boolean): EditableLine {
@@ -217,6 +223,7 @@ export function QuoteEditor({ editor }: { editor: EditorQuote }) {
             line={line}
             index={index}
             chargesVat={chargesVat}
+            priceItems={editor.priceItems}
             onChange={(patch) => updateLine(line.key, patch)}
             onRemove={() => setLines((current) => current.filter((item) => item.key !== line.key))}
           />
@@ -381,11 +388,13 @@ type LineCardProps = {
   line: EditableLine;
   index: number;
   chargesVat: boolean;
+  priceItems: PriceItem[];
   onChange: (patch: Partial<EditableLine>) => void;
   onRemove: () => void;
 };
 
-function LineCard({ line, index, chargesVat, onChange, onRemove }: LineCardProps) {
+function LineCard({ line, index, chargesVat, priceItems, onChange, onRemove }: LineCardProps) {
+  const suggestions = suggestPriceItems(priceItems, line.designation);
   const quantity = parseQuantityInput(line.quantity) || 0;
   const unitPriceCents = parseEurosInput(line.unitPrice);
   const isPriced = unitPriceCents !== null && !Number.isNaN(unitPriceCents);
@@ -424,6 +433,32 @@ function LineCard({ line, index, chargesVat, onChange, onRemove }: LineCardProps
         placeholder="Description de la prestation"
         className={TEXTAREA_CLASSES}
       />
+      {suggestions.length > 0 && (
+        <div className="space-y-1">
+          <p className="text-xs font-semibold text-stone-500">Vos lignes habituelles</p>
+          {suggestions.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() =>
+                onChange({
+                  designation: item.designation,
+                  category: item.category,
+                  ...(isQuoteUnit(item.unit) ? { unit: item.unit } : {}),
+                  unitPrice: centsToInput(item.unit_price_cents),
+                  vatRateBp: chargesVat ? toVatRate(item.vat_rate_bp) : 0,
+                })
+              }
+              className="flex min-h-11 w-full items-center justify-between gap-3 rounded-xl bg-emerald-50 px-3 text-left text-sm text-emerald-950 ring-1 ring-emerald-200 hover:bg-emerald-100"
+            >
+              <span className="min-w-0 truncate font-semibold">{item.designation}</span>
+              <span className="shrink-0 tabular-nums">
+                {formatPrice(item.unit_price_cents)} / {item.unit}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
 
       <div className="grid grid-cols-[1fr_1.2fr_1.4fr] gap-2">
         <label className="block">

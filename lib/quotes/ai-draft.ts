@@ -17,6 +17,10 @@ const QuoteDraftSchema = z.object({
         designation: z.string().describe("Description précise de la prestation ou de la fourniture"),
         quantity: z.number().describe("Quantité estimée, positive"),
         unit: z.enum(QUOTE_UNITS),
+        priceListRef: z
+          .string()
+          .nullable()
+          .describe("Référence [P…] de la ligne habituelle de l'artisan reprise telle quelle, ou null si aucune ne correspond"),
       }),
     )
     .describe("Lignes du devis, sans aucun prix"),
@@ -36,6 +40,8 @@ export type QuoteDraftInput = {
   description: string | null;
   address: string | null;
   photoUrls: string[];
+  // The artisan's usual lines ("Mes prix"), one per line: "[P1] category | designation | unit".
+  priceList: string;
 };
 
 export type QuoteDraftResult = { status: "ok"; draft: QuoteDraft } | { status: "unavailable"; reason: string };
@@ -44,7 +50,8 @@ const SYSTEM_PROMPT = `You prepare the first draft of a French building quote ("
 
 From the customer's request (text and photos), list the work and supplies the job needs, as quote lines:
 - write everything in plain French, in the words a craftsman uses with a private customer;
-- separate labour ("labor"), supplies ("material"), travel ("travel") and waste removal ("waste");
+- separate labour ("labor"), supplies ("material"), equipment and tools billed to the customer such as an aerial lift, scaffolding or a wood chipper ("equipment"), travel ("travel") and waste removal ("waste");
+- the craftsman's usual lines are listed in <prix_artisan>: whenever one fits the job, reuse it exactly (same wording and unit) and give its reference in priceListRef; only write a new line when none fits;
 - add one travel line, and a waste line whenever the job produces construction waste;
 - estimate quantities from what the request and photos show, with the most fitting unit;
 - never write prices: the craftsman sets them;
@@ -61,6 +68,9 @@ function buildRequestText(input: QuoteDraftInput): string {
     input.description?.trim() || "Le client n'a pas décrit son besoin par écrit.",
     "</demande_client>",
     input.photoUrls.length ? `${input.photoUrls.length} photo(s) jointe(s).` : "Aucune photo.",
+    "<prix_artisan>",
+    input.priceList || "Aucune ligne habituelle pour l'instant.",
+    "</prix_artisan>",
   ].join("\n");
 }
 
