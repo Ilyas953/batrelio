@@ -32,6 +32,11 @@ export function LoginForm() {
         autoComplete="current-password"
         required
       />
+      <p className="-mt-2 text-right text-base">
+        <Link href="/mot-de-passe-oublie" className="font-semibold text-orange-700 underline">
+          Mot de passe oublié ?
+        </Link>
+      </p>
       <FormError message={state.error} />
       <SubmitButton label="Se connecter" pendingLabel="Connexion…" />
       <p className="text-center text-base text-stone-600">

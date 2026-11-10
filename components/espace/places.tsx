@@ -7,6 +7,7 @@ import {
   FlagIcon,
   FlaskIcon,
   InboxIcon,
+  LockIcon,
   MessageIcon,
   PhoneMissedIcon,
   SettingsIcon,
@@ -27,6 +28,7 @@ export const PLACES = {
   autoReply: { label: "Réponse automatique", tone: "emerald", Icon: PhoneMissedIcon },
   messages: { label: "Vos messages", tone: "violet", Icon: MessageIcon },
   simulator: { label: "Simulateur", tone: "stone", Icon: FlaskIcon },
+  password: { label: "Mot de passe", tone: "stone", Icon: LockIcon },
 } satisfies Record<string, Look>;
 
 export type Place = keyof typeof PLACES;

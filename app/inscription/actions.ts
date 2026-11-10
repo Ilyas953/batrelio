@@ -7,11 +7,11 @@ import { toSmsSenderNameOrFallback } from "@/lib/company/sms-sender";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { toFrenchMobile } from "@/lib/telephony/french-mobile";
 import { isTrade, type Trade } from "@/lib/company/details";
+import { MIN_PASSWORD_LENGTH } from "@/lib/auth/password";
 import { LEGAL_VERSION } from "@/lib/legal/publisher";
 import { TOO_MANY_ATTEMPTS, isAllowedFromThisVisitor } from "@/lib/security/rate-limit";
 import { createClient } from "@/lib/supabase/server";
 
-const MIN_PASSWORD_LENGTH = 8;
 const MAX_COMPANY_NAME_LENGTH = 120;
 
 type SignUpValues = { companyName: string; trade: Trade | ""; email: string; mobile: string };

@@ -16,6 +16,8 @@ export const RATE_RULES = {
   signInPerEmail: { limit: 8, windowSeconds: 15 * MINUTE },
   signUpPerIp: { limit: 5, windowSeconds: HOUR },
   customerRequestPerIp: { limit: 15, windowSeconds: HOUR },
+  passwordResetPerIp: { limit: 5, windowSeconds: HOUR },
+  passwordResetPerEmail: { limit: 3, windowSeconds: HOUR },
 } satisfies Record<string, RateRule>;
 
 export type RateScope = keyof typeof RATE_RULES | "numberPurchase" | "greetingPreview" | "greetingAudio" | "testCall";

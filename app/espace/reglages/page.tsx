@@ -85,6 +85,7 @@ async function SettingsList() {
         place="messages"
         detail={`Voix ${findGreetingVoice(company.greeting_voice).label} · message d'accueil et envoi des devis`}
       />
+      <SettingsRow href="/espace/mot-de-passe" place="password" detail="Changer mon mot de passe" />
       {isTest && (
         <SettingsRow
           href="/espace/simulation"
