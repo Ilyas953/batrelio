@@ -64,6 +64,7 @@ export type Database = {
           insurer_name: string | null
           legal_form: Database["public"]["Enums"]["legal_form"] | null
           legal_name: string | null
+          logo_path: string | null
           mediator_name: string | null
           mediator_website: string | null
           naf_code: string | null
@@ -102,6 +103,7 @@ export type Database = {
           insurer_name?: string | null
           legal_form?: Database["public"]["Enums"]["legal_form"] | null
           legal_name?: string | null
+          logo_path?: string | null
           mediator_name?: string | null
           mediator_website?: string | null
           naf_code?: string | null
@@ -140,6 +142,7 @@ export type Database = {
           insurer_name?: string | null
           legal_form?: Database["public"]["Enums"]["legal_form"] | null
           legal_name?: string | null
+          logo_path?: string | null
           mediator_name?: string | null
           mediator_website?: string | null
           naf_code?: string | null

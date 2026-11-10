@@ -3,14 +3,14 @@ import { ACCEPTED_PHOTO_TYPES, MAX_PHOTO_BYTES, MAX_PHOTOS } from "./limits";
 
 type PhotoType = (typeof ACCEPTED_PHOTO_TYPES)[number];
 
-const EXTENSION_BY_TYPE: Record<PhotoType, string> = {
+export const EXTENSION_BY_TYPE: Record<PhotoType, string> = {
   "image/jpeg": "jpg",
   "image/png": "png",
   "image/webp": "webp",
 };
 
 // The declared type comes from the browser: trust the file's first bytes instead.
-function detectPhotoType(bytes: Uint8Array): PhotoType | null {
+export function detectPhotoType(bytes: Uint8Array): PhotoType | null {
   if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return "image/jpeg";
   if (bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47) return "image/png";
   const ascii = (start: number, end: number) => String.fromCharCode(...bytes.slice(start, end));

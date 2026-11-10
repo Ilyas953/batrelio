@@ -64,6 +64,11 @@ function DocumentHeader({ publicQuote }: { publicQuote: PublicQuote }) {
     <header className="space-y-6">
       <div className="flex flex-col justify-between gap-6 sm:flex-row">
         <div className="space-y-0.5 text-sm">
+          {publicQuote.logoUrl && (
+            // Private file behind a short-lived signed link: not for the shared image cache.
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={publicQuote.logoUrl} alt={`Logo ${company.name}`} className="mb-3 max-h-20 max-w-56 object-contain" />
+          )}
           <p className="text-2xl font-extrabold text-stone-900">{company.name}</p>
           {company.legal_name && (
             <p>

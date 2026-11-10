@@ -6,6 +6,7 @@ import { toSmsSenderNameOrFallback } from "@/lib/company/sms-sender";
 import { LEGAL_VERSION } from "@/lib/legal/publisher";
 import { PHOTO_BUCKET } from "@/lib/requests/limits";
 import { removeGreetingAudio } from "@/lib/telephony/greeting-audio";
+import { removeCompanyLogos } from "@/lib/company/logo";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { randomFictionLandline } from "./fiction-numbers";
@@ -59,6 +60,7 @@ export async function deleteTestAccount(userId: string): Promise<void> {
     const paths = (photos ?? []).map((photo) => photo.storage_path);
     if (paths.length > 0) await supabase.storage.from(PHOTO_BUCKET).remove(paths);
     await removeGreetingAudio(company.id);
+    await removeCompanyLogos(company.id);
   }
 
   const { error } = await supabase.auth.admin.deleteUser(userId);

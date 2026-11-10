@@ -1,6 +1,7 @@
 import "server-only";
 import { requireUser } from "@/lib/auth/session";
 import { listMissingQuoteDetails } from "@/lib/company/legal";
+import { logoUrl } from "@/lib/company/logo";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { CompanySnapshot } from "./company-snapshot";
 
@@ -65,7 +66,8 @@ export async function getPublicQuote(token: string) {
 
   const { data: lines } = await supabase.from("quote_lines").select(LINE_COLUMNS).eq("quote_id", quote.id).order("position");
 
-  return { quote, lines: lines ?? [], company: quote.company_snapshot as CompanySnapshot };
+  const company = quote.company_snapshot as CompanySnapshot;
+  return { quote, lines: lines ?? [], company, logoUrl: await logoUrl(company.logo_path) };
 }
 
 export type PublicQuote = NonNullable<Awaited<ReturnType<typeof getPublicQuote>>>;

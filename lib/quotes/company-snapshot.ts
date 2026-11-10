@@ -22,6 +22,7 @@ export type CompanySnapshot = Pick<
   | "mediator_website"
   | "contact_phone"
   | "contact_email"
+  | "logo_path"
 >;
 
 export function toCompanySnapshot(company: Tables<"companies">): CompanySnapshot {
@@ -44,6 +45,7 @@ export function toCompanySnapshot(company: Tables<"companies">): CompanySnapshot
     mediator_website: company.mediator_website,
     contact_phone: company.contact_phone,
     contact_email: company.contact_email,
+    logo_path: company.logo_path,
   };
 }
 

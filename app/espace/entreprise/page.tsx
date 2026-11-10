@@ -5,7 +5,9 @@ import { ReturnBackLink } from "@/components/espace/BackLink";
 import { requireUser } from "@/lib/auth/session";
 import { toProfileValues } from "@/lib/company/profile-form";
 import { safeReturnTo } from "@/lib/espace/return-to";
+import { logoUrl } from "@/lib/company/logo";
 import { CompanyProfileForm } from "./CompanyProfileForm";
+import { LogoForm } from "./LogoForm";
 
 export const metadata: Metadata = {
   title: "Mon entreprise · Batrelio",
@@ -36,5 +38,10 @@ async function CompanyProfile({ returnTo }: { returnTo: string }) {
     return <p className="text-lg text-stone-600">Aucune entreprise n&apos;est liée à ce compte.</p>;
   }
 
-  return <CompanyProfileForm initialValues={toProfileValues(company, claims.email ?? "")} returnTo={returnTo} />;
+  return (
+    <div className="space-y-6">
+      <LogoForm currentUrl={await logoUrl(company.logo_path)} />
+      <CompanyProfileForm initialValues={toProfileValues(company, claims.email ?? "")} returnTo={returnTo} />
+    </div>
+  );
 }

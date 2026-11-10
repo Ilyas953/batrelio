@@ -2,6 +2,7 @@ import "server-only";
 import { requireUser } from "@/lib/auth/session";
 import { listMissingQuoteDetails } from "@/lib/company/legal";
 import type { CompanySnapshot } from "@/lib/quotes/company-snapshot";
+import { logoUrl } from "@/lib/company/logo";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -59,7 +60,8 @@ export async function getPublicInvoice(token: string) {
   if (!invoice?.company_snapshot) return null;
 
   const { data: lines } = await supabase.from("invoice_lines").select(LINE_COLUMNS).eq("invoice_id", invoice.id).order("position");
-  return { invoice, lines: lines ?? [], company: invoice.company_snapshot as CompanySnapshot };
+  const company = invoice.company_snapshot as CompanySnapshot;
+  return { invoice, lines: lines ?? [], company, logoUrl: await logoUrl(company.logo_path) };
 }
 
 export type PublicInvoice = NonNullable<Awaited<ReturnType<typeof getPublicInvoice>>>;

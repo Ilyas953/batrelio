@@ -126,6 +126,11 @@ export function createContext(base, actionIds) {
   // background after an answer, so let it finish (it removes its file once the company is gone).
   const BACKGROUND_WORK_MS = 3000;
 
+  async function removeFolder(bucket, companyId) {
+    const { data: files } = await admin.storage.from(bucket).list(companyId, { limit: 100 });
+    if (files?.length) await admin.storage.from(bucket).remove(files.map((file) => `${companyId}/${file.name}`));
+  }
+
   async function removeGreetingAudio(companyId) {
     const { data: files } = await admin.storage.from("greeting-audio").list(companyId, { limit: 100 });
     if (files?.length) await admin.storage.from("greeting-audio").remove(files.map((file) => `${companyId}/${file.name}`));
@@ -138,6 +143,7 @@ export function createContext(base, actionIds) {
     for (const id of userIds) await admin.auth.admin.deleteUser(id).catch(() => {});
     await new Promise((resolve) => setTimeout(resolve, BACKGROUND_WORK_MS));
     for (const company of companies ?? []) await removeGreetingAudio(company.id).catch(() => {});
+    for (const company of companies ?? []) await removeFolder("company-logos", company.id).catch(() => {});
     if (bucketKeys.length > 0) await admin.from("rate_limit_buckets").delete().in("key", bucketKeys);
   }
 
