@@ -3,11 +3,12 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { LEGAL_FORM_LABELS } from "@/lib/company/legal";
 import { formatPrice } from "@/lib/format";
-import { UNIT_LABELS, formatVatRate, type QuoteUnit } from "@/lib/quotes/catalog";
+import { formatVatRate } from "@/lib/quotes/catalog";
+import { companyAddress, formatLongDate, formatSiret, unitLabel } from "@/lib/documents/format";
 import type { CompanySnapshot } from "@/lib/quotes/company-snapshot";
 import { getPublicQuote, type PublicQuote } from "@/lib/quotes/queries";
 import { computeTotals, lineTotalCents } from "@/lib/quotes/totals";
-import { PrintButton } from "./PrintButton";
+import { PrintButton } from "@/components/ui/PrintButton";
 
 export const metadata: Metadata = {
   title: "Votre devis",
@@ -16,26 +17,8 @@ export const metadata: Metadata = {
   referrer: "no-referrer",
 };
 
-const dateFormatter = new Intl.DateTimeFormat("fr-FR", { dateStyle: "long", timeZone: "Europe/Paris" });
-
-function formatDate(date: Date): string {
-  return dateFormatter.format(date);
-}
-
 function addDays(isoDate: string, days: number): Date {
   return new Date(new Date(isoDate).getTime() + days * 24 * 60 * 60 * 1000);
-}
-
-function formatSiret(siret: string | null): string | null {
-  return siret ? siret.replace(/^(\d{3})(\d{3})(\d{3})(\d{5})$/, "$1 $2 $3 $4") : null;
-}
-
-function companyAddress(company: CompanySnapshot): string {
-  return [company.address_line, [company.postal_code, company.city].filter(Boolean).join(" ")].filter(Boolean).join(", ");
-}
-
-function unitLabel(unit: string): string {
-  return UNIT_LABELS[unit as QuoteUnit] ?? unit;
 }
 
 export default function PublicQuotePage({ params }: PageProps<"/devis/[token]">) {
@@ -98,8 +81,8 @@ function DocumentHeader({ publicQuote }: { publicQuote: PublicQuote }) {
         <div className="text-sm sm:text-right">
           <p className="text-3xl font-extrabold tracking-tight text-stone-900">DEVIS</p>
           <p className="font-semibold">N° {quote.number}</p>
-          {sentAt && <p>Émis le {formatDate(new Date(sentAt))}</p>}
-          {sentAt && <p>Valable jusqu&apos;au {formatDate(addDays(sentAt, quote.validity_days))}</p>}
+          {sentAt && <p>Émis le {formatLongDate(new Date(sentAt))}</p>}
+          {sentAt && <p>Valable jusqu&apos;au {formatLongDate(addDays(sentAt, quote.validity_days))}</p>}
           <p>Devis gratuit</p>
         </div>
       </div>
@@ -210,7 +193,7 @@ function Conditions({ publicQuote }: { publicQuote: PublicQuote }) {
     <div className="space-y-5">
       <Section title="Réalisation des travaux">
         <p>
-          Début estimé : {quote.work_start_date ? formatDate(new Date(`${quote.work_start_date}T12:00:00`)) : "à convenir ensemble"}
+          Début estimé : {quote.work_start_date ? formatLongDate(new Date(`${quote.work_start_date}T12:00:00`)) : "à convenir ensemble"}
           {quote.work_duration ? ` · Durée estimée : ${quote.work_duration}` : ""}
         </p>
       </Section>

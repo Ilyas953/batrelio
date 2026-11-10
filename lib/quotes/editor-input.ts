@@ -3,7 +3,7 @@ import { QUOTE_LINE_CATEGORIES, QUOTE_UNITS, VAT_RATES_BP } from "./catalog";
 
 // What the quote editor sends to the server. Always re-validated on the server.
 
-const QuoteLineInputSchema = z.object({
+export const QuoteLineInputSchema = z.object({
   category: z.enum(QUOTE_LINE_CATEGORIES),
   designation: z.string().trim().min(1, "Chaque ligne doit avoir une description.").max(500),
   quantity: z.number().min(0).max(1_000_000),

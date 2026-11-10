@@ -9,6 +9,7 @@ import { withReturnTo } from "@/lib/espace/return-to";
 import { getQuoteForEditor, type EditorQuote } from "@/lib/quotes/queries";
 import { quoteShareText } from "@/lib/quotes/share-message";
 import { getSiteOrigin } from "@/lib/requests/site-origin";
+import { MakeInvoiceButton } from "../../factures/[id]/InvoiceButtons";
 import { QuoteEditor } from "./QuoteEditor";
 
 export default function QuotePage({ params }: PageProps<"/espace/devis/[id]">) {
@@ -73,9 +74,34 @@ async function SentQuote({ editor }: { editor: EditorQuote }) {
           shareText: quoteShareText({ name: companyName, quote_message: quoteMessage }, url),
         }}
       />
+      {(quote.status === "sent" || quote.status === "signed") && <InvoicesOfQuote quote={quote} />}
       <Link href={withReturnTo("/espace/messages", `/espace/devis/${quote.id}`)} className="block text-center text-base font-semibold text-orange-700 underline">
         Modifier le message d&apos;envoi
       </Link>
     </section>
+  );
+}
+
+const INVOICE_LABELS = { draft: "Brouillon", issued: "Émise", paid: "Payée" } as const;
+
+// Once the work is done: the invoice, made from this quote.
+function InvoicesOfQuote({ quote }: { quote: EditorQuote["quote"] }) {
+  const draft = quote.invoices.find((invoice) => invoice.status === "draft");
+  return (
+    <div className="space-y-2 border-t border-stone-200 pt-4">
+      {quote.invoices.map((invoice) => (
+        <Link
+          key={invoice.id}
+          href={`/espace/factures/${invoice.id}`}
+          className="flex items-center justify-between gap-3 rounded-2xl bg-stone-50 p-4 ring-1 ring-stone-200 hover:ring-stone-300"
+        >
+          <span className="font-semibold text-stone-900">
+            Facture {invoice.number ? `n° ${invoice.number}` : ""} · {INVOICE_LABELS[invoice.status]}
+          </span>
+          <span className="font-bold tabular-nums">{formatPrice(invoice.total_cents)}</span>
+        </Link>
+      ))}
+      {!draft && <MakeInvoiceButton quoteId={quote.id} label={quote.invoices.length ? "Faire une autre facture" : "Travaux finis : faire la facture"} />}
+    </div>
   );
 }

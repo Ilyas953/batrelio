@@ -6,6 +6,7 @@ SaaS pour artisans (couvreurs, élagueurs, paysagistes, plombiers…). Promesse 
 Périmètre V1 (ne rien coder en dehors sans validation)
 Appel manqué un
 Ajouté à la V1 (validé le 5 novembre 2026) : proposer une visite, partager une mission (placée à la main depuis l'admin).
+Ajouté à la V1 (validé le 10 novembre 2026) : « Mes prix » (lignes et prix réutilisés par l'IA), factures faites à partir d'un devis.
 Hors V1 : dashboard de résultats, devis vocal, app mobile native.
 
 Stack

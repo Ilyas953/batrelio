@@ -20,7 +20,7 @@ export async function getQuoteForEditor(quoteId: string) {
   const [quote, lines, company, priceItems] = await Promise.all([
     supabase
       .from("quotes")
-      .select(`${QUOTE_COLUMNS}, request:requests(customer_phone)`)
+      .select(`${QUOTE_COLUMNS}, request:requests(customer_phone), invoices(id, number, status, total_cents)`)
       .eq("id", quoteId)
       .maybeSingle(),
     supabase.from("quote_lines").select(LINE_COLUMNS).eq("quote_id", quoteId).order("position"),

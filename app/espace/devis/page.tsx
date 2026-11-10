@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
-import { CheckIcon, ClockIcon, DocumentIcon, SignatureIcon } from "@/components/landing/icons";
+import { CheckIcon, ClockIcon, DocumentIcon, ReceiptIcon, SignatureIcon } from "@/components/landing/icons";
 import { PageTitle } from "@/components/espace/places";
 import { QuoteRow, Section } from "@/components/espace/lists";
 import { formatCents, formatTimeAgo } from "@/lib/format";
-import { getQuotesOverview, type ListedQuote } from "@/lib/espace/quotes";
+import { getQuotesOverview, type ListedInvoice, type ListedQuote } from "@/lib/espace/quotes";
+import { IconTile, StatusPill } from "@/components/espace/tones";
+import { amountDueCents } from "@/lib/invoices/invoice";
 
 export const metadata: Metadata = {
   title: "Devis · Batrelio",
@@ -27,7 +29,7 @@ export default function QuotesPage() {
 }
 
 async function QuoteLists() {
-  const { drafts, sent, signed } = await getQuotesOverview();
+  const { drafts, sent, signed, invoices } = await getQuotesOverview();
   const now = new Date();
 
   return (
@@ -81,7 +83,57 @@ async function QuoteLists() {
           <QuoteRow key={quote.id} quote={quote} status="signed" detail={formatDeposit(quote)} />
         ))}
       </Section>
+      <Section
+        id="factures"
+        title="Factures"
+        count={invoices.length}
+        icon={<ReceiptIcon />}
+        tone="violet"
+        empty={{
+          icon: <ReceiptIcon className="size-7" />,
+          title: "Aucune facture pour l'instant",
+          detail: "Les travaux finis ? Ouvrez le devis et touchez « Faire la facture ».",
+        }}
+      >
+        {invoices.map((invoice) => (
+          <InvoiceRow key={invoice.id} invoice={invoice} now={now} />
+        ))}
+      </Section>
     </div>
+  );
+}
+
+const INVOICE_STATUS = {
+  draft: { label: "Brouillon", tone: "amber" },
+  issued: { label: "À encaisser", tone: "sky" },
+  paid: { label: "Payée", tone: "emerald" },
+} as const;
+
+function InvoiceRow({ invoice, now }: { invoice: ListedInvoice; now: Date }) {
+  const status = INVOICE_STATUS[invoice.status];
+  const when = invoice.paid_at ?? invoice.issued_at ?? invoice.updated_at;
+  return (
+    <li>
+      <Link
+        href={`/espace/factures/${invoice.id}`}
+        className="flex items-center gap-4 rounded-3xl bg-white p-4 shadow-sm ring-1 ring-stone-200 transition hover:ring-stone-300 sm:p-5"
+      >
+        <IconTile tone={status.tone}>
+          <ReceiptIcon />
+        </IconTile>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-lg font-bold text-stone-900">{invoice.customer_name ?? "Client"}</p>
+          <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-sm text-stone-500">
+            <StatusPill tone={status.tone}>{status.label}</StatusPill>
+            {invoice.number ? `n° ${invoice.number} · ` : ""}
+            {formatTimeAgo(when, now)}
+          </p>
+        </div>
+        <p className="shrink-0 text-xl font-extrabold tabular-nums text-stone-900">
+          {formatCents(invoice.status === "paid" ? invoice.total_cents : amountDueCents(invoice.total_cents, invoice.deposit_received_cents))}
+        </p>
+      </Link>
+    </li>
   );
 }
 
