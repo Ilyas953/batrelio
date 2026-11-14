@@ -55,7 +55,7 @@ export function RequestLinkPanel() {
         <div>
           <h2 className="text-xl font-bold text-stone-900">Lien de demande</h2>
           <p className="mt-1 text-base text-stone-600">
-            Le client décrit son besoin et ajoute ses photos. Sa demande arrive dans « À traiter ».
+            Le client décrit son besoin et ajoute ses photos. Sa demande arrive dans « Demandes reçues ».
           </p>
         </div>
         <button

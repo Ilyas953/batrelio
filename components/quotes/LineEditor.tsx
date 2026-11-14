@@ -233,7 +233,7 @@ function LineCard({ line, index, chargesVat, priceItems, onChange, onRemove }: L
       />
       {suggestions.length > 0 && (
         <div className="space-y-1">
-          <p className="text-xs font-semibold text-stone-500">Vos lignes habituelles</p>
+          <p className="text-sm font-semibold text-stone-600">Vos lignes habituelles</p>
           {suggestions.map((item) => (
             <button
               key={item.id}
@@ -258,13 +258,13 @@ function LineCard({ line, index, chargesVat, priceItems, onChange, onRemove }: L
         </div>
       )}
 
-      <div className="grid grid-cols-[1fr_1.2fr_1.4fr] gap-2">
+      <div className="grid grid-cols-[1fr_1.2fr_1.4fr] items-end gap-2">
         <label className="block">
-          <span className="mb-1 block text-xs font-semibold text-stone-500">Quantité</span>
+          <span className="mb-1 block text-sm font-semibold text-stone-600">Quantité</span>
           <input inputMode="decimal" value={line.quantity} onChange={(e) => onChange({ quantity: e.target.value })} className={FIELD_CLASSES} />
         </label>
         <label className="block">
-          <span className="mb-1 block text-xs font-semibold text-stone-500">Unité</span>
+          <span className="mb-1 block text-sm font-semibold text-stone-600">Unité</span>
           <select value={line.unit} onChange={(e) => onChange({ unit: e.target.value as QuoteUnit })} className={FIELD_CLASSES}>
             {QUOTE_UNITS.map((unit) => (
               <option key={unit} value={unit}>
@@ -274,7 +274,7 @@ function LineCard({ line, index, chargesVat, priceItems, onChange, onRemove }: L
           </select>
         </label>
         <label className="block">
-          <span className="mb-1 block text-xs font-semibold text-stone-500">Prix unitaire {chargesVat ? "HT" : ""} (€)</span>
+          <span className="mb-1 block text-sm font-semibold text-stone-600">Prix {chargesVat ? "HT " : ""}(€)</span>
           <input
             inputMode="decimal"
             value={line.unitPrice}

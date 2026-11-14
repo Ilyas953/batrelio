@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { GREETING_NEXT_STEPS, defaultGreetingIntro, greetingWithSms, missedCallSms, toPlayResponse, toVoiceResponse } from "@/lib/telephony/messages";
-import { DEFAULT_GREETING_VOICE, GREETING_VOICES, LIVE_FALLBACK_VOICE, findGreetingVoice, liveReadingVoice } from "@/lib/telephony/voices";
+import { DEFAULT_GREETING_VOICE, GREETING_VOICES, LIVE_FALLBACK_VOICES, findGreetingVoice, liveReadingVoice } from "@/lib/telephony/voices";
 import { greetingAudioPath } from "@/lib/telephony/greeting-audio-path";
 import {
   chooseGreeting,
   chooseGreetingVariant,
   decideSms,
   greetingText,
-  greetingVariantsByExclusion,
+  greetingVariantsForCaller,
   type AnsweringCompany,
 } from "@/lib/telephony/missed-call";
 import { isFrenchMobile, isIdentifiedCaller } from "@/lib/telephony/phone-rules";
@@ -48,6 +48,15 @@ describe("who gets an SMS after a missed call", () => {
     expect(decideSms({ ...company, auto_reply_enabled: false }, CUSTOMER_MOBILE, false)).toBe("skipped_disabled");
   });
 
+  // Only strangers get the SMS: a customer the company already had a request from is called back.
+  it("does not text a number the company already knows", () => {
+    expect(decideSms(company, CUSTOMER_MOBILE, false, true)).toBe("skipped_known");
+    expect(decideSms(company, CUSTOMER_MOBILE, false, false)).toBe("send");
+    // The other reasons come first: they say more.
+    expect(decideSms(company, "+33199001234", false, true)).toBe("skipped_not_mobile");
+    expect(decideSms(company, CUSTOMER_MOBILE, true, true)).toBe("skipped_excluded");
+  });
+
   it("does not text landlines or foreign numbers (SMS would not arrive or cost too much)", () => {
     expect(decideSms(company, "+33199001234", false)).toBe("skipped_not_mobile");
     expect(decideSms(company, "+33912345678", false)).toBe("skipped_not_mobile");
@@ -67,14 +76,18 @@ describe("what the caller hears", () => {
     expect(chooseGreeting("skipped_anonymous", company)).toContain("masqué");
   });
 
-  // Both greetings are looked up while the exclusion list is read: the caller is waiting.
-  it("knows both possible greetings before the exclusion list is read", () => {
-    expect(greetingVariantsByExclusion(company, CUSTOMER_MOBILE)).toEqual({ excluded: "withoutSms", notExcluded: "withSms" });
-    expect(greetingVariantsByExclusion(company, undefined)).toEqual({ excluded: "hiddenCaller", notExcluded: "hiddenCaller" });
-    expect(greetingVariantsByExclusion({ ...company, auto_reply_enabled: false }, CUSTOMER_MOBILE)).toEqual({
-      excluded: "withoutSms",
-      notExcluded: "withoutSms",
+  // Both greetings are looked up while the caller's history is read: the caller is waiting.
+  it("knows both possible greetings before the caller's history is read", () => {
+    expect(greetingVariantsForCaller(company, CUSTOMER_MOBILE)).toEqual({ ifKnown: "withoutSms", ifUnknown: "withSms" });
+    expect(greetingVariantsForCaller(company, undefined)).toEqual({ ifKnown: "hiddenCaller", ifUnknown: "hiddenCaller" });
+    expect(greetingVariantsForCaller({ ...company, auto_reply_enabled: false }, CUSTOMER_MOBILE)).toEqual({
+      ifKnown: "withoutSms",
+      ifUnknown: "withoutSms",
     });
+  });
+
+  it("never promises an SMS to a known customer", () => {
+    expect(chooseGreeting(decideSms(company, CUSTOMER_MOBILE, false, true), company)).not.toContain("SMS");
   });
 
   it("always says the company name", () => {
@@ -112,17 +125,22 @@ describe("greeting voice", () => {
     expect(twiml).toContain("<Hangup/>");
   });
 
-  it("uses the default voice when nothing or an unknown voice is stored", () => {
+  it("uses the default voice, Hugo, when nothing or an unknown voice is stored", () => {
+    expect(findGreetingVoice(null).label).toBe("Hugo");
     expect(findGreetingVoice(null).id).toBe(DEFAULT_GREETING_VOICE);
     expect(findGreetingVoice("removed-voice").id).toBe(DEFAULT_GREETING_VOICE);
   });
 
   it("reads live with a voice outside the provider's beta when the recording is not ready", () => {
-    expect(liveReadingVoice("claire-ai")).toBe(LIVE_FALLBACK_VOICE);
-    expect(liveReadingVoice(null)).toBe(LIVE_FALLBACK_VOICE);
-    expect(findGreetingVoice(LIVE_FALLBACK_VOICE).kind).toBe("standard");
+    expect(liveReadingVoice("claire-ai")).toBe(LIVE_FALLBACK_VOICES.female);
     expect(liveReadingVoice("mathieu")).toBe("mathieu");
-    expect(toVoiceResponse("Bonjour", liveReadingVoice("hugo-ai"))).toContain('voice="Google.fr-FR-Neural2-F"');
+    for (const id of Object.values(LIVE_FALLBACK_VOICES)) expect(findGreetingVoice(id).kind).toBe("standard");
+  });
+
+  it("reads live with a voice of the same gender, so the caller hears a man if Hugo is chosen", () => {
+    expect(liveReadingVoice(null)).toBe("mathieu");
+    expect(toVoiceResponse("Bonjour", liveReadingVoice("hugo-ai"))).toContain('voice="Google.fr-FR-Neural2-G"');
+    for (const voice of GREETING_VOICES) expect(findGreetingVoice(liveReadingVoice(voice.id)).gender).toBe(voice.gender);
   });
 
   it("plays in the page exactly the voice customers hear on the phone", () => {

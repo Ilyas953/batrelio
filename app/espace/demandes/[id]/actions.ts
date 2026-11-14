@@ -15,7 +15,7 @@ async function findOwnRequest(requestId: string) {
   const { supabase } = await requireUser();
   const { data } = await supabase
     .from("requests")
-    .select("id, company_id, status, customer_name, customer_phone, company:companies(name)")
+    .select("id, company_id, status, source, submitted_at, customer_name, customer_phone, company:companies(name)")
     .eq("id", requestId)
     .maybeSingle();
   return data;
@@ -64,4 +64,50 @@ export async function shareMission(requestId: string, formData: FormData): Promi
 
   await admin.from("requests").update({ status: "shared" }).eq("id", request.id).eq("company_id", request.company_id);
   redirect(`/espace/demandes/${request.id}`);
+}
+
+// Settled by phone, not for the artisan, a wrong number…: the request leaves the list to handle.
+export async function closeRequest(requestId: string): Promise<{ error?: string }> {
+  const request = await findOwnRequest(requestId);
+  if (!request) return { error: "Demande introuvable." };
+  if (request.status !== "new") return { error: "Seule une demande à traiter peut être classée." };
+
+  const { error } = await createAdminClient()
+    .from("requests")
+    .update({ status: "closed" })
+    .eq("id", request.id)
+    .eq("company_id", request.company_id)
+    .eq("status", "new");
+  return error ? { error: "La demande n'a pas pu être classée. Réessayez." } : {};
+}
+
+export async function reopenRequest(requestId: string): Promise<{ error?: string }> {
+  const request = await findOwnRequest(requestId);
+  if (!request) return { error: "Demande introuvable." };
+  if (request.status !== "closed") return { error: "Cette demande n'est pas classée." };
+
+  const { error } = await createAdminClient()
+    .from("requests")
+    .update({ status: "new" })
+    .eq("id", request.id)
+    .eq("company_id", request.company_id)
+    .eq("status", "closed");
+  return error ? { error: "La demande n'a pas pu être remise à traiter. Réessayez." } : {};
+}
+
+// "C'est fait" on a missed call: every call of this number still waiting is settled at once.
+// If the customer describes their need later through the SMS link, the request comes back.
+export async function markMissedCallsDone(requestId: string): Promise<{ error?: string }> {
+  const request = await findOwnRequest(requestId);
+  if (!request || request.source !== "missed_call" || request.submitted_at) return { error: "Appel introuvable." };
+
+  const { error } = await createAdminClient()
+    .from("requests")
+    .update({ status: "closed" })
+    .eq("company_id", request.company_id)
+    .eq("customer_phone", request.customer_phone)
+    .eq("source", "missed_call")
+    .eq("status", "new")
+    .is("submitted_at", null);
+  return error ? { error: "L'appel n'a pas pu être marqué comme rappelé. Réessayez." } : {};
 }

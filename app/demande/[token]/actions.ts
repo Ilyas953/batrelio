@@ -118,6 +118,8 @@ export async function submitCustomerRequest(token: string, formData: FormData): 
   }
 
   await supabase.from("request_links").update({ request_id: saved.id }).eq("id", link.id);
+  // The artisan may have settled the missed call meanwhile: the described need is new again.
+  await supabase.from("requests").update({ status: "new" }).eq("id", saved.id).eq("status", "closed");
   const savedPhotos = await storePhotos(supabase, link.company_id, saved.id, photos);
 
   // After the answer: the customer does not wait for the artisan's SMS.

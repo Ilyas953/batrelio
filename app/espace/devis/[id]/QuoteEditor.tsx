@@ -23,6 +23,7 @@ import {
 import { formatPrice } from "@/lib/format";
 import { deleteQuote, saveQuote, sendQuote } from "../actions";
 import { withReturnTo } from "@/lib/espace/return-to";
+import { AUTOSAVE_LABELS, EDITOR_BAR_CLASSES, useAutosave } from "@/components/quotes/useAutosave";
 
 type Fields = {
   title: string;
@@ -57,9 +58,7 @@ export function QuoteEditor({ editor }: { editor: EditorQuote }) {
   });
   const [lines, setLines] = useState<EditableLine[]>(() => toEditableLines(editor.lines, chargesVat));
   const [error, setError] = useState<string>();
-  const [savedAt, setSavedAt] = useState<string>();
   const [sent, setSent] = useState<ShareableLink>();
-  const [isSaving, startSaving] = useTransition();
   const [isSending, startSending] = useTransition();
   const [isDeleting, startDeleting] = useTransition();
 
@@ -67,21 +66,22 @@ export function QuoteEditor({ editor }: { editor: EditorQuote }) {
   const totals = liveTotals(lines, chargesVat);
   const deposit = depositCents(totals.totalCents, fields.depositPercent);
 
+  const autosave = useAutosave(
+    JSON.stringify({ fields, lines }),
+    async () => {
+      const input = toInput(fields, lines);
+      const result = typeof input === "string" ? { error: input } : await saveQuote(quote.id, input);
+      setError(result.error);
+      return !result.error;
+    },
+    { enabled: !sent && !isSending && !isDeleting },
+  );
+
   function run(action: (input: QuoteEditorInput) => void) {
     const input = toInput(fields, lines);
     setError(undefined);
     if (typeof input === "string") setError(input);
     else action(input);
-  }
-
-  function handleSave() {
-    run((input) =>
-      startSaving(async () => {
-        const result = await saveQuote(quote.id, input);
-        if (result.error) setError(result.error);
-        else setSavedAt(result.savedAt);
-      }),
-    );
   }
 
   function handleSend() {
@@ -108,7 +108,7 @@ export function QuoteEditor({ editor }: { editor: EditorQuote }) {
   }
 
   return (
-    <div className="space-y-6 pb-32">
+    <div className="space-y-6 pb-52 sm:pb-32">
       {quote.ai_notes && (
         <section className="rounded-3xl border-2 border-amber-200 bg-amber-50 p-5">
           <h2 className="text-lg font-bold text-amber-950">Points à vérifier</h2>
@@ -214,31 +214,24 @@ export function QuoteEditor({ editor }: { editor: EditorQuote }) {
         Supprimer le brouillon
       </button>
 
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-stone-200 bg-white/95 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur">
+      <div className={EDITOR_BAR_CLASSES}>
         <div className="mx-auto max-w-2xl space-y-2">
           <FormError message={error} />
           <div className="flex items-center gap-2">
             <div className="min-w-0 flex-1">
-              <p className="text-xs text-stone-500">
-                {isSaving ? "Enregistrement…" : savedAt ? "Enregistré ✓" : chargesVat ? "Total TTC" : "Total"}
+              <p className="truncate text-sm text-stone-500">{AUTOSAVE_LABELS[autosave]}</p>
+              <p className="truncate text-xl font-extrabold tabular-nums text-stone-900">
+                {formatPrice(totals.totalCents)}
+                <span className="ml-1 text-sm font-semibold text-stone-500">{chargesVat ? "TTC" : ""}</span>
               </p>
-              <p className="truncate text-xl font-extrabold tabular-nums text-stone-900">{formatPrice(totals.totalCents)}</p>
             </div>
             <button
               type="button"
-              onClick={handleSave}
-              disabled={isSaving || isSending}
-              className="min-h-12 rounded-2xl px-4 text-base font-semibold text-stone-800 ring-1 ring-stone-300 hover:bg-stone-50 disabled:opacity-60"
-            >
-              Enregistrer
-            </button>
-            <button
-              type="button"
               onClick={handleSend}
-              disabled={isSaving || isSending}
-              className="min-h-12 rounded-2xl bg-orange-600 px-5 text-base font-semibold text-white hover:bg-orange-700 disabled:opacity-60"
+              disabled={isSending}
+              className="min-h-14 rounded-2xl bg-orange-600 px-5 text-base font-semibold text-white hover:bg-orange-700 disabled:opacity-60"
             >
-              {isSending ? "Envoi…" : "Envoyer"}
+              {isSending ? "Envoi…" : "Valider et envoyer"}
             </button>
           </div>
         </div>

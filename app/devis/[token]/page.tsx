@@ -9,6 +9,8 @@ import type { CompanySnapshot } from "@/lib/quotes/company-snapshot";
 import { getPublicQuote, type PublicQuote } from "@/lib/quotes/queries";
 import { computeTotals, lineTotalCents } from "@/lib/quotes/totals";
 import { PrintButton } from "@/components/ui/PrintButton";
+import { ACCEPTANCE_MENTION, acceptanceState, type AcceptanceState } from "@/lib/quotes/acceptance";
+import { AcceptQuoteForm } from "./AcceptQuoteForm";
 
 export const metadata: Metadata = {
   title: "Votre devis",
@@ -36,18 +38,17 @@ export default function PublicQuotePage({ params }: PageProps<"/devis/[token]">)
 async function QuoteDocument({ token }: { token: string }) {
   const publicQuote = await getPublicQuote(token);
   if (!publicQuote) notFound();
+  const state = acceptanceState(publicQuote.quote, new Date());
 
   return (
     <>
-      <div className="mb-4 flex justify-end print:hidden">
-        <PrintButton />
-      </div>
+      <AnswerSummary publicQuote={publicQuote} state={state} />
       <article className="space-y-8 rounded-3xl bg-white p-6 text-stone-800 shadow-sm ring-1 ring-stone-200 sm:p-10 print:rounded-none print:p-0 print:shadow-none print:ring-0">
         <DocumentHeader publicQuote={publicQuote} />
         <LinesTable publicQuote={publicQuote} />
         <Conditions publicQuote={publicQuote} />
         <LegalMentions company={publicQuote.company} />
-        <Acceptance />
+        <Acceptance publicQuote={publicQuote} token={token} state={state} />
         <WithdrawalForm company={publicQuote.company} />
       </article>
       <p className="mt-6 text-center text-sm text-stone-400 print:hidden">Devis établi avec Batrelio</p>
@@ -261,15 +262,78 @@ function LegalMentions({ company }: { company: CompanySnapshot }) {
   );
 }
 
-function Acceptance() {
+const acceptedFormatter = new Intl.DateTimeFormat("fr-FR", { dateStyle: "long", timeStyle: "short", timeZone: "Europe/Paris" });
+
+// At the top of the screen: the total and what to do, so the customer does not hunt for it.
+function AnswerSummary({ publicQuote, state }: { publicQuote: PublicQuote; state: AcceptanceState }) {
+  const { quote, company } = publicQuote;
+  const status = {
+    open: null,
+    signed: "Devis accepté ✓",
+    declined: "Devis refusé",
+    expired: "Devis expiré",
+    not_sent: null,
+  }[state];
+
   return (
-    <section className="space-y-3 rounded-2xl border-2 border-stone-300 p-5 text-sm print:break-inside-avoid">
+    <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-3xl bg-white p-4 shadow-sm ring-1 ring-stone-200 print:hidden">
+      <div>
+        <p className="text-sm text-stone-500">Devis de {company.name}</p>
+        <p className="text-2xl font-extrabold tabular-nums text-stone-900">{formatPrice(quote.total_cents)}</p>
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        {state === "open" ? (
+          <a
+            href="#accepter"
+            className="flex min-h-12 items-center rounded-2xl bg-orange-600 px-5 text-base font-semibold text-white hover:bg-orange-700"
+          >
+            Accepter le devis
+          </a>
+        ) : (
+          status && <p className="text-base font-bold text-stone-700">{status}</p>
+        )}
+        <PrintButton />
+      </div>
+    </div>
+  );
+}
+
+function Acceptance({ publicQuote, token, state }: { publicQuote: PublicQuote; token: string; state: AcceptanceState }) {
+  const { quote, company } = publicQuote;
+
+  if (state === "signed" && quote.signed_at) {
+    return (
+      <section className="space-y-2 rounded-2xl border-2 border-emerald-300 bg-emerald-50 p-5 text-sm text-emerald-950 print:break-inside-avoid">
+        <h2 className="text-base font-bold">Bon pour accord</h2>
+        <p>
+          {quote.signed_by_name && quote.signed_ip
+            ? `Devis accepté en ligne par ${quote.signed_by_name} le ${acceptedFormatter.format(new Date(quote.signed_at))}, avec la mention « ${ACCEPTANCE_MENTION} »`
+            : `Devis accepté le ${acceptedFormatter.format(new Date(quote.signed_at))}.`}
+        </p>
+      </section>
+    );
+  }
+
+  return (
+    <section id="accepter" className="scroll-mt-6 space-y-4 rounded-2xl border-2 border-stone-300 p-5 text-sm print:break-inside-avoid">
       <h2 className="text-base font-bold text-stone-900">Bon pour accord</h2>
-      <p>
-        Date et signature du client, précédées de la mention manuscrite « Devis reçu avant l&apos;exécution des travaux,
-        bon pour accord » :
-      </p>
-      <div className="h-24" />
+      {state === "open" && (
+        <div className="print:hidden">
+          <AcceptQuoteForm token={token} companyName={company.name} defaultName={quote.customer_name ?? ""} />
+        </div>
+      )}
+      {state === "declined" && <p className="text-base print:hidden">Ce devis a été refusé. Pour en reparler, contactez {company.name}.</p>}
+      {state === "expired" && (
+        <p className="text-base print:hidden">Ce devis a expiré. Demandez un nouveau devis à {company.name}.</p>
+      )}
+      {/* On paper, the classic handwritten acceptance. */}
+      <div className="hidden space-y-3 print:block">
+        <p>
+          Date et signature du client, précédées de la mention manuscrite « Devis reçu avant l&apos;exécution des travaux,
+          bon pour accord » :
+        </p>
+        <div className="h-24" />
+      </div>
     </section>
   );
 }

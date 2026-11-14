@@ -10,6 +10,8 @@ import { getQuoteForEditor, type EditorQuote } from "@/lib/quotes/queries";
 import { quoteShareText } from "@/lib/quotes/share-message";
 import { getSiteOrigin } from "@/lib/requests/site-origin";
 import { MakeInvoiceButton } from "../../factures/[id]/InvoiceButtons";
+import { canRecordAnswer } from "@/lib/quotes/acceptance";
+import { QuoteAnswer } from "./QuoteAnswer";
 import { QuoteEditor } from "./QuoteEditor";
 
 export default function QuotePage({ params }: PageProps<"/espace/devis/[id]">) {
@@ -59,6 +61,14 @@ async function SentQuote({ editor }: { editor: EditorQuote }) {
     <section className="space-y-4 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-stone-200">
       <p className="text-3xl font-extrabold tabular-nums text-stone-900">{formatPrice(quote.total_cents)}</p>
       <p className="text-base text-stone-600">Ce devis a été envoyé : il ne peut plus être modifié.</p>
+      {(quote.status === "sent" || quote.status === "signed" || quote.status === "declined") && (
+        <QuoteAnswer
+          quoteId={quote.id}
+          status={quote.status}
+          answerLabel={answerLabel(quote)}
+          canUndo={canRecordAnswer(quote, "sent")}
+        />
+      )}
       <a
         href={url}
         target="_blank"
@@ -80,6 +90,17 @@ async function SentQuote({ editor }: { editor: EditorQuote }) {
       </Link>
     </section>
   );
+}
+
+const answerFormatter = new Intl.DateTimeFormat("fr-FR", { dateStyle: "long", timeStyle: "short", timeZone: "Europe/Paris" });
+
+function answerLabel(quote: EditorQuote["quote"]): string | null {
+  if (quote.status === "signed" && quote.signed_at) {
+    const when = answerFormatter.format(new Date(quote.signed_at));
+    return quote.signed_ip && quote.signed_by_name ? `Accepté en ligne par ${quote.signed_by_name} le ${when}` : `Accepté le ${when}`;
+  }
+  if (quote.status === "declined" && quote.declined_at) return `Refusé le ${answerFormatter.format(new Date(quote.declined_at))}`;
+  return null;
 }
 
 const INVOICE_LABELS = { draft: "Brouillon", issued: "Émise", paid: "Payée" } as const;

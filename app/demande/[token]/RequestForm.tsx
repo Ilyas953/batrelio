@@ -162,7 +162,7 @@ export function RequestForm({ token, companyName, defaultName, defaultPhone, pri
       </div>
 
       <TextField
-        label="Adresse du chantier"
+        label="Adresse du chantier (facultatif)"
         name="address"
         autoComplete="street-address"
         placeholder="Rue, ville"

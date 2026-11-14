@@ -10,6 +10,7 @@ export const SMS_STATUSES = [
   "skipped_own_number",
   "skipped_recent",
   "skipped_excluded",
+  "skipped_known",
 ] as const;
 
 export type SmsStatus = (typeof SMS_STATUSES)[number];

@@ -462,6 +462,7 @@ export type Database = {
           created_at: string
           customer_address: string | null
           customer_name: string | null
+          declined_at: string | null
           deposit_cents: number | null
           deposit_paid_at: string | null
           deposit_percent: number | null
@@ -472,6 +473,8 @@ export type Database = {
           request_id: string
           sent_at: string | null
           signed_at: string | null
+          signed_by_name: string | null
+          signed_ip: string | null
           status: Database["public"]["Enums"]["quote_status"]
           subtotal_cents: number
           title: string | null
@@ -490,6 +493,7 @@ export type Database = {
           created_at?: string
           customer_address?: string | null
           customer_name?: string | null
+          declined_at?: string | null
           deposit_cents?: number | null
           deposit_paid_at?: string | null
           deposit_percent?: number | null
@@ -500,6 +504,8 @@ export type Database = {
           request_id: string
           sent_at?: string | null
           signed_at?: string | null
+          signed_by_name?: string | null
+          signed_ip?: string | null
           status?: Database["public"]["Enums"]["quote_status"]
           subtotal_cents?: number
           title?: string | null
@@ -518,6 +524,7 @@ export type Database = {
           created_at?: string
           customer_address?: string | null
           customer_name?: string | null
+          declined_at?: string | null
           deposit_cents?: number | null
           deposit_paid_at?: string | null
           deposit_percent?: number | null
@@ -528,6 +535,8 @@ export type Database = {
           request_id?: string
           sent_at?: string | null
           signed_at?: string | null
+          signed_by_name?: string | null
+          signed_ip?: string | null
           status?: Database["public"]["Enums"]["quote_status"]
           subtotal_cents?: number
           title?: string | null

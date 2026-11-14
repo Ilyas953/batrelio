@@ -10,7 +10,7 @@ import { formatPhone, formatPrice, formatTimeAgo } from "@/lib/format";
 import { MISSION_STATUS_FOR_ARTISAN, SHARE_REWARD_PROMISE } from "@/lib/missions/shared-mission";
 import { formatVisit, toVisitInputs, visitMessage } from "@/lib/requests/visit";
 import { MakeQuoteButton } from "./MakeQuoteButton";
-import { ShareMissionPanel, VisitPanel, type ExistingVisit } from "./RequestActions";
+import { RequestStatusButton, ShareMissionPanel, VisitPanel, type ExistingVisit } from "./RequestActions";
 
 // Preparing a quote with the AI can take several dozen seconds.
 export const maxDuration = 120;
@@ -55,8 +55,7 @@ async function RequestDetail({ requestId, openSharing }: { requestId: string; op
         Appeler le {formatPhone(request.customer_phone)}
       </a>
 
-      <RequestActions request={request} openSharing={openSharing} />
-
+      {/* What the customer wants comes first: the artisan reads it before choosing an answer. */}
       {request.description && (
         <section className="rounded-3xl bg-white p-5 sm:p-6">
           <SectionLabel icon={<MessageIcon />} tone="violet">Son besoin</SectionLabel>
@@ -97,6 +96,8 @@ async function RequestDetail({ requestId, openSharing }: { requestId: string; op
           </ul>
         </section>
       )}
+
+      <RequestActions request={request} openSharing={openSharing} />
     </article>
   );
 }
@@ -162,6 +163,9 @@ function RequestActions({ request, openSharing }: { request: RequestWithQuotes; 
           )}
           <VisitPanel requestId={request.id} existing={toExistingVisit(request)} minDate={toVisitInputs(new Date()).date} />
           <ShareMissionPanel requestId={request.id} initiallyOpen={openSharing} />
+          {(request.status === "new" || request.status === "closed") && (
+            <RequestStatusButton requestId={request.id} isClosed={request.status === "closed"} />
+          )}
         </>
       )}
     </section>

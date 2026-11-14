@@ -32,14 +32,32 @@ export async function isExcludedCaller(companyId: string, callerPhone: string | 
   return (count ?? 0) > 0;
 }
 
+// A number the company already knows: an earlier request, after a call (SMS or not) or by link.
+// Only strangers get the SMS; a known customer is called back by the artisan.
+export async function isKnownCaller(companyId: string, callerPhone: string | undefined): Promise<boolean> {
+  if (!isIdentifiedCaller(callerPhone)) return false;
+  const { count } = await createAdminClient()
+    .from("requests")
+    .select("id", { count: "exact", head: true })
+    .eq("company_id", companyId)
+    .eq("customer_phone", callerPhone);
+  return (count ?? 0) > 0;
+}
+
 // Called while the greeting plays: decides whether this caller gets an SMS.
-export function decideSms(company: AnsweringCompany, callerPhone: string | undefined, isExcluded: boolean): SmsDecision {
+export function decideSms(
+  company: AnsweringCompany,
+  callerPhone: string | undefined,
+  isExcluded: boolean,
+  isKnown = false,
+): SmsDecision {
   if (!isIdentifiedCaller(callerPhone)) return "skipped_anonymous";
   // The artisan's own phone, or the setup test call placed from their Batrelio number.
   if (callerPhone === company.contact_phone || callerPhone === company.phone_number) return "skipped_own_number";
   if (isExcluded) return "skipped_excluded";
   if (!company.auto_reply_enabled) return "skipped_disabled";
   if (!isFrenchMobile(callerPhone)) return "skipped_not_mobile";
+  if (isKnown) return "skipped_known";
   return "send";
 }
 
@@ -51,15 +69,15 @@ export function chooseGreetingVariant(decision: SmsDecision): GreetingVariant {
   return "withoutSms";
 }
 
-// The greeting this caller hears, depending on whether the artisan excluded their number.
-// Known before the exclusion is looked up, so both lookups can run while the caller waits.
-export function greetingVariantsByExclusion(
+// The greeting this caller hears, whether or not the company knows their number (excluded or known:
+// the same greeting, without SMS). Worked out before the lookups, so they all run while the caller waits.
+export function greetingVariantsForCaller(
   company: AnsweringCompany,
   callerPhone: string | undefined,
-): Record<"excluded" | "notExcluded", GreetingVariant> {
+): Record<"ifKnown" | "ifUnknown", GreetingVariant> {
   return {
-    excluded: chooseGreetingVariant(decideSms(company, callerPhone, true)),
-    notExcluded: chooseGreetingVariant(decideSms(company, callerPhone, false)),
+    ifKnown: chooseGreetingVariant(decideSms(company, callerPhone, false, true)),
+    ifUnknown: chooseGreetingVariant(decideSms(company, callerPhone, false, false)),
   };
 }
 
@@ -129,6 +147,8 @@ export async function handleMissedCall(params: {
   callSid: string;
   callerPhone: string | undefined;
   isExcluded: boolean;
+  // The company already had a request from this number: no SMS, the call is still listed.
+  isKnown?: boolean;
   siteUrl: string;
   deliverSms?: SmsDelivery;
 }): Promise<MissedCallOutcome | null> {
@@ -151,7 +171,7 @@ export async function handleMissedCall(params: {
 
   if (!callerPhone) return recordOutcome({ sms_status: "skipped_anonymous" });
 
-  const decision = decideSms(company, callerPhone, params.isExcluded);
+  const decision = decideSms(company, callerPhone, params.isExcluded, params.isKnown ?? false);
   // Not a customer: no request in "À traiter", only the line in the call history.
   if (decision === "skipped_own_number" || decision === "skipped_excluded") {
     return recordOutcome({ sms_status: decision });
@@ -160,7 +180,8 @@ export async function handleMissedCall(params: {
   const recentRequestId = await findRecentRequestId(supabase, company.id, callerPhone);
   if (recentRequestId) return recordOutcome({ sms_status: "skipped_recent", request_id: recentRequestId });
 
-  // The artisan sees every customer in "À traiter", SMS or not, to call them back.
+  // Every customer gets a request, SMS or not: until they describe their need, it is listed under
+  // "Appels manqués" for the artisan to call back; once described, it moves to "Demandes reçues".
   const { requestId, token } = await createRequestWithLink(supabase, company.id, callerPhone);
   if (decision !== "send") return recordOutcome({ sms_status: decision, request_id: requestId });
 

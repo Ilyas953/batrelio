@@ -17,6 +17,7 @@ import {
 import { FormError, TextField } from "@/components/ui/form";
 import { ShareLinkButtons, type ShareableLink } from "@/components/ui/ShareLinkButtons";
 import { withReturnTo } from "@/lib/espace/return-to";
+import { AUTOSAVE_LABELS, EDITOR_BAR_CLASSES, useAutosave } from "@/components/quotes/useAutosave";
 import { formatPrice } from "@/lib/format";
 import { PAYMENT_DUE_DAY_OPTIONS, amountDueCents, paymentTermsLabel, type InvoiceEditorInput, type PaymentDueDays } from "@/lib/invoices/invoice";
 import type { EditorInvoice } from "@/lib/invoices/queries";
@@ -59,9 +60,7 @@ export function InvoiceEditor({ editor }: { editor: EditorInvoice }) {
   });
   const [lines, setLines] = useState<EditableLine[]>(() => toEditableLines(editor.lines, chargesVat));
   const [error, setError] = useState<string>();
-  const [savedAt, setSavedAt] = useState<string>();
   const [issued, setIssued] = useState<ShareableLink>();
-  const [isSaving, startSaving] = useTransition();
   const [isIssuing, startIssuing] = useTransition();
   const [isDeleting, startDeleting] = useTransition();
 
@@ -69,21 +68,22 @@ export function InvoiceEditor({ editor }: { editor: EditorInvoice }) {
   const totals = liveTotals(lines, chargesVat);
   const deposit = parseEurosInput(fields.depositReceived) || 0;
 
+  const autosave = useAutosave(
+    JSON.stringify({ fields, lines }),
+    async () => {
+      const input = toInput(fields, lines);
+      const result = typeof input === "string" ? { error: input } : await saveInvoice(invoice.id, input);
+      setError(result.error);
+      return !result.error;
+    },
+    { enabled: !issued && !isIssuing && !isDeleting },
+  );
+
   function run(action: (input: InvoiceEditorInput) => void) {
     const input = toInput(fields, lines);
     setError(undefined);
     if (typeof input === "string") setError(input);
     else action(input);
-  }
-
-  function handleSave() {
-    run((input) =>
-      startSaving(async () => {
-        const result = await saveInvoice(invoice.id, input);
-        if (result.error) setError(result.error);
-        else setSavedAt(result.savedAt);
-      }),
-    );
   }
 
   function handleIssue() {
@@ -111,7 +111,7 @@ export function InvoiceEditor({ editor }: { editor: EditorInvoice }) {
   }
 
   return (
-    <div className="space-y-6 pb-32">
+    <div className="space-y-6 pb-52 sm:pb-32">
       {editor.missingCompanyDetails.length > 0 && (
         <Link
           href={withReturnTo("/espace/entreprise", `/espace/factures/${invoice.id}`)}
@@ -195,31 +195,24 @@ export function InvoiceEditor({ editor }: { editor: EditorInvoice }) {
         Supprimer le brouillon
       </button>
 
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-stone-200 bg-white/95 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur">
+      <div className={EDITOR_BAR_CLASSES}>
         <div className="mx-auto max-w-2xl space-y-2">
           <FormError message={error} />
           <div className="flex items-center gap-2">
             <div className="min-w-0 flex-1">
-              <p className="text-xs text-stone-500">{isSaving ? "Enregistrement…" : savedAt ? "Enregistré ✓" : "Reste à payer"}</p>
+              <p className="truncate text-sm text-stone-500">{AUTOSAVE_LABELS[autosave]}</p>
               <p className="truncate text-xl font-extrabold tabular-nums text-stone-900">
                 {formatPrice(amountDueCents(totals.totalCents, deposit))}
+                <span className="ml-1 text-sm font-semibold text-stone-500">à payer</span>
               </p>
             </div>
             <button
               type="button"
-              onClick={handleSave}
-              disabled={isSaving || isIssuing}
-              className="min-h-12 rounded-2xl px-4 text-base font-semibold text-stone-800 ring-1 ring-stone-300 hover:bg-stone-50 disabled:opacity-60"
-            >
-              Enregistrer
-            </button>
-            <button
-              type="button"
               onClick={handleIssue}
-              disabled={isSaving || isIssuing}
-              className="min-h-12 rounded-2xl bg-orange-600 px-5 text-base font-semibold text-white hover:bg-orange-700 disabled:opacity-60"
+              disabled={isIssuing}
+              className="min-h-14 rounded-2xl bg-orange-600 px-5 text-base font-semibold text-white hover:bg-orange-700 disabled:opacity-60"
             >
-              {isIssuing ? "Émission…" : "Émettre"}
+              {isIssuing ? "Émission…" : "Émettre la facture"}
             </button>
           </div>
         </div>

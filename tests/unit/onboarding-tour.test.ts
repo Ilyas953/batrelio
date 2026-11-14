@@ -5,9 +5,10 @@ const PHONE = { width: 390, height: 844 };
 const BUBBLE = { width: 358, height: 220 };
 
 describe("tour steps", () => {
-  it("skips what is not on the page, keeps the messages worth saying anyway", () => {
+  it("skips what is not on the page, and stays short", () => {
     const onSettingsPage = stepsForPage(TOUR_STEPS, (target) => target.startsWith("tab-"));
     expect(onSettingsPage.map((step) => step.id)).toEqual(["welcome", "requests-tab", "share", "quotes-tab", "settings-tab", "done"]);
+    expect(TOUR_STEPS.length).toBeLessThanOrEqual(7);
   });
 
   it("shows everything on a full home page", () => {

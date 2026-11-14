@@ -3,6 +3,9 @@ import { admin, IDENTITY } from "./helpers.mjs";
 
 const SMS_PREVIEW = "Nous n'avons pas pu décrocher";
 
+// What the page shows: without React's text separators, nor the data it repeats in its scripts.
+const visible = (html) => html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/g, "").replaceAll("<!-- -->", "").replaceAll("&#x27;", "'");
+
 // The SMS to the artisan leaves after the customer's answer: wait for it to be recorded.
 async function waitFor(read, attempts = 20) {
   for (let attempt = 0; attempt < attempts; attempt++) {
@@ -65,11 +68,33 @@ export async function simulationSuite({ check, makeUser, get, action, fakeIp, tr
     JSON.stringify(statuses),
   );
   check("identifiants simulés, jamais de vrai SMS", calls.every((call) => call.call_sid.startsWith("SIM-") && (!call.sms_sid || call.sms_sid.startsWith("SIM-"))));
-  // A missed call alone is not a request: it only shows once the customer described their need.
+  // A missed call alone is not a request received: it is listed apart, to be called back.
   page = await get("/espace", jar);
-  check("appels sans formulaire : rien dans « À traiter »", page.text.includes("Rien à traiter") && !page.text.includes("06 39 98 12 34"));
+  let shown = visible(page.text);
+  check(
+    "appels sans formulaire : dans « Appels manqués à rappeler », pas dans les demandes reçues",
+    shown.includes("Aucune demande pour l'instant") && shown.includes("Appels manqués à rappeler") && shown.includes("06 39 98 12 34") && shown.includes("01 99 00 55 55"),
+  );
   page = await get("/espace/reponse-automatique", jar);
   check("appels sans formulaire : visibles dans l'historique", page.text.includes("06 39 98 12 34") && page.text.includes("01 99 00 55 55"));
+
+  // Only strangers get the SMS: a customer who already sent a request is called back instead.
+  await admin.from("requests").insert({
+    company_id: company.id,
+    source: "link",
+    customer_phone: "+33639986666",
+    customer_name: "M. Habitué",
+    description: "Ancien chantier",
+    status: "closed",
+    created_at: new Date(Date.now() - 3 * 24 * 3600_000).toISOString(),
+  });
+  result = await simulate({ caller: "06 39 98 66 66" });
+  check(
+    "client déjà connu : pas de SMS, et le message n'en annonce pas",
+    result.text.includes('"status":"skipped_known"') && !result.text.includes(SMS_PREVIEW) && !result.text.includes("Vous allez recevoir un SMS"),
+  );
+  shown = visible((await get("/espace", jar)).text);
+  check("client déjà connu : son appel est à rappeler", shown.includes("06 39 98 66 66") && shown.includes("Déjà client"));
 
   if (link) {
     const token = link.split("/").at(-1);

@@ -17,12 +17,14 @@ import {
 } from "@/components/landing/icons";
 import { Section } from "@/components/espace/lists";
 import { InstallAppCard } from "@/components/espace/InstallAppCard";
-import { RewardBadge } from "@/components/espace/RewardBadge";
 import { IconTile, StatusPill, type Tone } from "@/components/espace/tones";
 import { withReturnTo } from "@/lib/espace/return-to";
 import { getDashboard, type HandledRequest, type NewRequest } from "@/lib/espace/dashboard";
+import { missedCallSmsNote, type MissedCallToReturn } from "@/lib/espace/missed-calls";
 import { formatPhone, formatTimeAgo } from "@/lib/format";
 import { formatVisitShort } from "@/lib/requests/visit";
+import { MakeQuoteButton } from "./demandes/[id]/MakeQuoteButton";
+import { MissedCallDoneButton } from "./MissedCallDoneButton";
 import { RequestLinkPanel } from "./RequestLinkPanel";
 
 const HOME = "/espace";
@@ -43,7 +45,7 @@ const todayFormatter = new Intl.DateTimeFormat("fr-FR", {
 });
 
 async function Dashboard() {
-  const { companyName, missingQuoteDetails, setup, autoReply, newRequests, handledRequests, quoteCounts, newRequestSmsBlocker } =
+  const { companyName, missingQuoteDetails, setup, autoReply, newRequests, missedCalls, handledRequests, quoteCounts, newRequestSmsBlocker } =
     await getDashboard();
   const setupPending = setup !== null && setup.doneCount < setup.total;
   const now = new Date();
@@ -53,7 +55,7 @@ async function Dashboard() {
       <Welcome
         companyName={companyName}
         today={todayFormatter.format(now)}
-        counts={{ toHandle: newRequests.length, ...quoteCounts }}
+        counts={{ requests: newRequests.length, toCall: missedCalls.length, pending: quoteCounts.pending }}
       />
 
       {setupPending ? (
@@ -65,23 +67,40 @@ async function Dashboard() {
       {!setupPending && newRequestSmsBlocker && <SmsBlockerBanner blocker={newRequestSmsBlocker} />}
 
       <Section
-        id="a-traiter"
+        id="demandes"
         tourId="requests"
-        title="À traiter"
+        title="Demandes reçues"
         count={newRequests.length}
-        icon={<BellIcon />}
+        icon={<InboxIcon />}
         tone="orange"
         highlight
         empty={{
           icon: <InboxIcon className="size-7" />,
-          title: "Rien à traiter pour l'instant",
+          title: "Aucune demande pour l'instant",
           detail: "Quand un client décrit son besoin, après un appel manqué ou par lien, sa demande arrive ici.",
         }}
       >
-        {newRequests.map((request, index) => (
-          <RequestCard key={request.id} request={request} now={now} isFirst={index === 0} />
+        {newRequests.map((request) => (
+          <RequestCard key={request.id} request={request} now={now} />
         ))}
       </Section>
+
+      {/* Apart from the requests: these customers called but have not described anything yet. */}
+      {missedCalls.length > 0 && (
+        <Section
+          id="appels-manques"
+          title="Appels manqués à rappeler"
+          count={missedCalls.length}
+          icon={<PhoneMissedIcon />}
+          tone="amber"
+          highlight
+          empty={{ icon: null, title: "", detail: "" }}
+        >
+          {missedCalls.map((call) => (
+            <MissedCallRow key={call.requestId} call={call} now={now} />
+          ))}
+        </Section>
+      )}
 
       {/* After the requests: on a phone, what the artisan came for is visible without scrolling. */}
       <div className="grid gap-3 sm:grid-cols-2">
@@ -145,18 +164,21 @@ function HandledRequestRow({ request, now }: { request: HandledRequest; now: Dat
   );
 }
 
-type Counts = { toHandle: number; pending: number; signed: number };
+type Counts = { requests: number; toCall: number; pending: number };
 
-function summarize(toHandle: number): string {
-  if (toHandle === 0) return "Rien à traiter pour l'instant. Bon chantier !";
-  return toHandle === 1 ? "1 client attend votre réponse." : `${toHandle} clients attendent votre réponse.`;
+function summarize({ requests, toCall }: Counts): string {
+  const parts = [
+    requests === 1 ? "1 demande reçue" : requests > 1 ? `${requests} demandes reçues` : "",
+    toCall === 1 ? "1 appel à rappeler" : toCall > 1 ? `${toCall} appels à rappeler` : "",
+  ].filter(Boolean);
+  return parts.length ? `${parts.join(" · ")}.` : "Rien à traiter pour l'instant. Bon chantier !";
 }
 
 function Welcome({ companyName, today, counts }: { companyName: string | null; today: string; counts: Counts }) {
   const stats = [
-    { href: "#a-traiter", label: "À traiter", value: counts.toHandle, accent: counts.toHandle > 0, Icon: BellIcon, iconColor: "text-orange-300" },
-    { href: "/espace/devis#en-attente", label: "En attente", value: counts.pending, accent: false, Icon: ClockIcon, iconColor: "text-sky-300" },
-    { href: "/espace/devis#signes", label: "Signés", value: counts.signed, accent: false, Icon: CheckIcon, iconColor: "text-emerald-300" },
+    { href: "#demandes", label: "Demandes", value: counts.requests, accent: counts.requests > 0, Icon: InboxIcon, iconColor: "text-orange-300" },
+    { href: "#appels-manques", label: "À rappeler", value: counts.toCall, accent: counts.toCall > 0, Icon: PhoneMissedIcon, iconColor: "text-amber-300" },
+    { href: "/espace/devis#en-attente", label: "Devis envoyés", value: counts.pending, accent: false, Icon: ClockIcon, iconColor: "text-sky-300" },
   ];
 
   return (
@@ -166,7 +188,7 @@ function Welcome({ companyName, today, counts }: { companyName: string | null; t
       <h1 className="relative mt-1 text-3xl font-extrabold tracking-tight sm:text-4xl">
         Bonjour{companyName ? `, ${companyName}` : ""}
       </h1>
-      <p className="relative mt-2 text-lg text-stone-300">{summarize(counts.toHandle)}</p>
+      <p className="relative mt-2 text-lg text-stone-300">{summarize(counts)}</p>
 
       <div className="relative mt-6 grid grid-cols-3 gap-2">
         {stats.map((stat) => (
@@ -314,12 +336,13 @@ function SourceBadge({ source }: { source: NewRequest["source"] }) {
   );
 }
 
-function RequestCard({ request, now, isFirst }: { request: NewRequest; now: Date; isFirst: boolean }) {
+function RequestCard({ request, now }: { request: NewRequest; now: Date }) {
   const initials = initialsOf(request.customer_name);
   const hiddenPhotos = request.photoCount - request.photoPreviews.length;
 
   return (
-    <li className="overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-stone-200">
+    // Outlined in the colour of Demandes: a customer is waiting for an answer.
+    <li className="overflow-hidden rounded-3xl bg-white shadow-md shadow-orange-100 ring-2 ring-orange-500">
       <Link href={`/espace/demandes/${request.id}`} className="block p-5 transition-colors hover:bg-stone-50">
         <div className="flex items-start gap-3">
           <span className="grid size-12 shrink-0 place-items-center rounded-full bg-orange-100 text-base font-bold text-orange-800">
@@ -373,16 +396,50 @@ function RequestCard({ request, now, isFirst }: { request: NewRequest; now: Date
           <PhoneIcon className="size-5" />
           Appeler
         </a>
-        {/* Opens the request with the sharing form ready: one more tap to confirm. */}
-        <Link
-          href={`/espace/demandes/${request.id}?partager=1#partager`}
-          data-tour={isFirst ? "share" : undefined}
-          className="flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-violet-50 px-3 text-base font-semibold text-violet-800 ring-2 ring-violet-200 hover:bg-violet-100"
+        {/* The main answer to a request. Visit and sharing are on the request itself. */}
+        {request.draftQuoteId ? (
+          <Link
+            href={`/espace/devis/${request.draftQuoteId}`}
+            className="flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-stone-900 px-3 text-base font-semibold text-white hover:bg-stone-700"
+          >
+            <DocumentIcon className="size-5 shrink-0" />
+            Reprendre le devis
+          </Link>
+        ) : (
+          <MakeQuoteButton requestId={request.id} label="Faire le devis" compact />
+        )}
+      </div>
+    </li>
+  );
+}
+
+function MissedCallRow({ call, now }: { call: MissedCallToReturn; now: Date }) {
+  return (
+    <li className="overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-amber-200">
+      <div className="flex items-start gap-3 p-5">
+        <span className="grid size-12 shrink-0 place-items-center rounded-full bg-amber-100 text-amber-800">
+          <PhoneMissedIcon className="size-5" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-baseline justify-between gap-3">
+            <p className="truncate text-lg font-bold tabular-nums text-stone-900">{formatPhone(call.phone)}</p>
+            <p className="shrink-0 text-sm text-stone-500">{formatTimeAgo(call.lastCallAt, now)}</p>
+          </div>
+          <p className="mt-1 text-base text-stone-600">
+            {call.callCount > 1 ? `${call.callCount} appels · ` : ""}
+            {missedCallSmsNote(call.smsStatus)}
+          </p>
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-2 border-t border-stone-100 p-3">
+        <a
+          href={`tel:${call.phone}`}
+          className="flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-orange-600 px-4 text-base font-semibold text-white hover:bg-orange-700"
         >
-          <ForwardIcon className="size-5 shrink-0" />
-          Partager
-          <RewardBadge />
-        </Link>
+          <PhoneIcon className="size-5" />
+          Rappeler
+        </a>
+        <MissedCallDoneButton requestId={call.requestId} />
       </div>
     </li>
   );

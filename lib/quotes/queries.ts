@@ -9,7 +9,7 @@ const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{
 const TOKEN_PATTERN = /^[0-9a-f]{32}$/;
 
 const QUOTE_COLUMNS =
-  "id, request_id, status, number, public_token, title, customer_name, customer_address, subtotal_cents, vat_cents, total_cents, deposit_percent, deposit_cents, validity_days, work_start_date, work_duration, waste_management, notes, ai_notes, sent_at, company_snapshot";
+  "id, request_id, status, number, public_token, title, customer_name, customer_address, subtotal_cents, vat_cents, total_cents, deposit_percent, deposit_cents, validity_days, work_start_date, work_duration, waste_management, notes, ai_notes, sent_at, signed_at, signed_by_name, signed_ip, declined_at, company_snapshot";
 
 const LINE_COLUMNS = "id, position, category, designation, quantity, unit, unit_price_cents, vat_rate_bp";
 

@@ -29,3 +29,13 @@ export function newRequestSms({ customerName, customerPhone, requestUrl }: NewRe
 export function requestPageUrl(siteUrl: string, requestId: string): string {
   return `${siteUrl}/espace/demandes/${requestId}`;
 }
+
+// The customer accepted a quote online: the artisan hears it at once, with the quote to open.
+export function acceptedQuoteSms({ signerName, quoteNumber, quoteUrl }: { signerName: string; quoteNumber: string | null; quoteUrl: string }): string {
+  const quote = quoteNumber ? `le devis ${quoteNumber}` : "votre devis";
+  return `Batrelio : ${signerName} a accepté ${quote}. Voir : ${quoteUrl}`;
+}
+
+export function quotePageUrl(siteUrl: string, quoteId: string): string {
+  return `${siteUrl}/espace/devis/${quoteId}`;
+}

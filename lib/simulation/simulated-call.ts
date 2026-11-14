@@ -7,6 +7,7 @@ import {
   decideSms,
   handleMissedCall,
   isExcludedCaller,
+  isKnownCaller,
   type MissedCallOutcome,
   type SmsDelivery,
 } from "@/lib/telephony/missed-call";
@@ -26,13 +27,14 @@ export async function simulateMissedCall(companyId: string, callerPhone: string 
     .single();
   if (error) throw error;
 
-  const isExcluded = await isExcludedCaller(company.id, callerPhone);
-  const greeting = chooseGreeting(decideSms(company, callerPhone, isExcluded), company);
+  const [isExcluded, isKnown] = await Promise.all([isExcludedCaller(company.id, callerPhone), isKnownCaller(company.id, callerPhone)]);
+  const greeting = chooseGreeting(decideSms(company, callerPhone, isExcluded, isKnown), company);
   const outcome = await handleMissedCall({
     company,
     callSid: `SIM-${randomUUID()}`,
     callerPhone,
     isExcluded,
+    isKnown,
     siteUrl,
     deliverSms: showSmsInstead,
   });

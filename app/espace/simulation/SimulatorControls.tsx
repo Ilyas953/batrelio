@@ -15,11 +15,12 @@ const SECONDARY_BUTTON =
 const NO_SMS_REASONS: Record<Exclude<SmsStatus, "sent" | "delivered" | "pending">, string> = {
   skipped_anonymous: "Numéro masqué : impossible de lui envoyer un SMS. L'appel est noté dans l'historique.",
   skipped_not_mobile:
-    "C'est une ligne fixe : elle ne reçoit pas de SMS. La demande apparaît quand même dans « À traiter » pour que vous rappeliez.",
+    "C'est une ligne fixe : elle ne reçoit pas de SMS. L'appel apparaît dans « Appels manqués à rappeler ».",
   skipped_disabled:
-    "La réponse automatique est en pause : pas de SMS. La demande apparaît quand même dans « À traiter ».",
+    "La réponse automatique est en pause : pas de SMS. L'appel apparaît dans « Appels manqués à rappeler ».",
   skipped_own_number: "C'est votre propre numéro : rien n'est envoyé.",
   skipped_excluded: "Ce numéro est dans vos exclusions : rien n'est envoyé.",
+  skipped_known: "Ce numéro vous a déjà contacté : pas de SMS, l'appel est dans « Appels manqués à rappeler ».",
   skipped_recent: "Cette personne a déjà reçu un SMS dans les dernières 24 heures : pas de deuxième SMS.",
   failed: "Le SMS n'a pas pu partir.",
 };
@@ -86,7 +87,7 @@ function CallResult({ call }: { call: NonNullable<SimulateCallState["call"]> }) 
             Ouvrir le lien comme le client
           </a>
           <p className="text-sm text-stone-600">
-            Remplissez le formulaire comme le ferait votre client : sa demande arrive dans « À traiter » et vous pouvez
+            Remplissez le formulaire comme le ferait votre client : sa demande arrive dans « Demandes reçues » et vous pouvez
             faire le devis.
           </p>
         </>
@@ -98,7 +99,7 @@ function CallResult({ call }: { call: NonNullable<SimulateCallState["call"]> }) 
 
       <div className="flex flex-wrap gap-x-5 gap-y-2 text-base font-semibold">
         <Link href="/espace" className="text-orange-700 underline">
-          Voir « À traiter »
+          Voir « Demandes reçues »
         </Link>
         <Link href="/espace/reponse-automatique" className="text-orange-700 underline">
           Historique des appels

@@ -31,7 +31,8 @@ export async function missionsSuite({ check, makeUser, get, action }) {
   check("demande : le partage annonce les 10 %", html.includes("+10 %"));
 
   html = (await get("/espace", artisan.jar)).text;
-  check("À traiter : « Partager » à côté d'« Appeler »", html.includes(`${page}?partager=1#partager`) && html.includes("Appeler"));
+  // Sharing is on the request itself: the card goes straight to the main answer.
+  check("demandes reçues : « Faire le devis » à côté d'« Appeler »", html.includes("Faire le devis") && html.includes("Appeler") && !html.includes(`${page}?partager=1#partager`));
   html = (await get(`${page}?partager=1`, artisan.jar)).text;
   check("depuis « Partager » : le formulaire est ouvert et promet 10 %", html.includes("Un mot pour Batrelio") && html.includes("vous touchez 10 % de ce que le client paie (TTC)") && html.includes("Comment ça marche ?"));
 

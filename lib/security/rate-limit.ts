@@ -17,6 +17,7 @@ export const RATE_RULES = {
   // Mobile operators and trade-fair Wi-Fi put many artisans behind one address: room for a busy stand.
   signUpPerIp: { limit: 20, windowSeconds: HOUR },
   customerRequestPerIp: { limit: 15, windowSeconds: HOUR },
+  quoteAnswerPerIp: { limit: 15, windowSeconds: HOUR },
   passwordResetPerIp: { limit: 5, windowSeconds: HOUR },
   passwordResetPerEmail: { limit: 3, windowSeconds: HOUR },
 } satisfies Record<string, RateRule>;

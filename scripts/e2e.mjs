@@ -17,6 +17,7 @@ import { passwordSuite } from "../tests/e2e/password.e2e.mjs";
 import { pricesSuite } from "../tests/e2e/prices.e2e.mjs";
 import { securitySuite } from "../tests/e2e/security.e2e.mjs";
 import { simulationSuite } from "../tests/e2e/simulation.e2e.mjs";
+import { answersSuite } from "../tests/e2e/answers.e2e.mjs";
 
 const PORT = Number(process.env.E2E_PORT ?? 3100);
 const BASE = `http://localhost:${PORT}`;
@@ -24,7 +25,8 @@ const SUITES = { "Mode test et simulateur": simulationSuite, "Messages personnal
   "Onglets": navigationSuite, "Visites et missions partagées": missionsSuite,
   "Moins d'efforts": effortSuite, "Mot de passe oublié": passwordSuite,
   "Mes prix": pricesSuite, "Factures": invoicesSuite,
-  "Logo": logoSuite, "Sécurité": securitySuite };
+  "Logo": logoSuite, "Demandes, appels manqués et réponses aux devis": answersSuite,
+  "Sécurité": securitySuite };
 
 function readActionIds() {
   const manifestPath = ".next/server/server-reference-manifest.json";

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { decideArtisanSms, newRequestSms, requestPageUrl } from "@/lib/requests/artisan-sms";
+import { acceptedQuoteSms, decideArtisanSms, newRequestSms, quotePageUrl, requestPageUrl } from "@/lib/requests/artisan-sms";
 
 const URL = requestPageUrl("https://batrelio.com", "0b6f1c2e-6a4f-4d3b-9c1e-2f3a4b5c6d7e");
 // Characters of the basic GSM alphabet: a message made of them fits 160 per SMS.
@@ -31,5 +31,13 @@ describe("SMS telling the artisan about a new request", () => {
 
   it("links to the request in the artisan space", () => {
     expect(URL).toBe("https://batrelio.com/espace/demandes/0b6f1c2e-6a4f-4d3b-9c1e-2f3a4b5c6d7e");
+  });
+});
+
+describe("SMS when a quote is accepted online", () => {
+  it("says who accepted which quote, with the link", () => {
+    const body = acceptedQuoteSms({ signerName: "Marie Le Goff", quoteNumber: "2026-004", quoteUrl: quotePageUrl("https://batrelio.com", "q1") });
+    expect(body).toBe("Batrelio : Marie Le Goff a accepté le devis 2026-004. Voir : https://batrelio.com/espace/devis/q1");
+    expect(body.length).toBeLessThanOrEqual(160);
   });
 });

@@ -12,7 +12,7 @@ import {
   SHARE_REWARD_PROMISE,
   SHARE_REWARD_STEPS,
 } from "@/lib/missions/shared-mission";
-import { proposeVisit, shareMission } from "./actions";
+import { closeRequest, proposeVisit, reopenRequest, shareMission } from "./actions";
 
 const SECONDARY_BUTTON =
   "flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl border-2 border-stone-200 bg-white px-5 text-lg font-semibold text-stone-900 hover:border-stone-900";
@@ -201,5 +201,35 @@ function CancelButton({ onClick, label = "Annuler" }: { onClick: () => void; lab
     <button type="button" onClick={onClick} className="block w-full text-center text-base font-semibold text-stone-500 underline">
       {label}
     </button>
+  );
+}
+
+// Settled by phone, not for the artisan…: the request leaves "Demandes reçues", and can come back.
+export function RequestStatusButton({ requestId, isClosed }: { requestId: string; isClosed: boolean }) {
+  const router = useRouter();
+  const [error, setError] = useState<string>();
+  const [isPending, startTransition] = useTransition();
+
+  function handleClick() {
+    setError(undefined);
+    startTransition(async () => {
+      const result = isClosed ? await reopenRequest(requestId) : await closeRequest(requestId);
+      if (result.error) setError(result.error);
+      else router.refresh();
+    });
+  }
+
+  return (
+    <div className="space-y-2 pt-2">
+      <button type="button" onClick={handleClick} disabled={isPending} className={SECONDARY_BUTTON}>
+        {isPending ? "…" : isClosed ? "Remettre dans les demandes" : "Classer cette demande"}
+      </button>
+      <p className="text-center text-sm text-stone-500">
+        {isClosed
+          ? "Cette demande est classée : elle n'apparaît plus dans vos demandes reçues."
+          : "Réglée par téléphone, pas pour vous ? Elle quitte vos demandes reçues."}
+      </p>
+      <FormError message={error} />
+    </div>
   );
 }

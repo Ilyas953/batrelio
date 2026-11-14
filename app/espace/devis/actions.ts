@@ -12,6 +12,7 @@ import { quoteShareText } from "@/lib/quotes/share-message";
 import { chargesVat, toCompanySnapshot } from "@/lib/quotes/company-snapshot";
 import { QuoteEditorInputSchema, listMissingBeforeSending, type QuoteEditorInput } from "@/lib/quotes/editor-input";
 import { computeTotals, depositCents } from "@/lib/quotes/totals";
+import { canRecordAnswer, type ArtisanAnswer } from "@/lib/quotes/acceptance";
 import { PHOTO_BUCKET } from "@/lib/requests/limits";
 import { getSiteOrigin } from "@/lib/requests/site-origin";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -292,4 +293,34 @@ export async function deleteQuote(quoteId: string): Promise<{ error: string }> {
   if (error || !quote) return { error: "Ce brouillon n'a pas pu être supprimé." };
 
   redirect(`/espace/demandes/${quote.request_id}`);
+}
+
+const ANSWER_FIELDS = {
+  signed: () => ({ status: "signed" as const, signed_at: new Date().toISOString(), signed_by_name: null, signed_ip: null, declined_at: null }),
+  declined: () => ({ status: "declined" as const, declined_at: new Date().toISOString(), signed_at: null, signed_by_name: null, signed_ip: null }),
+  sent: () => ({ status: "sent" as const, signed_at: null, signed_by_name: null, signed_ip: null, declined_at: null }),
+};
+
+// The customer answered by phone or on paper: the artisan records it, or undoes what they recorded.
+export async function recordQuoteAnswer(quoteId: string, answer: ArtisanAnswer): Promise<{ error?: string }> {
+  if (!UUID_PATTERN.test(quoteId) || !Object.hasOwn(ANSWER_FIELDS, answer)) return { error: "Devis introuvable." };
+  const { supabase } = await requireUser();
+
+  // RLS: only finds a quote of the artisan's own company.
+  const { data: quote } = await supabase.from("quotes").select("id, company_id, status, signed_ip").eq("id", quoteId).maybeSingle();
+  if (!quote) return { error: "Devis introuvable." };
+  if (!canRecordAnswer(quote, answer)) {
+    return { error: quote.signed_ip ? "Votre client a accepté ce devis en ligne : sa réponse ne peut pas être changée." : "Ce devis ne peut pas être modifié." };
+  }
+
+  const { data, error } = await createAdminClient()
+    .from("quotes")
+    .update(ANSWER_FIELDS[answer]())
+    .eq("id", quote.id)
+    .eq("company_id", quote.company_id)
+    .eq("status", quote.status)
+    .select("id")
+    .maybeSingle();
+  if (error || !data) return { error: "La réponse n'a pas pu être enregistrée. Réessayez." };
+  return {};
 }

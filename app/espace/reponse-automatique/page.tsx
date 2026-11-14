@@ -211,6 +211,7 @@ const SMS_STATUS_LABELS: Record<SmsStatus, string> = {
   skipped_own_number: "Votre propre numéro",
   skipped_recent: "Déjà prévenu aujourd'hui",
   skipped_excluded: "Numéro exclu",
+  skipped_known: "Pas de SMS : déjà client",
 };
 
 type Call = Pick<Tables<"missed_calls">, "id" | "caller_phone" | "sms_status" | "created_at">;

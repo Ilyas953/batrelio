@@ -7,9 +7,10 @@ import {
   ANSWERING_COMPANY_COLUMNS,
   type GreetingVariant,
   greetingText,
-  greetingVariantsByExclusion,
+  greetingVariantsForCaller,
   handleMissedCall,
   isExcludedCaller,
+  isKnownCaller,
 } from "@/lib/telephony/missed-call";
 import { liveReadingVoice } from "@/lib/telephony/voices";
 
@@ -37,20 +38,22 @@ export async function POST(request: Request) {
     .maybeSingle();
   if (!company || !params.CallSid) return voiceResponse(UNASSIGNED_NUMBER_MESSAGE);
 
-  // The caller is waiting in silence: the exclusion and the recorded greeting(s) are looked up together.
+  // The caller is waiting in silence: whether the number is excluded or already known, and the
+  // recorded greeting(s), are looked up together. Only a stranger is told about an SMS.
   // The greeting recorded beforehand when it is ready; otherwise read live, and recorded for next time.
-  const variants = greetingVariantsByExclusion(company, params.From);
+  const variants = greetingVariantsForCaller(company, params.From);
   const findAudio = (variant: GreetingVariant) => findGreetingAudioUrl(company, variant).catch(() => null);
-  const [isExcluded, audioIfNotExcluded, audioIfExcluded] = await Promise.all([
+  const [isExcluded, isKnown, audioIfUnknown, audioIfKnown] = await Promise.all([
     isExcludedCaller(company.id, params.From),
-    findAudio(variants.notExcluded),
-    variants.excluded === variants.notExcluded ? null : findAudio(variants.excluded),
+    isKnownCaller(company.id, params.From),
+    findAudio(variants.ifUnknown),
+    variants.ifKnown === variants.ifUnknown ? null : findAudio(variants.ifKnown),
   ]);
-  const variant = isExcluded ? variants.excluded : variants.notExcluded;
-  const audioUrl = variant === variants.notExcluded ? audioIfNotExcluded : audioIfExcluded;
+  const variant = isExcluded || isKnown ? variants.ifKnown : variants.ifUnknown;
+  const audioUrl = variant === variants.ifUnknown ? audioIfUnknown : audioIfKnown;
 
   after(() =>
-    handleMissedCall({ company, callSid: params.CallSid, callerPhone: params.From, isExcluded, siteUrl }).catch(
+    handleMissedCall({ company, callSid: params.CallSid, callerPhone: params.From, isExcluded, isKnown, siteUrl }).catch(
       (error) => console.error(`Appel manqué ${params.CallSid} non traité :`, error),
     ),
   );

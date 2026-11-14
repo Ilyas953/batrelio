@@ -14,7 +14,7 @@ const BENEFITS = [
   "Un SMS à votre nom part après chaque appel manqué",
   "Le client vous envoie son besoin, ses photos et son adresse",
   "Vous envoyez le devis depuis votre téléphone",
-  "Il signe et paie l'acompte en ligne",
+  "Il accepte le devis en ligne, en un geste",
 ];
 
 export default function SignupPage() {
