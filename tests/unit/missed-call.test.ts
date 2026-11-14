@@ -2,8 +2,16 @@ import { describe, expect, it } from "vitest";
 import { GREETING_NEXT_STEPS, defaultGreetingIntro, greetingWithSms, missedCallSms, toPlayResponse, toVoiceResponse } from "@/lib/telephony/messages";
 import { DEFAULT_GREETING_VOICE, GREETING_VOICES, LIVE_FALLBACK_VOICE, findGreetingVoice, liveReadingVoice } from "@/lib/telephony/voices";
 import { greetingAudioPath } from "@/lib/telephony/greeting-audio-path";
-import { chooseGreeting, chooseGreetingVariant, decideSms, greetingText, type AnsweringCompany } from "@/lib/telephony/missed-call";
+import {
+  chooseGreeting,
+  chooseGreetingVariant,
+  decideSms,
+  greetingText,
+  greetingVariantsByExclusion,
+  type AnsweringCompany,
+} from "@/lib/telephony/missed-call";
 import { isFrenchMobile, isIdentifiedCaller } from "@/lib/telephony/phone-rules";
+import { CANCEL_FORWARDING_CODE, FORWARDING_RING_SECONDS, forwardingCode } from "@/lib/telephony/forwarding";
 
 const company: AnsweringCompany = {
   id: "c1",
@@ -57,6 +65,16 @@ describe("what the caller hears", () => {
 
   it("asks a hidden caller to call back", () => {
     expect(chooseGreeting("skipped_anonymous", company)).toContain("masqué");
+  });
+
+  // Both greetings are looked up while the exclusion list is read: the caller is waiting.
+  it("knows both possible greetings before the exclusion list is read", () => {
+    expect(greetingVariantsByExclusion(company, CUSTOMER_MOBILE)).toEqual({ excluded: "withoutSms", notExcluded: "withSms" });
+    expect(greetingVariantsByExclusion(company, undefined)).toEqual({ excluded: "hiddenCaller", notExcluded: "hiddenCaller" });
+    expect(greetingVariantsByExclusion({ ...company, auto_reply_enabled: false }, CUSTOMER_MOBILE)).toEqual({
+      excluded: "withoutSms",
+      notExcluded: "withoutSms",
+    });
   });
 
   it("always says the company name", () => {
@@ -186,5 +204,18 @@ describe("greeting recorded beforehand", () => {
     const twiml = toPlayResponse("https://x.supabase.co/storage/v1/object/sign/greeting-audio/c1/a.mp3?token=a&b=<Dial>");
     expect(twiml).toContain("<Play>https://x.supabase.co/storage/v1/object/sign/greeting-audio/c1/a.mp3?token=a&amp;b=&lt;Dial&gt;</Play>");
     expect(twiml).not.toContain("<Dial>");
+  });
+});
+
+describe("call forwarding code", () => {
+  it("forwards after 15 seconds of ringing, so customers do not hang up before the greeting", () => {
+    expect(forwardingCode("+33939123452")).toBe("**004*0939123452**15#");
+    expect(FORWARDING_RING_SECONDS % 5).toBe(0);
+    expect(FORWARDING_RING_SECONDS).toBeGreaterThanOrEqual(5);
+    expect(FORWARDING_RING_SECONDS).toBeLessThanOrEqual(30);
+  });
+
+  it("cancels every conditional forwarding at once", () => {
+    expect(CANCEL_FORWARDING_CODE).toBe("##004#");
   });
 });

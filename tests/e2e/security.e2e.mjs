@@ -43,7 +43,7 @@ export async function securitySuite({ check, makeUser, get, action, fakeIp, buck
   check("connexion : adresse qui a fait 20 essais bloquée sur tous les comptes", result.text.includes(TOO_MANY));
 
   const signupIp = fakeIp();
-  await fillBucket("signUpPerIp", signupIp, 5, 3600);
+  await fillBucket("signUpPerIp", signupIp, 20, 3600);
   const signupEmail = `signup-${randomBytes(4).toString("hex")}@example.com`;
   result = await action("signUp", "/inscription", {
     ip: signupIp,
@@ -51,7 +51,7 @@ export async function securitySuite({ check, makeUser, get, action, fakeIp, buck
     formData: { companyName: "Abus E2E", trade: "couvreur", mobile: "06 39 98 77 01", email: signupEmail, password: "un-long-mot-de-passe-123", acceptTerms: "on" },
   });
   const { data: users } = await admin.auth.admin.listUsers({ perPage: 1000 });
-  check("inscription : 6e depuis la même adresse bloquée, aucun compte créé", result.text.includes(TOO_MANY) && !users.users.some((user) => user.email === signupEmail));
+  check("inscription : 21e depuis la même adresse bloquée, aucun compte créé", result.text.includes(TOO_MANY) && !users.users.some((user) => user.email === signupEmail));
 
   const token = randomBytes(16).toString("hex");
   const requestIp = fakeIp();

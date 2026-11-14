@@ -51,6 +51,18 @@ export function chooseGreetingVariant(decision: SmsDecision): GreetingVariant {
   return "withoutSms";
 }
 
+// The greeting this caller hears, depending on whether the artisan excluded their number.
+// Known before the exclusion is looked up, so both lookups can run while the caller waits.
+export function greetingVariantsByExclusion(
+  company: AnsweringCompany,
+  callerPhone: string | undefined,
+): Record<"excluded" | "notExcluded", GreetingVariant> {
+  return {
+    excluded: chooseGreetingVariant(decideSms(company, callerPhone, true)),
+    notExcluded: chooseGreetingVariant(decideSms(company, callerPhone, false)),
+  };
+}
+
 type GreetingCompany = Pick<AnsweringCompany, "name" | "greeting_intro">;
 
 const GREETING_BUILDERS: Record<GreetingVariant, (companyName: string, intro?: string | null) => string> = {

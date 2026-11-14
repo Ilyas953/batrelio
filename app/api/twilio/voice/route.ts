@@ -5,9 +5,9 @@ import { findGreetingAudioUrl, prepareGreetingAudio } from "@/lib/telephony/gree
 import { toPlayResponse, toVoiceResponse } from "@/lib/telephony/messages";
 import {
   ANSWERING_COMPANY_COLUMNS,
-  chooseGreetingVariant,
-  decideSms,
+  type GreetingVariant,
   greetingText,
+  greetingVariantsByExclusion,
   handleMissedCall,
   isExcludedCaller,
 } from "@/lib/telephony/missed-call";
@@ -37,16 +37,24 @@ export async function POST(request: Request) {
     .maybeSingle();
   if (!company || !params.CallSid) return voiceResponse(UNASSIGNED_NUMBER_MESSAGE);
 
-  const isExcluded = await isExcludedCaller(company.id, params.From);
+  // The caller is waiting in silence: the exclusion and the recorded greeting(s) are looked up together.
+  // The greeting recorded beforehand when it is ready; otherwise read live, and recorded for next time.
+  const variants = greetingVariantsByExclusion(company, params.From);
+  const findAudio = (variant: GreetingVariant) => findGreetingAudioUrl(company, variant).catch(() => null);
+  const [isExcluded, audioIfNotExcluded, audioIfExcluded] = await Promise.all([
+    isExcludedCaller(company.id, params.From),
+    findAudio(variants.notExcluded),
+    variants.excluded === variants.notExcluded ? null : findAudio(variants.excluded),
+  ]);
+  const variant = isExcluded ? variants.excluded : variants.notExcluded;
+  const audioUrl = variant === variants.notExcluded ? audioIfNotExcluded : audioIfExcluded;
+
   after(() =>
     handleMissedCall({ company, callSid: params.CallSid, callerPhone: params.From, isExcluded, siteUrl }).catch(
       (error) => console.error(`Appel manqué ${params.CallSid} non traité :`, error),
     ),
   );
 
-  // The greeting recorded beforehand when it is ready; otherwise read live, and recorded for next time.
-  const variant = chooseGreetingVariant(decideSms(company, params.From, isExcluded));
-  const audioUrl = await findGreetingAudioUrl(company, variant).catch(() => null);
   if (audioUrl) return twimlResponse(toPlayResponse(audioUrl));
 
   after(() => prepareGreetingAudio(company).catch((error) => console.error("Message d'accueil non préparé :", error)));

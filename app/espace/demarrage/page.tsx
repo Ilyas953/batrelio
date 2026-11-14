@@ -9,6 +9,7 @@ import { returnLink, withReturnTo, type ReturnLink } from "@/lib/espace/return-t
 import { getSetup, hasCompanyIdentity, type SetupStep, type SetupStepId } from "@/lib/espace/setup";
 import { formatPhone } from "@/lib/format";
 import type { Tables } from "@/lib/supabase/database.types";
+import { CANCEL_FORWARDING_CODE, FORWARDING_RING_SECONDS, forwardingCode } from "@/lib/telephony/forwarding";
 import { ActivateButton, ConfirmForwardingButton, ForwardingCode } from "../reponse-automatique/AutoReplyControls";
 import { TestCallPanel } from "./TestCallPanel";
 
@@ -195,7 +196,9 @@ function StepContent({ step, company, isTest }: StepContentProps) {
 
     case "forwarding":
       if (!company.phone_number) return <p>Activez d&apos;abord votre numéro Batrelio (étape 2).</p>;
-      if (step.done) return <p>Le renvoi est activé sur votre téléphone. Pour l&apos;arrêter un jour : composez ##004#.</p>;
+      if (step.done) {
+        return <p>Le renvoi est activé sur votre téléphone. Pour l&apos;arrêter un jour : composez {CANCEL_FORWARDING_CODE}.</p>;
+      }
       return (
         <>
           {isTest && (
@@ -205,8 +208,8 @@ function StepContent({ step, company, isTest }: StepContentProps) {
           )}
           <p>Sur le téléphone que vos clients appellent, composez ce code puis appuyez sur appeler. Un message confirme le renvoi.</p>
           <ForwardingCode
-            code={`**004*${formatPhone(company.phone_number).replaceAll(" ", "")}#`}
-            label="Code à composer (pas de réponse, occupé, injoignable)"
+            code={forwardingCode(company.phone_number)}
+            label={`Code à composer (pas de réponse après ${FORWARDING_RING_SECONDS} secondes, occupé, injoignable)`}
           />
           <p className="text-sm">
             Sur iPhone, touchez « Copier », ouvrez Téléphone puis Clavier, appuyez longuement pour coller. N&apos;utilisez

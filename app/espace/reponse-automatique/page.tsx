@@ -8,6 +8,7 @@ import { formatPhone, formatTimeAgo } from "@/lib/format";
 import { decideArtisanSms } from "@/lib/requests/artisan-sms";
 import type { Tables } from "@/lib/supabase/database.types";
 import { getFallbackSmsSender } from "@/lib/telephony/config";
+import { CANCEL_FORWARDING_CODE, FORWARDING_RING_SECONDS, forwardingCode } from "@/lib/telephony/forwarding";
 import { isIdentifiedCaller } from "@/lib/telephony/phone-rules";
 import { toSmsStatus, type SmsStatus } from "@/lib/telephony/sms-status";
 import {
@@ -173,10 +174,8 @@ function StatusCard({ enabled, phoneNumber }: { enabled: boolean; phoneNumber: s
   );
 }
 
-// French operators share the GSM codes: **004* covers no answer, busy and unreachable.
+// The codes and the ring time are explained in lib/telephony/forwarding.ts.
 function ForwardingCard({ phoneNumber }: { phoneNumber: string }) {
-  const nationalNumber = formatPhone(phoneNumber).replaceAll(" ", "");
-
   return (
     <Card title="Renvoyer vos appels manqués">
       <ol className="list-decimal space-y-2 pl-6 text-base text-stone-700">
@@ -184,8 +183,15 @@ function ForwardingCard({ phoneNumber }: { phoneNumber: string }) {
         <li>Un message confirme que le renvoi est activé.</li>
         <li>Testez : faites-vous appeler et ne décrochez pas.</li>
       </ol>
-      <ForwardingCode code={`**004*${nationalNumber}#`} label="Activer le renvoi (pas de réponse, occupé, injoignable)" />
-      <ForwardingCode code="##004#" label="Désactiver le renvoi" />
+      <ForwardingCode
+        code={forwardingCode(phoneNumber)}
+        label={`Activer le renvoi (pas de réponse après ${FORWARDING_RING_SECONDS} secondes, occupé, injoignable)`}
+      />
+      <ForwardingCode code={CANCEL_FORWARDING_CODE} label="Désactiver le renvoi" />
+      <p className="text-sm text-stone-500">
+        Déjà activé avec l&apos;ancien code ? Composez ce code une fois de plus : vos clients attendront moins
+        longtemps avant d&apos;entendre votre message.
+      </p>
       <p className="text-sm text-stone-500">
         Fonctionne chez Orange, SFR, Bouygues Telecom et Free. Votre opérateur peut facturer le renvoi d&apos;appel :
         renseignez-vous auprès de lui.

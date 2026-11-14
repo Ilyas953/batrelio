@@ -44,15 +44,18 @@ function readCustomerRequest(formData: FormData): CustomerRequest | { error: str
 type Admin = ReturnType<typeof createAdminClient>;
 
 // Storing is best effort per photo: the request is already saved, a failed photo must not lose it.
+// All photos upload at once (the customer is waiting), and keep the order they were picked in.
 async function storePhotos(supabase: Admin, companyId: string, requestId: string, photos: CheckedPhoto[]) {
-  const storedPaths: string[] = [];
-  for (const photo of photos) {
-    const path = `${companyId}/${requestId}/${crypto.randomUUID()}.${photo.extension}`;
-    const { error } = await supabase.storage
-      .from(PHOTO_BUCKET)
-      .upload(path, photo.bytes, { contentType: photo.contentType });
-    if (!error) storedPaths.push(path);
-  }
+  const uploads = await Promise.all(
+    photos.map(async (photo) => {
+      const path = `${companyId}/${requestId}/${crypto.randomUUID()}.${photo.extension}`;
+      const { error } = await supabase.storage
+        .from(PHOTO_BUCKET)
+        .upload(path, photo.bytes, { contentType: photo.contentType });
+      return error ? null : path;
+    }),
+  );
+  const storedPaths = uploads.filter((path) => path !== null);
 
   if (storedPaths.length > 0) {
     await supabase.from("request_photos").insert(
